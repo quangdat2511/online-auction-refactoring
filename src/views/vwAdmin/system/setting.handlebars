@@ -1,0 +1,280 @@
+{{#section 'css'}}
+<link rel="stylesheet" href="/css/admin/system/setting.css">
+<style>
+  .btn-admin-primary {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+  }
+  .btn-admin-primary:hover {
+    background-color: #bb2d3b;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+  }
+  .btn-admin-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+  }
+  .btn-admin-secondary {
+    transition: all 0.3s ease;
+  }
+  .btn-admin-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+  }
+</style>
+{{/section}}
+
+{{#section 'js'}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    $(document).ready(function() {
+        // Validation form trước khi submit
+        $('#formSystemSettings').on('submit', function(e) {
+            e.preventDefault();
+            
+            const newProductLimit = parseInt($('#txtNewProductLimit').val());
+            const autoExtendTrigger = parseInt($('#txtAutoExtendTrigger').val());
+            const autoExtendDuration = parseInt($('#txtAutoExtendDuration').val());
+            
+            // Validation
+            if (!newProductLimit || newProductLimit < 1) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    text: 'New Product Limit must be greater than 0!'
+                });
+                return false;
+            }
+            
+            if (!autoExtendTrigger || autoExtendTrigger < 1) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    text: 'Auto Extend Trigger must be greater than 0!'
+                });
+                return false;
+            }
+            
+            if (!autoExtendDuration || autoExtendDuration < 1) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    text: 'Auto Extend Duration must be greater than 0!'
+                });
+                return false;
+            }
+
+            // Confirm before saving
+            Swal.fire({
+                title: 'Confirm Changes',
+                html: `
+                    <div class="text-start">
+                        <p class="mb-2"><strong>New Product Limit:</strong> ${newProductLimit} minutes</p>
+                        <p class="mb-2"><strong>Auto Extend Trigger:</strong> ${autoExtendTrigger} minutes</p>
+                        <p class="mb-0"><strong>Auto Extend Duration:</strong> ${autoExtendDuration} minutes</p>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, save settings!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit();
+                }
+            });
+        });
+
+        // Show success message if exists
+        {{#if success_message}}
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: '{{success_message}}',
+            timer: 2000,
+            showConfirmButton: false
+        });
+        {{/if}}
+    });
+</script>
+{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    <!-- SIDEBAR -->
+    <div class="col-md-3 mb-4">
+        {{> admin-sidebar activeSection='settings'}}
+    </div>
+
+    <!-- CONTENT -->
+    <div class="col-md-9">
+      <div class="card shadow-sm border-0">
+        
+        <!-- Header -->
+        <div class="card-header bg-white border-bottom py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-danger">
+                <i class="bi bi-gear-fill me-2"></i> SYSTEM SETTINGS
+            </h5>
+            <span class="badge bg-danger-subtle text-danger px-3 py-2">Configuration</span>
+          </div>
+        </div>
+        
+        <!-- Body -->
+        <div class="card-body p-4">
+          {{#if error_message}}
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i> {{error_message}}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {{/if}}
+
+          <!-- Description -->
+          <div class="alert alert-info border-0 mb-4">
+              <i class="bi bi-info-circle-fill me-2"></i>
+              <strong>Important:</strong> These settings control critical auction system behaviors. Please make changes carefully.
+          </div>
+
+          <form id="formSystemSettings" method="POST" action="/admin/system/settings">
+            
+            <d class="row g-4">
+              
+              <!-- Setting 1: New Product Limit -->
+              <div class="col-md-12">
+                <div class="setting-card card border-0 shadow-sm p-4">
+                  <div class="row align-items-center">
+                    <div class="col-auto">
+                      <div class="setting-icon">
+                        <i class="bi bi-clock-history"></i>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <h6 class="fw-bold mb-2 text-dark">New Product Limit</h6>
+                      <p class="text-muted small mb-3">
+                        Defines how long (in minutes) a product is considered "new" and highlighted on the homepage.
+                      </p>
+                      <div class="input-group input-group-lg">
+                        <span class="input-group-text">
+                          <i class="bi bi-stopwatch me-2"></i> Duration
+                        </span>
+                        <input 
+                          type="number" 
+                          class="form-control" 
+                          id="txtNewProductLimit" 
+                          name="new_product_limit_minutes" 
+                          value="{{settings.new_product_limit_minutes}}"
+                          min="1"
+                          max="10080"
+                          required>
+                        <span class="input-group-text">minutes</span>
+                      </div>
+                      <div class="form-text mt-2">
+                        <i class="bi bi-info-circle me-1"></i> 
+                        Recommended: 60-1440 minutes (1 hour to 1 day)
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Setting 2: Auto Extend Trigger -->
+              <div class="col-md-12">
+                <div class="setting-card card border-0 shadow-sm p-4">
+                  <div class="row align-items-center">
+                    <div class="col-auto">
+                      <div class="setting-icon">
+                        <i class="bi bi-lightning-charge"></i>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <h6 class="fw-bold mb-2 text-dark">Auto Extend Trigger</h6>
+                      <p class="text-muted small mb-3">
+                        When a bid is placed within this many minutes before auction end, the auction will be automatically extended.
+                      </p>
+                      <div class="input-group input-group-lg">
+                        <span class="input-group-text">
+                          <i class="bi bi-alarm me-2"></i> Trigger Time
+                        </span>
+                        <input 
+                          type="number" 
+                          class="form-control" 
+                          id="txtAutoExtendTrigger" 
+                          name="auto_extend_trigger_minutes" 
+                          value="{{settings.auto_extend_trigger_minutes}}"
+                          min="1"
+                          max="60"
+                          required>
+                        <span class="input-group-text">minutes</span>
+                      </div>
+                      <div class="form-text mt-2">
+                        <i class="bi bi-info-circle me-1"></i> 
+                        Recommended: 5-15 minutes before end
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Setting 3: Auto Extend Duration -->
+              <div class="col-md-12">
+                <div class="setting-card card border-0 shadow-sm p-4">
+                  <div class="row align-items-center">
+                    <div class="col-auto">
+                      <div class="setting-icon">
+                        <i class="bi bi-arrow-clockwise"></i>
+                      </div>
+                    </div>
+                    <div class="col">
+                      <h6 class="fw-bold mb-2 text-dark">Auto Extend Duration</h6>
+                      <p class="text-muted small mb-3">
+                        How many minutes to extend the auction when auto-extend is triggered.
+                      </p>
+                      <div class="input-group input-group-lg">
+                        <span class="input-group-text">
+                          <i class="bi bi-plus-circle me-2"></i> Extension
+                        </span>
+                        <input 
+                          type="number" 
+                          class="form-control" 
+                          id="txtAutoExtendDuration" 
+                          name="auto_extend_duration_minutes" 
+                          value="{{settings.auto_extend_duration_minutes}}"
+                          min="1"
+                          max="120"
+                          required>
+                        <span class="input-group-text">minutes</span>
+                      </div>
+                      <div class="form-text mt-2">
+                        <i class="bi bi-info-circle me-1"></i> 
+                        Recommended: 5-30 minutes extension
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </d>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 mt-4 pt-4 border-top mb-4">
+              <button type="submit" class="btn btn-lg px-5 btn-admin-primary">
+                <i class="bi bi-check-circle me-2"></i>Save Changes
+              </button>
+              <a href="/admin/dashboard" class="btn btn-outline-secondary btn-lg px-4 btn-admin-secondary">
+                <i class="bi bi-x-circle me-2"></i>Cancel
+              </a>
+            </div>
+          </form>
+
+        </div>
+        
+      </div>
+    </div>
+
+  </div>
+</div>

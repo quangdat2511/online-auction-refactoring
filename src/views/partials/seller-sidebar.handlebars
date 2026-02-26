@@ -1,0 +1,72 @@
+<div class="card shadow-sm border-0">
+  <div class="card-body text-center pt-4 pb-3">
+    <div class="position-relative d-inline-block">
+      <img src="https://ui-avatars.com/api/?name={{authUser.fullname}}&background=random&size=128" 
+           class="rounded-circle mb-3 shadow-sm" 
+           width="100" height="100" 
+           style="object-fit: cover;">
+      
+      <span class="position-absolute bottom-0 start-100 translate-middle badge rounded-pill bg-success border border-white text-capitalize">
+        {{authUser.role}}
+      </span>
+    </div>
+
+    <h5 class="card-title fw-bold mb-1">{{authUser.fullname}}</h5>
+    <div class="text-muted small text-break px-3">{{authUser.email}}</div>
+  </div>
+  
+  <div class="list-group list-group-flush profile-nav small">
+    
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'dashboard')}}active fw-bold{{/if}}" 
+       href="/seller">
+      <i class="bi bi-speedometer2 fs-5"></i> 
+      <span>Dashboard</span>
+    </a>
+    
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'all-products')}}active fw-bold{{/if}}" 
+       href="/seller/products">
+      <i class="bi bi-box-seam fs-5"></i> 
+      <span>All Products</span>
+    </a>
+
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'active-products')}}active fw-bold{{/if}}" 
+       href="/seller/products/active">
+      <i class="bi bi-play-circle fs-5"></i> 
+      <span>Active</span>
+    </a>
+
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'pending-products')}}active fw-bold{{/if}}" 
+       href="/seller/products/pending">
+      <i class="bi bi-hourglass-split fs-5"></i> 
+      <span>Pending</span>
+    </a>
+
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'sold-products')}}active fw-bold{{/if}}" 
+       href="/seller/products/sold">
+      <i class="bi bi-bag-check fs-5"></i> 
+      <span>Sold</span>
+    </a>
+
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'expired-products')}}active fw-bold{{/if}}" 
+       href="/seller/products/expired">
+      <i class="bi bi-x-circle fs-5"></i> 
+      <span>Expired</span>
+    </a>
+    
+    <hr class="my-2">
+
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'profile')}}active fw-bold{{/if}}" 
+       href="/account/profile">
+      <i class="bi bi-person-gear fs-5"></i> 
+      <span>Account Settings</span>
+    </a>
+
+    <form id="formLogout" action="/account/logout" method="POST"></form>
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 text-danger fw-bold" 
+       href="javascript: $('#formLogout').submit()">
+      <i class="bi bi-box-arrow-right fs-5"></i> 
+      <span>Sign Out</span>
+    </a>
+
+  </div>
+</div>

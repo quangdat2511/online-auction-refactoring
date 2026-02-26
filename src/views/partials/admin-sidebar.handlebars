@@ -1,0 +1,67 @@
+<div class="card shadow-sm border-0">
+  <div class="card-body text-center pt-4 pb-3">
+    <div class="position-relative d-inline-block">
+      {{!-- Avatar Admin: Nền đỏ (dc3545) --}}
+      <img src="https://ui-avatars.com/api/?name={{authUser.fullname}}&background=dc3545&color=fff&size=128" 
+           class="rounded-circle mb-3 shadow-sm" 
+           width="100" height="100" 
+           style="object-fit: cover;">
+      
+      <span class="position-absolute bottom-0 start-100 translate-middle badge rounded-pill bg-danger border border-white text-capitalize">
+        Administrator
+      </span>
+    </div>
+
+    <h5 class="card-title fw-bold mb-1">{{authUser.fullname}}</h5>
+    <div class="text-muted small text-break px-3">{{authUser.email}}</div>
+  </div>
+  
+  <div class="list-group list-group-flush profile-nav small">
+    
+    {{!-- 1. Account Settings --}}
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'profile')}}active fw-bold{{/if}}" 
+       href="/admin/account/profile">
+      <i class="bi bi-person-gear fs-5"></i> 
+      <span>Account Settings</span>
+    </a>
+    
+    {{!-- 2. Quản lý danh mục (4.1) --}}
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'categories')}}active fw-bold{{/if}}" 
+       href="/admin/categories/list">
+      <i class="bi bi-tags fs-5"></i> 
+      <span>Manage Categories</span>
+    </a>
+
+    {{!-- 3. Quản lý sản phẩm (4.2) --}}
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'products')}}active fw-bold{{/if}}" 
+       href="/admin/products/list">
+       <i class="bi bi-box-seam fs-5"></i> 
+       <span>Manage Products</span>
+    </a>
+
+    {{!-- 4. Quản lý người dùng (4.3) --}}
+    {{!-- Bao gồm: Xem danh sách, Xoá, Sửa, và DUYỆT NÂNG CẤP --}}
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'users')}}active fw-bold{{/if}}" 
+       href="/admin/users/list">
+       <i class="bi bi-people fs-5"></i> 
+       <span>Manage Users</span>
+    </a>
+
+    {{!-- 5. System Settings --}}
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'settings')}}active fw-bold{{/if}}" 
+       href="/admin/system/settings">
+       <i class="bi bi-gear fs-5"></i> 
+       <span>System Settings</span>
+    </a>
+
+    
+    {{!-- Logout --}}
+    <form id="formAdminLogout" action="/account/logout" method="POST"></form>
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 text-danger fw-bold mt-2 border-top" 
+       href="javascript: $('#formAdminLogout').submit()">
+      <i class="bi bi-box-arrow-right fs-5"></i> 
+      <span>Sign Out</span>
+    </a>
+
+  </div>
+</div>

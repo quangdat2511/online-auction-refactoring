@@ -1,0 +1,1058 @@
+/* Product Details Page Styles */
+
+/* General Styles */
+:root {
+  --primary-color: #72AEC8;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --light-bg: #f8f9fa;
+  --border-color: #e9ecef;
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, #72AEC8 0%, #5a9ab8 50%, #4a7fa3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -moz-background-clip: text;
+  -moz-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Premium Badge */
+.badge-premium {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  background: linear-gradient(135deg, rgba(114, 174, 200, 0.15) 0%, rgba(90, 154, 184, 0.1) 100%);
+  border: 2px solid rgba(114, 174, 200, 0.3);
+  border-radius: 30px;
+  color: #72AEC8;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(114, 174, 200, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+  animation: floatPulse 3s ease-in-out infinite;
+}
+
+.badge-premium:hover {
+  background: linear-gradient(135deg, rgba(114, 174, 200, 0.25) 0%, rgba(90, 154, 184, 0.15) 100%);
+  border-color: rgba(114, 174, 200, 0.5);
+  box-shadow: 0 8px 25px rgba(114, 174, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+@keyframes floatPulse {
+  0%, 100% {
+    transform: translateY(0px);
+    box-shadow: 0 4px 15px rgba(114, 174, 200, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(114, 174, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  background-color: transparent;
+  padding: 0;
+}
+
+.breadcrumb-item a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  position: relative;
+  display: inline-block;
+}
+
+.breadcrumb-item a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #72AEC8, #5a9ab8);
+  transition: width 0.3s ease;
+}
+
+.breadcrumb-item a:hover::after {
+  width: 100%;
+}
+
+.breadcrumb-item a:hover {
+  color: #5a8ba8;
+}
+
+/* Product Image Styles */
+.product-image-wrapper {
+  position: sticky;
+  top: 100px;
+}
+
+.main-image-container {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 251, 253, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  box-shadow: 0 8px 32px rgba(114, 174, 200, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(114, 174, 200, 0.15);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.main-image-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(114, 174, 200, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  border-radius: 16px;
+}
+
+.main-image-container:hover {
+  box-shadow: 0 20px 60px rgba(114, 174, 200, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border-color: rgba(114, 174, 200, 0.3);
+}
+
+.main-product-image {
+  max-width: 100%;
+  max-height: 450px;
+  object-fit: contain;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+}
+
+.main-image-container:hover .main-product-image {
+  transform: scale(1.08) translateZ(0);
+}
+
+/* Price Card Styles - Glassmorphism */
+.price-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 251, 253, 0.5) 100%) !important;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(114, 174, 200, 0.15) !important;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  will-change: box-shadow, border-color;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.price-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.price-card:hover::before {
+  left: 100%;
+}
+
+.price-card:hover {
+  box-shadow: 0 12px 40px rgba(114, 174, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border-color: rgba(114, 174, 200, 0.3) !important;
+}
+
+.price-card-buy-now {
+  background: linear-gradient(135deg, rgba(114, 174, 200, 0.12) 0%, rgba(90, 154, 184, 0.08) 100%) !important;
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(114, 174, 200, 0.25) !important;
+  box-shadow: 0 8px 25px rgba(114, 174, 200, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.price-card-buy-now:hover {
+  box-shadow: 0 12px 35px rgba(114, 174, 200, 0.25);
+  border-color: rgba(114, 174, 200, 0.4) !important;
+}
+
+/* Info Box Styles - Glassmorphism */
+.info-box {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 251, 253, 0.5) 100%);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(114, 174, 200, 0.15) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  will-change: box-shadow, border-color;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.info-box::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(114, 174, 200, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.info-box:hover {
+  box-shadow: 0 16px 50px rgba(114, 174, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border-color: rgba(114, 174, 200, 0.3) !important;
+  transform: translateY(-5px);
+}
+
+.info-box:hover::after {
+  opacity: 1;
+}
+
+/* Action Buttons */
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+}
+
+/* Seller Info - Glassmorphism */
+.seller-info {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 251, 253, 0.5) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(114, 174, 200, 0.15) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  will-change: box-shadow, border-color;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.seller-info:hover {
+  border-color: rgba(114, 174, 200, 0.3) !important;
+  box-shadow: 0 16px 50px rgba(114, 174, 200, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transform: translateY(-5px);
+}
+
+/* Description Section - Glassmorphism */
+.description-section {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 251, 253, 0.5) 100%);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(114, 174, 200, 0.1) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.description-section p {
+  line-height: 1.9;
+  color: #495057;
+}
+
+/* Details Table */
+.table {
+  margin-bottom: 0;
+}
+
+.table tbody tr {
+  transition: all 0.3s ease;
+}
+
+.table tbody tr:hover {
+  background: linear-gradient(90deg, rgba(114, 174, 200, 0.05) 0%, transparent 100%);
+}
+
+.table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+/* Sidebar Sticky - Glassmorphism */
+.sidebar-widget {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 251, 253, 0.5) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(114, 174, 200, 0.15) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-widget:hover {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Stat Item */
+.stat-item {
+  padding-bottom: 1.5rem;
+}
+
+.stat-item strong {
+  color: #212529;
+  font-size: 1.1rem;
+}
+
+/* Related Products */
+.image-wrapper {
+  position: relative;
+}
+
+.image-wrapper .overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(114, 174, 200, 0.1);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.related-product-card:hover .overlay {
+  opacity: 1;
+}
+
+/* Countdown Timer */
+.countdown-timer {
+  font-size: 1.2rem;
+  font-family: inherit;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+/* Section Headers */
+h3 {
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+h3::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, #72AEC8, #5a9ab8);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+h3:hover::after {
+  width: 80px;
+}
+
+/* Gallery Thumb - Enhanced */
+.gallery-thumb {
+  flex: 0 0 120px;
+  min-width: 120px;
+  height: 120px;
+  cursor: pointer;
+  border: 2px solid rgba(114, 174, 200, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(248, 251, 253, 0.5) 100%);
+  backdrop-filter: blur(10px);
+  position: relative;
+}
+
+.gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gallery-thumb:hover {
+  border-color: rgba(114, 174, 200, 0.5);
+}
+
+.gallery-thumb:hover img {
+  transform: scale(1);
+}
+
+.gallery-thumb.active {
+  border-color: rgba(114, 174, 200, 0.6);
+  box-shadow: 0 8px 25px rgba(114, 174, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Image Gallery Carousel */
+.image-gallery {
+  position: relative;
+}
+
+.gallery-container {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(248, 251, 253, 0.5) 100%);
+  border-radius: 12px;
+  padding: 8px;
+}
+
+.gallery-track {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.gallery-track::-webkit-scrollbar {
+  display: none;
+}
+
+/* Gallery Navigation Buttons */
+.gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(114, 174, 200, 0.85);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(114, 174, 200, 0.3);
+  font-size: 1.2rem;
+}
+
+.gallery-nav:hover {
+  background: rgba(114, 174, 200, 1);
+  box-shadow: 0 6px 18px rgba(114, 174, 200, 0.4);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.gallery-nav:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.gallery-nav-prev {
+  left: 8px;
+}
+
+.gallery-nav-next {
+  right: 8px;
+}
+
+/* Lightbox Gallery - Enhanced */
+.lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lightbox-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-img {
+  max-width: 100%;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 16px;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.4), 0 0 60px rgba(114, 174, 200, 0.2);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  background: rgba(114, 174, 200, 0.95);
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10000;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.lightbox-close i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-close:hover {
+  background: rgba(114, 174, 200, 1);
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(114, 174, 200, 0.4);
+}
+
+.lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(114, 174, 200, 0.9);
+  border: none;
+  color: white;
+  font-size: 2rem;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10000;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  padding: 0;
+}
+
+.lightbox-nav i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-nav:hover {
+  background: rgba(114, 174, 200, 1);
+  transform: translateY(-50%) scale(1.15);
+  box-shadow: 0 6px 25px rgba(114, 174, 200, 0.4);
+}
+
+.lightbox-nav:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.lightbox-prev {
+  left: 20px;
+}
+
+.lightbox-next {
+  right: 20px;
+}
+
+.lightbox-counter {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 1rem;
+  backdrop-filter: blur(10px);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Button Styles - Neon Glow Effects */
+.btn-place-bid {
+  background: linear-gradient(135deg, #72AEC8 0%, #5a9ab8 100%);
+  border: 2px solid #72AEC8;
+  color: white;
+  border-radius: 10px;
+  padding: 0.75rem;
+  transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  box-shadow: 0 8px 25px rgba(114, 174, 200, 0.35), 0 0 20px rgba(114, 174, 200, 0.1);
+  position: relative;
+  overflow: hidden;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.btn-place-bid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.btn-place-bid:hover::before {
+  left: 100%;
+}
+
+.btn-place-bid:hover {
+  background: linear-gradient(135deg, #5a9ab8 0%, #4a7fa3 100%);
+  border-color: #4a7fa3;
+  color: white;
+  box-shadow: 0 12px 35px rgba(114, 174, 200, 0.5), 0 0 25px rgba(114, 174, 200, 0.2);
+}
+
+.btn-place-bid:active {
+  box-shadow: 0 6px 20px rgba(114, 174, 200, 0.4);
+}
+
+.btn-watch {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 251, 253, 0.8) 100%);
+  border: 2px solid rgba(114, 174, 200, 0.5);
+  color: #72AEC8;
+  border-radius: 10px;
+  transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(114, 174, 200, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-watch::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.btn-watch:hover::before {
+  left: 100%;
+}
+
+.btn-watch:hover {
+  background: linear-gradient(135deg, #72AEC8 0%, #5a9ab8 100%);
+  border-color: #72AEC8;
+  color: white;
+  box-shadow: 0 12px 35px rgba(114, 174, 200, 0.3), 0 0 20px rgba(114, 174, 200, 0.2);
+}
+
+.btn-watch:active {
+  box-shadow: 0 6px 20px rgba(114, 174, 200, 0.2);
+}
+
+.btn-buy-now {
+  background: linear-gradient(135deg, #72AEC8 0%, #5a9ab8 100%);
+  border: 2px solid #72AEC8;
+  color: white;
+  border-radius: 10px;
+  padding: 0.75rem;
+  transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  box-shadow: 0 8px 25px rgba(114, 174, 200, 0.35), 0 0 20px rgba(114, 174, 200, 0.1);
+  position: relative;
+  overflow: hidden;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.btn-buy-now::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.btn-buy-now:hover::before {
+  left: 100%;
+}
+
+.btn-buy-now:hover {
+  background: linear-gradient(135deg, #5a9ab8 0%, #4a7fa3 100%);
+  border-color: #4a7fa3;
+  color: white;
+  box-shadow: 0 12px 35px rgba(114, 174, 200, 0.5), 0 0 25px rgba(114, 174, 200, 0.2);
+}
+
+.btn-buy-now:active {
+  box-shadow: 0 6px 20px rgba(114, 174, 200, 0.4);
+}
+
+.btn-contact {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 251, 253, 0.8) 100%);
+  border: 2px solid rgba(114, 174, 200, 0.5);
+  color: #72AEC8;
+  border-radius: 25px;
+  transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(114, 174, 200, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-contact::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.btn-contact:hover::before {
+  left: 100%;
+}
+
+.btn-contact:hover {
+  background: linear-gradient(135deg, #72AEC8 0%, #5a9ab8 100%);
+  border-color: #72AEC8;
+  color: white;
+  box-shadow: 0 10px 25px rgba(114, 174, 200, 0.3), 0 0 15px rgba(114, 174, 200, 0.15);
+}
+
+.btn-contact:active {
+  box-shadow: 0 6px 18px rgba(114, 174, 200, 0.2);
+}
+
+/* Related Product Card - Glassmorphism */
+.related-product-card {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: 1px solid rgba(114, 174, 200, 0.15) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 251, 253, 0.5) 100%);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.related-product-card:hover {
+  box-shadow: 0 20px 50px rgba(114, 174, 200, 0.2), 0 0 30px rgba(114, 174, 200, 0.1) !important;
+  transform: translateY(-8px);
+  border-color: rgba(114, 174, 200, 0.3) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .product-image-wrapper {
+    position: static;
+  }
+
+  .main-image-container {
+    min-height: 300px;
+    padding: 20px;
+  }
+
+  .sidebar-widget {
+    position: static !important;
+    margin-top: 2rem;
+  }
+
+  .breadcrumb {
+    font-size: 0.9rem;
+  }
+
+  h1 {
+    font-size: 1.8rem !important;
+  }
+
+  h3 {
+    font-size: 1.3rem;
+  }
+
+  .gallery-thumb {
+    flex: 0 0 100px;
+    min-width: 100px;
+    height: 100px;
+  }
+
+  .gallery-nav {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+}
+
+/* Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.description-section,
+.details-section,
+.comments-section,
+.bidding-history-section,
+.rejected-bidders-section {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(248, 251, 253, 0.5) 100%);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(114, 174, 200, 0.1) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideInUp 0.6s ease-out;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Sticky Sidebar for Bidding History */
+.sticky-sidebar {
+  position: sticky;
+  top: 20px;
+  align-self: flex-start;
+}
+
+.btn-watch-active {
+    background-color: #ffe6e6 !important;
+    color: #dc3545 !important;
+    border: 1px solid #dc3545 !important;
+}
+.btn-watch-active:hover {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
+/* Bidding History Signin Button - Join Us Style */
+.bidding-history-section .btn-outline-primary,
+.bidding-history-section .btn-outline-primary *,
+.bidding-history-section .btn-outline-primary :after,
+.bidding-history-section .btn-outline-primary :before,
+.bidding-history-section .btn-outline-primary:after,
+.bidding-history-section .btn-outline-primary:before {
+  border: 0 solid;
+  box-sizing: border-box;
+}
+
+.bidding-history-section .btn-outline-primary {
+  -webkit-tap-highlight-color: transparent;
+  background-color: #72AEC8;
+  background-image: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.5;
+  margin: 0;
+  -webkit-mask-image: -webkit-radial-gradient(#000, #fff);
+  padding: 0.5rem 1.5rem;
+  text-transform: uppercase;
+  border-radius: 99rem;
+  border: 2px solid #72AEC8;
+  z-index: 1;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  isolation: isolate;
+  display: inline-block;
+  vertical-align: middle;
+  overflow: hidden;
+  position: relative;
+}
+
+.bidding-history-section .btn-outline-primary .btn-text {
+  position: relative;
+  z-index: 3;
+  display: inline-block;
+  color: #fff;
+  transition: color 0.3s ease;
+}
+
+.bidding-history-section .btn-outline-primary:hover {
+  border-color: #72AEC8;
+  box-shadow: 0 8px 20px rgba(114, 174, 200, 0.4);
+}
+
+.bidding-history-section .btn-outline-primary:hover .btn-text {
+  color: #2c3e50;
+}
+
+.bidding-history-section .btn-outline-primary:after,
+.bidding-history-section .btn-outline-primary:before {
+  --skew: 0.2;
+  background: #fff;
+  content: "";
+  display: block;
+  height: 105%;
+  left: calc(-50% - 50% * var(--skew));
+  pointer-events: none;
+  position: absolute;
+  top: -106%;
+  transform: skew(calc(150deg * var(--skew))) translateY(var(--progress, 0));
+  transition: transform 0.2s ease;
+  width: 100%;
+  will-change: transform;
+  z-index: 1;
+}
+
+.bidding-history-section .btn-outline-primary:after {
+  --progress: 0%;
+  left: calc(50% + 50% * var(--skew));
+  top: 103%;
+  z-index: 1;
+}
+
+.bidding-history-section .btn-outline-primary:hover:before {
+  --progress: 100%;
+}
+
+.bidding-history-section .btn-outline-primary:hover:after {
+  --progress: -102%;
+}
+
+.bidding-history-section .btn-outline-primary i {
+  position: relative;
+  z-index: 3;
+}
+
+/* Related Products Horizontal Scroll */
+.related-section {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.related-section .row {
+  flex-wrap: nowrap;
+  display: flex;
+  gap: 1rem;
+}
+
+.related-section .col-md-3 {
+  flex: 0 0 calc(25% - 0.75rem);
+  min-width: 250px;
+}
+
+/* Scrollbar styling */
+.related-section::-webkit-scrollbar {
+  height: 8px;
+}
+
+.related-section::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.related-section::-webkit-scrollbar-thumb {
+  background: #72AEC8;
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.related-section::-webkit-scrollbar-thumb:hover {
+  background: #5a9ab8;
+}
+
+/* Firefox scrollbar */
+.related-section {
+  scrollbar-color: #72AEC8 #f1f1f1;
+  scrollbar-width: thin;
+}
+
+/* Mention styling - for @username in reply input */
+.mention {
+  color: #72AEC8;
+  font-weight: 600;
+}
+/* Reply button hover effect */
+.reply-btn:hover {
+  background: linear-gradient(135deg, #5a9ab8 0%, #4a7fa3 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(114, 174, 200, 0.3);
+}
+
+.reply-btn:active {
+  transform: translateY(0);
+}
+/* Contenteditable reply input styling */
+.reply-input {
+  border: 1px solid #ced4da !important;
+  border-radius: 0.25rem !important;
+  padding: 0.375rem 0.75rem !important;
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.reply-input:focus {
+  border-color: #72AEC8 !important;
+  box-shadow: 0 0 0 0.2rem rgba(114, 174, 200, 0.25) !important;
+}
+
+.pagination .page-link:hover:not(.disabled span) {
+  background: linear-gradient(135deg, #72AEC8 0%, #5a9ab8 100%) !important;
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(114, 174, 200, 0.4);
+}
+
+/* Badge for title - Unrated Bidders Detail Page */
+.badge-detail-unrated {
+  display: inline-block;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #72AEC8 0%, #5a9ab8 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 0.75rem;
+  border-radius: 5px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(114, 174, 200, 0.25);
+  vertical-align: middle;
+}
+
+/* Bidder name link in bidding history */
+.bidder-name-link {
+  transition: color 0.2s ease;
+}
+
+.bidder-name-link:hover {
+  color: #72AEC8 !important;
+}

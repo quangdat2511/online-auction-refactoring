@@ -1,0 +1,2043 @@
+{{#section "css"}}
+<link rel="stylesheet" href="/static/css/product/detail.css">
+<style>
+  /* SweetAlert2 Custom Buttons */
+  .swal-btn-confirm,
+  .swal-btn-cancel {
+    min-width: 120px !important;
+    padding: 12px 32px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+  }
+  
+  .swal-btn-confirm {
+    background: linear-gradient(135deg, #72AEC8 0%, #5a9bb8 100%) !important;
+    color: white !important;
+  }
+  
+  .swal-btn-confirm:hover {
+    background: linear-gradient(135deg, #5a9bb8 0%, #4a8aa8 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(114, 174, 200, 0.4) !important;
+  }
+  
+  .swal-btn-confirm:active {
+    transform: translateY(0) !important;
+  }
+  
+  .swal-btn-cancel {
+    background: #6c757d !important;
+    color: white !important;
+  }
+  
+  .swal-btn-cancel:hover {
+    background: #5a6268 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .swal-btn-cancel:active {
+    transform: translateY(0) !important;
+  }
+
+  /* Bid Modal Enhancements */
+  #decreaseBid:hover,
+  #increaseBid:hover {
+    background-color: #72AEC8 !important;
+    color: white !important;
+    border-color: #72AEC8 !important;
+    transform: scale(1.05);
+  }
+
+  #decreaseBid:active,
+  #increaseBid:active {
+    transform: scale(0.95);
+    background-color: #5a9bb8 !important;
+  }
+
+  #submitBidBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(114, 174, 200, 0.4) !important;
+  }
+
+  #submitBidBtn:active {
+    transform: translateY(0);
+  }
+
+  #bidModal .btn-outline-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  #bidAmount {
+    transition: all 0.3s ease;
+  }
+
+  #bidAmount:focus {
+    box-shadow: 0 0 0 0.2rem rgba(114, 174, 200, 0.25);
+  }
+  
+  /* Quick increment buttons */
+  .quick-increment:hover,
+  .quick-decrement:hover {
+    transform: scale(1.05);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  }
+  
+  .quick-increment:active,
+  .quick-decrement:active {
+    transform: scale(0.95);
+  }
+
+  /* Prevent layout shift when modal opens */
+  body.modal-open {
+    padding-right: 0 !important;
+  }
+</style>
+{{/section}}
+
+{{#section "js"}}
+<script>
+  // Gallery Carousel Navigation - Chuyển ảnh chính
+  function galleryNext() {
+    const thumbnails = document.querySelectorAll('.gallery-thumb');
+    if (thumbnails.length > 0) {
+      const nextIndex = (currentImageIndex + 1) % thumbnails.length;
+      thumbnails[nextIndex].click();
+    }
+  }
+
+  function galleryPrev() {
+    const thumbnails = document.querySelectorAll('.gallery-thumb');
+    if (thumbnails.length > 0) {
+      const prevIndex = (currentImageIndex - 1 + thumbnails.length) % thumbnails.length;
+      thumbnails[prevIndex].click();
+    }
+  }
+
+  // Gallery images data
+  const galleryImages = [
+    {{#if product.thumbnail}}'/static/{{product.thumbnail}}'{{else}} 'https://placehold.co/800x800?text=Image+1'{{/if}},
+  {{#each product.sub_images}}
+  '/static/{{this}}',
+    {{/each}}
+  ];
+
+  let currentImageIndex = 0;
+
+  function changeMainImage(element, index) {
+    // Lấy ảnh từ thumbnail
+    const imgSrc = element.querySelector('img').src;
+
+    // Update ảnh chính
+    document.getElementById('mainImage').src = imgSrc;
+    currentImageIndex = index;
+
+    // Update class active
+    document.querySelectorAll('.gallery-thumb').forEach(thumb => {
+      thumb.classList.remove('active');
+    });
+    element.classList.add('active');
+  }
+
+  function openLightbox(index) {
+    currentImageIndex = index;
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImage = document.getElementById('lightboxImage');
+
+    lightboxImage.src = galleryImages[index];
+    document.getElementById('currentImageNum').textContent = index + 1;
+    lightbox.style.display = 'flex';
+
+    // Disable body scroll
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    const lightbox = document.getElementById('lightbox');
+    lightbox.style.display = 'none';
+    document.body.style.overflow = 'auto';
+  }
+
+  function nextImage() {
+    currentImageIndex = (currentImageIndex + 1) % galleryImages.length;
+    document.getElementById('lightboxImage').src = galleryImages[currentImageIndex];
+    document.getElementById('currentImageNum').textContent = currentImageIndex + 1;
+  }
+
+  function prevImage() {
+    currentImageIndex = (currentImageIndex - 1 + galleryImages.length) % galleryImages.length;
+    document.getElementById('lightboxImage').src = galleryImages[currentImageIndex];
+    document.getElementById('currentImageNum').textContent = currentImageIndex + 1;
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function (event) {
+    const lightbox = document.getElementById('lightbox');
+    if (lightbox.style.display === 'flex') {
+      if (event.key === 'ArrowLeft') prevImage();
+      if (event.key === 'ArrowRight') nextImage();
+      if (event.key === 'Escape') closeLightbox();
+    }
+  });
+
+  // Click on main image to open lightbox - Wait for DOM
+  window.addEventListener('load', function () {
+    const mainImage = document.getElementById('mainImage');
+    if (mainImage) {
+      mainImage.addEventListener('click', function () {
+        openLightbox(currentImageIndex);
+      });
+    }
+  });
+
+  // Toggle Description Section
+  function toggleDescription() {
+    const descContent = document.getElementById('descriptionContent');
+    const descToggle = document.getElementById('descriptionToggle');
+    const isHidden = descContent.style.display === 'none';
+
+    descContent.style.display = isHidden ? 'block' : 'none';
+    descToggle.innerHTML = isHidden
+      ? '<i class="bi bi-chevron-up"></i>'
+      : '<i class="bi bi-chevron-down"></i>';
+  }
+
+  // Toggle Details Section
+  function toggleDetails() {
+    const detailsContent = document.getElementById('detailsContent');
+    const detailsToggle = document.getElementById('detailsToggle');
+    const isHidden = detailsContent.style.display === 'none';
+
+    detailsContent.style.display = isHidden ? 'block' : 'none';
+    detailsToggle.innerHTML = isHidden
+      ? '<i class="bi bi-chevron-up"></i>'
+      : '<i class="bi bi-chevron-down"></i>';
+  }
+
+  // ==================== BID FUNCTIONALITY ====================
+  const bidModal = new bootstrap.Modal(document.getElementById('bidModal'));
+  const currentPrice = {{ product.current_price }};
+  const productId = {{ product.id }};
+  const minIncrement = {{ product.step_price }}; // VND
+
+  // Format number with commas
+  function formatNumberWithCommas(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  // Remove commas from formatted number
+  function removeCommas(str) {
+    return str.replace(/,/g, '');
+  }
+
+  // Open bid modal
+  document.querySelector('.btn-place-bid')?.addEventListener('click', function () {
+    {{#if isAuthenticated}}
+      const suggestedBid = currentPrice + minIncrement;
+      const bidInput = document.getElementById('bidAmount');
+      bidInput.value = formatNumberWithCommas(suggestedBid);
+      bidInput.setAttribute('data-raw-value', suggestedBid);
+      bidModal.show();
+    {{else}}
+      window.location.href = '/account/signin?retUrl=/products/detail?id={{product.id}}';
+    {{/if}}
+  });
+
+  // Long-press functionality
+  let pressTimer = null;
+  let isLongPress = false;
+  
+  function adjustBid(amount) {
+    const bidInput = document.getElementById('bidAmount');
+    let currentBid = parseInt(bidInput.getAttribute('data-raw-value')) || (currentPrice + minIncrement);
+    const minBid = currentPrice + minIncrement;
+    const newBid = Math.max(minBid, currentBid + amount);
+
+    bidInput.setAttribute('data-raw-value', newBid);
+    bidInput.value = formatNumberWithCommas(newBid);
+    bidInput.setCustomValidity('');
+  }
+  
+  function startPressIncrease() {
+    isLongPress = false;
+    pressTimer = setTimeout(() => {
+      isLongPress = true;
+      repeatIncrease();
+    }, 500); // Start repeating after 500ms
+  }
+  
+  function startPressDecrease() {
+    isLongPress = false;
+    pressTimer = setTimeout(() => {
+      isLongPress = true;
+      repeatDecrease();
+    }, 500);
+  }
+  
+  function stopPress() {
+    clearTimeout(pressTimer);
+    clearInterval(repeatInterval);
+  }
+  
+  let repeatInterval = null;
+  
+  function repeatIncrease() {
+    adjustBid(minIncrement);
+    repeatInterval = setInterval(() => {
+      adjustBid(minIncrement);
+    }, 100); // Repeat every 100ms
+  }
+  
+  function repeatDecrease() {
+    adjustBid(-minIncrement);
+    repeatInterval = setInterval(() => {
+      adjustBid(-minIncrement);
+    }, 100);
+  }
+
+  // Handle increase bid button
+  const increaseBtn = document.getElementById('increaseBid');
+  increaseBtn?.addEventListener('mousedown', startPressIncrease);
+  increaseBtn?.addEventListener('mouseup', function() {
+    stopPress();
+    if (!isLongPress) {
+      adjustBid(minIncrement);
+    }
+  });
+  increaseBtn?.addEventListener('mouseleave', stopPress);
+  increaseBtn?.addEventListener('touchstart', startPressIncrease);
+  increaseBtn?.addEventListener('touchend', function() {
+    stopPress();
+    if (!isLongPress) {
+      adjustBid(minIncrement);
+    }
+  });
+
+  // Handle decrease bid button
+  const decreaseBtn = document.getElementById('decreaseBid');
+  decreaseBtn?.addEventListener('mousedown', startPressDecrease);
+  decreaseBtn?.addEventListener('mouseup', function() {
+    stopPress();
+    if (!isLongPress) {
+      adjustBid(-minIncrement);
+    }
+  });
+  decreaseBtn?.addEventListener('mouseleave', stopPress);
+  decreaseBtn?.addEventListener('touchstart', startPressDecrease);
+  decreaseBtn?.addEventListener('touchend', function() {
+    stopPress();
+    if (!isLongPress) {
+      adjustBid(-minIncrement);
+    }
+  });
+  
+  // Handle quick increment buttons
+  document.querySelectorAll('.quick-increment').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const multiplier = parseInt(this.getAttribute('data-multiplier'));
+      adjustBid(minIncrement * multiplier);
+    });
+  });
+  
+  // Handle quick decrement buttons
+  document.querySelectorAll('.quick-decrement').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const multiplier = parseInt(this.getAttribute('data-multiplier'));
+      adjustBid(-minIncrement * multiplier);
+    });
+  });
+
+  // Format bid input on user input (keep for manual typing if needed)
+  document.getElementById('bidAmount')?.addEventListener('input', function (e) {
+    let value = removeCommas(this.value);
+
+    // Remove non-numeric characters
+    value = value.replace(/[^\d]/g, '');
+
+    if (value === '') {
+      this.value = '';
+      this.setAttribute('data-raw-value', '0');
+      return;
+    }
+
+    const numValue = parseInt(value);
+    this.setAttribute('data-raw-value', numValue);
+    this.value = formatNumberWithCommas(numValue);
+
+    // Validation
+    const minBid = currentPrice + minIncrement;
+    if (numValue && numValue < minBid) {
+      this.setCustomValidity('Giá đấu phải ít nhất ' + formatNumberWithCommas(minBid) + ' VND');
+    } else {
+      this.setCustomValidity('');
+    }
+  });
+
+  // Handle confirmation checkbox for bid
+  const confirmBidCheckbox = document.getElementById('confirmBidCheckbox');
+  const submitBidBtn = document.getElementById('submitBidBtn');
+  
+  if (confirmBidCheckbox && submitBidBtn) {
+    confirmBidCheckbox.addEventListener('change', function() {
+      if (this.checked) {
+        submitBidBtn.disabled = false;
+        submitBidBtn.style.opacity = '1';
+      } else {
+        submitBidBtn.disabled = true;
+        submitBidBtn.style.opacity = '0.6';
+      }
+    });
+    
+    // Reset checkbox when modal is closed
+    document.getElementById('bidModal')?.addEventListener('hidden.bs.modal', function() {
+      confirmBidCheckbox.checked = false;
+      submitBidBtn.disabled = true;
+      submitBidBtn.style.opacity = '0.6';
+    });
+  }
+
+  // Handle bid form submission - Server-side rendering
+  document.getElementById('bidForm')?.addEventListener('submit', function (e) {
+    const bidInput = document.getElementById('bidAmount');
+    const rawValue = bidInput.getAttribute('data-raw-value');
+
+    // Set the raw value (without commas) to a hidden input
+    const hiddenInput = document.getElementById('bidAmountRaw');
+    if (hiddenInput) {
+      hiddenInput.value = rawValue || removeCommas(bidInput.value);
+    }
+    // Disable submit button to prevent double submission
+    const submitBtn = document.getElementById('submitBidBtn');
+    submitBtn.disabled = true;
+    submitBtn.classList.add('processing');
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+    // Form will submit normally to server
+  });
+
+  // ==================== COMMENT FORM SUBMISSION PROTECTION ====================
+  const commentForm = document.querySelector('.comment-form form');
+  if (commentForm) {
+    commentForm.addEventListener('submit', function(e) {
+      const submitBtn = this.querySelector('button[type="submit"]');
+      
+      // Prevent double submission
+      if (submitBtn.disabled) {
+        e.preventDefault();
+        return false;
+      }
+      
+      // Disable button and show loading state
+      submitBtn.disabled = true;
+      const originalHTML = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Posting...';
+      
+      // Re-enable after a delay (in case of server error and no redirect)
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHTML;
+      }, 3000);
+    });
+  }
+
+  // ==================== COMMENT REPLY FUNCTIONALITY ====================
+  document.querySelectorAll('.reply-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const commentId = this.getAttribute('data-comment-id');
+      const userName = this.getAttribute('data-user-name');
+      const replyForm = document.getElementById(`reply-form-${commentId}`);
+      const replyInput = replyForm.querySelector('.reply-input');
+
+      // Pre-fill with colored @username (using HTML)
+      if (userName && replyInput) {
+        replyInput.innerHTML = `<span class="mention">@${userName}</span>&nbsp;`;
+        replyInput.focus();
+        // Move cursor to end
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(replyInput);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+
+      replyForm.style.display = 'block';
+      this.style.display = 'none';
+    });
+  });
+
+  document.querySelectorAll('.cancel-reply').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const commentId = this.getAttribute('data-comment-id');
+      const replyForm = document.getElementById(`reply-form-${commentId}`);
+      const replyBtn = document.querySelector(`.reply-btn[data-comment-id="${commentId}"]`);
+      const replyInput = replyForm.querySelector('.reply-input');
+
+      // Clear editor content
+      if (replyInput) {
+        replyInput.innerHTML = '';
+      }
+
+      replyForm.style.display = 'none';
+      replyBtn.style.display = 'inline-block';
+    });
+  });
+
+  // ==================== SYNC CONTENTEDITABLE TO HIDDEN INPUT ====================
+  document.querySelectorAll('.reply-input').forEach(editor => {
+    // Sync to hidden input on form submit
+    const form = editor.closest('form');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        // Prevent double submission
+        if (submitBtn && submitBtn.disabled) {
+          e.preventDefault();
+          return false;
+        }
+        
+        const hiddenInput = form.querySelector('.reply-content-hidden');
+        if (hiddenInput) {
+          hiddenInput.value = editor.textContent;
+        }
+        
+        // Disable button and show loading state
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          const originalHTML = submitBtn.innerHTML;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+          
+          // Re-enable after delay
+          setTimeout(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHTML;
+          }, 3000);
+        }
+      });
+    }
+  });
+
+  // ==================== REJECT BIDDER FUNCTIONALITY ====================
+  document.addEventListener('DOMContentLoaded', function() {
+    const rejectButtons = document.querySelectorAll('.reject-bidder-btn');
+    
+    rejectButtons.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const bidderId = this.getAttribute('data-bidder-id');
+        const bidderName = this.getAttribute('data-bidder-name');
+        const productId = {{product.id}};
+        
+        // Show confirmation modal with SweetAlert2
+        Swal.fire({
+          title: 'Reject Bidder?',
+          html: `Are you sure you want to reject bidder <strong>"${bidderName}"</strong>?<br><br>This bidder will not be able to bid on this product anymore.`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#dc3545',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Yes, reject',
+          cancelButtonText: 'Cancel'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            
+            // Send reject request
+            fetch('/products/reject-bidder', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                productId: productId,
+                bidderId: bidderId
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                Swal.fire({
+                  title: 'Rejected!',
+                  text: 'The bidder has been rejected successfully.',
+                  icon: 'success',
+                  confirmButtonColor: '#72AEC8'
+                }).then(() => {
+                  window.location.reload();
+                });
+              } else {
+                Swal.fire({
+                  title: 'Error!',
+                  text: data.message || 'Unable to reject bidder.',
+                  icon: 'error',
+                  confirmButtonColor: '#72AEC8'
+                });
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-x-circle"></i>';
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              Swal.fire({
+                title: 'Error!',
+                text: 'An error occurred while rejecting the bidder.',
+                icon: 'error',
+                confirmButtonColor: '#72AEC8'
+              });
+              this.disabled = false;
+              this.innerHTML = '<i class="bi bi-x-circle"></i>';
+            });
+          }
+        });
+      });
+    });
+  });
+
+  // ==================== UNREJECT BIDDER FUNCTIONALITY ====================
+  document.addEventListener('DOMContentLoaded', function() {
+    const unrejectButtons = document.querySelectorAll('.unreject-bidder-btn');
+    
+    unrejectButtons.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const bidderId = this.getAttribute('data-bidder-id');
+        const bidderName = this.getAttribute('data-bidder-name');
+        const productId = {{product.id}};
+        
+        // Show confirmation modal with SweetAlert2
+        Swal.fire({
+          title: 'Unban Bidder?',
+          html: `Allow <strong>"${bidderName}"</strong> to bid on this product again?`,
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#28a745',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Yes, allow',
+          cancelButtonText: 'Cancel'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // Show loading state
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            
+            // Send unreject request
+            fetch('/products/unreject-bidder', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                productId: productId,
+                bidderId: bidderId
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                // Keep spinner spinning until page reloads
+                Swal.fire({
+                  title: 'Unbanned!',
+                  text: 'The bidder can now bid on this product again.',
+                  icon: 'success',
+                  confirmButtonColor: '#72AEC8'
+                }).then(() => {
+                  window.location.reload();
+                });
+              } else {
+                Swal.fire({
+                  title: 'Error!',
+                  text: data.message || 'Unable to unban bidder.',
+                  icon: 'error',
+                  confirmButtonColor: '#72AEC8'
+                });
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-check-circle"></i>';
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              Swal.fire({
+                title: 'Error!',
+                text: 'An error occurred while unbanning the bidder.',
+                icon: 'error',
+                confirmButtonColor: '#72AEC8'
+              });
+              this.disabled = false;
+              this.innerHTML = '<i class="bi bi-check-circle"></i> Unban';
+            });
+          }
+        });
+      });
+    });
+  });
+
+  // ==================== SMART COUNTDOWN FUNCTIONALITY ====================
+  let countdownEnded = false; // Flag to prevent multiple reloads
+  
+  function updateSmartCountdown() {
+    const countdownElement = document.querySelector('.countdown-timer');
+    if (!countdownElement) return;
+    
+    const endDate = new Date(countdownElement.getAttribute('data-end-date'));
+    const now = new Date();
+    const timeLeft = endDate - now;
+    
+    if (timeLeft <= 0) {
+      countdownElement.textContent = 'Auction Ended';
+      countdownElement.classList.remove('text-danger');
+      countdownElement.classList.add('text-muted');
+      
+      // Auto-reload page when countdown ends (only once)
+      if (!countdownEnded) {
+        countdownEnded = true;
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000); // Wait 1 second before reload
+      }
+      return;
+    }
+    
+    const THREE_DAYS_IN_MS = 3 * 24 * 60 * 60 * 1000;
+    
+    // If more than 3 days, show end date/time only
+    if (timeLeft > THREE_DAYS_IN_MS) {
+      const dateOptions = { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric'
+      };
+      const timeOptions = {
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true
+      };
+      
+      const dateStr = endDate.toLocaleDateString('en-US', dateOptions);
+      const timeStr = endDate.toLocaleTimeString('en-US', timeOptions);
+      
+      // Display on two lines
+      countdownElement.innerHTML = `${dateStr}<br>${timeStr}`;
+      countdownElement.classList.remove('text-danger');
+      countdownElement.classList.add('text-primary');
+      
+      // Update label
+      const labelElement = countdownElement.closest('.info-box').querySelector('small.text-muted');
+      if (labelElement) {
+        labelElement.textContent = 'Ends at';
+      }
+    } else {
+      // 3 days or less: show real-time countdown
+      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+      
+      let timeString = '';
+      if (days > 0) {
+        timeString = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      } else if (hours > 0) {
+        timeString = `${hours}h ${minutes}m ${seconds}s`;
+      } else if (minutes > 0) {
+        timeString = `${minutes}m ${seconds}s`;
+      } else {
+        timeString = `${seconds}s`;
+      }
+      
+      countdownElement.textContent = timeString;
+      countdownElement.classList.remove('text-primary');
+      countdownElement.classList.add('text-danger');
+      
+      // Update label
+      const labelElement = countdownElement.closest('.info-box').querySelector('small.text-muted');
+      if (labelElement) {
+        labelElement.textContent = 'Time Left';
+      }
+      
+      // Extra urgency for last hour
+      if (days === 0 && hours < 1) {
+        countdownElement.classList.add('fw-bold');
+      }
+    }
+  }
+  
+  // Update immediately and then every second
+  document.addEventListener('DOMContentLoaded', function() {
+    {{#if (eq productStatus "ACTIVE")}}
+      // Only run countdown for ACTIVE products
+      updateSmartCountdown();
+      setInterval(updateSmartCountdown, 1000);
+    {{/if}}
+  });
+
+  // ==================== SELLER RATINGS MODAL ====================
+  function openSellerRatingsModal(sellerId, sellerName) {
+    // Update modal title
+    document.getElementById('sellerNameTitle').textContent = sellerName + "'s Ratings";
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('sellerRatingsModal'));
+    modal.show();
+    
+    // Show loading, hide others
+    document.getElementById('ratingsLoading').style.display = 'block';
+    document.getElementById('ratingsError').style.display = 'none';
+    document.getElementById('ratingsContent').style.display = 'none';
+    
+    // Fetch ratings data
+    fetch(`/products/api/seller-ratings/${sellerId}`)
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to fetch');
+        return response.json();
+      })
+      .then(data => {
+        // Hide loading
+        document.getElementById('ratingsLoading').style.display = 'none';
+        document.getElementById('ratingsContent').style.display = 'block';
+        
+        // Update statistics
+        const ratingPoint = data.rating_point || 0;
+        const ratingPercentage = ratingPoint === 1 ? '100.00%' : (ratingPoint * 100).toFixed(2) + '%';
+        document.getElementById('overallRating').textContent = ratingPercentage;
+        document.getElementById('totalReviewsCount').textContent = data.totalReviews || 0;
+        document.getElementById('positiveCount').textContent = data.positiveReviews || 0;
+        document.getElementById('negativeCount').textContent = data.negativeReviews || 0;
+        document.getElementById('totalReviewsText').textContent = `Based on ${data.totalReviews || 0} review(s)`;
+        
+        // Display reviews
+        const reviewsList = document.getElementById('reviewsList');
+        const emptyState = document.getElementById('emptyState');
+        
+        if (data.reviews && data.reviews.length > 0) {
+          reviewsList.innerHTML = data.reviews.map(review => `
+            <div class="card mb-3 border-0" style="background: ${review.rating === 1 ? 'rgba(40, 167, 69, 0.05)' : 'rgba(220, 53, 69, 0.05)'}; border-left: 4px solid ${review.rating === 1 ? '#28a745' : '#dc3545'} !important;">
+              <div class="card-body">
+                <div class="row align-items-start">
+                  <div class="col-md-3 mb-2 mb-md-0">
+                    <div class="d-flex align-items-center">
+                      <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
+                        <i class="bi bi-person-fill"></i>
+                      </div>
+                      <div>
+                        <div class="fw-bold small">${review.reviewer_name}</div>
+                        <small class="text-muted">${new Date(review.created_at).toLocaleDateString()}</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4 mb-2 mb-md-0">
+                    <small class="text-muted d-block mb-1">Product</small>
+                    <div class="fw-500 small">
+                      <i class="bi bi-box-seam me-1"></i>${review.product_name}
+                    </div>
+                  </div>
+                  <div class="col-md-2 mb-2 mb-md-0">
+                    <span class="badge ${review.rating === 1 ? 'bg-success' : 'bg-danger'} px-2 py-1">
+                      <i class="bi bi-hand-thumbs-${review.rating === 1 ? 'up' : 'down'}-fill me-1"></i>
+                      ${review.rating === 1 ? 'Positive' : 'Negative'}
+                    </span>
+                  </div>
+                  <div class="col-md-3">
+                    ${review.comment ? `
+                      <div class="bg-white p-2 rounded">
+                        <small class="text-muted d-block mb-1">
+                          <i class="bi bi-chat-left-quote-fill me-1"></i>Comment
+                        </small>
+                        <p class="mb-0 small">${review.comment}</p>
+                      </div>
+                    ` : '<small class="text-muted fst-italic">No comment</small>'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `).join('');
+          emptyState.style.display = 'none';
+        } else {
+          reviewsList.innerHTML = '';
+          emptyState.style.display = 'block';
+        }
+      })
+      .catch(error => {
+        console.error('Error loading ratings:', error);
+        document.getElementById('ratingsLoading').style.display = 'none';
+        document.getElementById('ratingsError').style.display = 'block';
+      });
+  }
+
+  // ==================== BUY NOW FUNCTIONALITY ====================
+  document.querySelector('.btn-buy-now')?.addEventListener('click', function() {
+    {{#if isAuthenticated}}
+      const productId = this.getAttribute('data-product-id');
+      const buyNowPrice = parseFloat(this.getAttribute('data-buy-now-price'));
+      const formattedPrice = buyNowPrice.toLocaleString('vi-VN');
+
+      Swal.fire({
+        title: '<strong>Confirm Buy Now Purchase</strong>',
+        icon: 'warning',
+        html: `
+          <div style="text-align: left; padding: 10px;">
+            <p class="mb-3"><strong>Are you sure you want to purchase this product now?</strong></p>
+            <div class="alert alert-info" style="font-size: 0.95rem;">
+              <i class="bi bi-info-circle-fill"></i> <strong>Important Information:</strong>
+              <ul style="margin-top: 10px; margin-bottom: 0;">
+                <li>Product will be purchased at <strong>${formattedPrice} VND</strong></li>
+                <li>The auction will <strong>end immediately</strong></li>
+                <li>Product status will change to <strong>pending payment</strong></li>
+                <li>You must complete the payment process</li>
+              </ul>
+            </div>
+            <div class="alert alert-warning" style="font-size: 0.9rem; margin-bottom: 0;">
+              <i class="bi bi-exclamation-triangle-fill"></i> <strong>Warning:</strong> 
+              If you do not complete payment, the seller may give you a <strong class="text-danger">negative rating</strong>, 
+              which could affect your ability to bid in future auctions.
+            </div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel',
+        width: '600px',
+        buttonsStyling: false,
+        customClass: {
+          confirmButton: 'swal-btn-confirm',
+          cancelButton: 'swal-btn-cancel',
+          actions: 'd-flex justify-content-center gap-3'
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Show loading
+          Swal.fire({
+            title: 'Processing...',
+            html: 'Please wait while we process your purchase.',
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            }
+          });
+
+          // Send buy now request
+          fetch('/products/buy-now', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ productId: productId })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                html: data.message,
+                confirmButtonColor: '#72AEC8',
+                confirmButtonText: 'Proceed to Payment'
+              }).then(() => {
+                if (data.redirectUrl) {
+                  window.location.href = data.redirectUrl;
+                } else {
+                  window.location.reload();
+                }
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Failed to purchase product',
+                confirmButtonColor: '#72AEC8'
+              });
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'An error occurred. Please try again.',
+              confirmButtonColor: '#72AEC8'
+            });
+          });
+        }
+      });
+    {{else}}
+      window.location.href = '/account/signin?retUrl=/products/detail?id={{product.id}}';
+    {{/if}}
+  });
+
+</script>
+{{/section}}
+
+<div class="container mb-5">
+  <!-- Flash Messages -->
+  {{#if success_message}}
+  <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    <strong>Success!</strong> {{success_message}}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {{/if}}
+
+  {{#if error_message}}
+  <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>Error!</strong> {{error_message}}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {{/if}}
+
+  <!-- Breadcrumb Navigation -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <a href="javascript:history.back()" class="text-decoration-none d-flex align-items-center gap-2">
+          <i class="bi bi-arrow-left"></i> Back
+        </a>
+      </li>
+      <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Category</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Product Detail</li>
+    </ol>
+  </nav>
+
+  <div class="row">
+    <!-- Product Image Section -->
+    <div class="col-lg-5 mb-4 mb-lg-0">
+      <div class="product-image-wrapper">
+        <div class="main-image-container position-relative" onclick="openLightbox(0)" style="cursor: pointer;">
+          {{#if product.thumbnail}}
+          <img id="mainImage" src="/static/{{product.thumbnail}}" alt="{{product.name}}"
+            class="img-fluid main-product-image">
+          {{else}}
+          <img id="mainImage" src="https://placehold.co/500x500?text=No+Image" class="img-fluid main-product-image">
+          {{/if}}
+
+          {{#if product.is_new}}
+          <div class="position-absolute top-0 start-0 m-3">
+            <span class="badge bg-success fs-6 px-3 py-2">
+              <i class="bi bi-lightning-fill"></i> New
+            </span>
+          </div>
+          {{/if}}
+
+          <!-- Zoom Icon - Positioned to not be covered by image -->
+          <div class="position-absolute top-0 end-0 m-3">
+            <span class="badge bg-dark" style="opacity: 0.7; cursor: pointer;">
+              <i class="bi bi-arrows-fullscreen"></i>
+            </span>
+          </div>
+        </div>
+
+        <!-- Image Gallery -->
+        <div class="image-gallery mt-3">
+          <div class="gallery-container position-relative">
+            <div class="gallery-track">
+              <div class="gallery-thumb active" onclick="changeMainImage(this, 0)">
+                {{#if product.thumbnail}}
+                <img src="/static/{{product.thumbnail}}" alt="Thumb 1" class="w-100 h-100 rounded-2"
+                  style="object-fit: cover;">
+                {{else}}
+                <img src="https://placehold.co/150x150?text=Image+1" alt="Thumb 1" class="w-100 h-100 rounded-2"
+                  style="object-fit: cover;">
+                {{/if}}
+              </div>
+              {{#each product.sub_images}}
+              <div class="gallery-thumb" onclick="changeMainImage(this, {{@index}} + 1)">
+                <img src="/static/{{this}}" alt="Thumb {{@index}}" class="w-100 h-100 rounded-2"
+                  style="object-fit: cover;">
+              </div>
+              {{/each}}
+            </div>
+
+            <!-- Gallery Navigation Buttons -->
+            <button class="gallery-nav gallery-nav-prev" onclick="galleryPrev()" title="Previous">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <button class="gallery-nav gallery-nav-next" onclick="galleryNext()" title="Next">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Details Section -->
+    <div class="col-lg-7">
+      <!-- Product Title & Category -->
+      <div class="mb-4">
+        <div class="mb-3 d-flex gap-2 align-items-center flex-wrap">
+          <span class="badge-premium">
+            <i class="bi bi-gem"></i> Featured Auction
+          </span>
+          {{#if product.allow_unrated_bidder}}
+          <span class="badge-premium"
+            style="background: linear-gradient(135deg, rgba(114, 174, 200, 0.15) 0%, rgba(90, 154, 184, 0.1) 100%); border: 2px solid rgba(114, 174, 200, 0.3); color: #72AEC8;">
+            <i class="bi bi-person-check"></i> Allow Unrated Bidders
+          </span>
+          {{/if}}
+        </div>
+        <h1 class="display-5 fw-bold gradient-text mb-3" style="text-shadow: 0 4px 20px rgba(114, 174, 200, 0.3);">
+          {{product.name}}
+        </h1>
+        
+        {{!-- Product Status Badge --}}
+        {{#if productStatus}}
+          {{#if (eq productStatus "ACTIVE")}}
+            <span class="badge bg-success mb-3" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+              <i class="bi bi-circle-fill" style="font-size: 0.6rem;"></i> Active Auction
+            </span>
+          {{else if (eq productStatus "PENDING")}}
+            <span class="badge bg-warning text-dark mb-3" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+              <i class="bi bi-clock-fill"></i> Pending Payment
+            </span>
+          {{else if (eq productStatus "SOLD")}}
+            <span class="badge bg-primary mb-3" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+              <i class="bi bi-check-circle-fill"></i> Sold
+            </span>
+          {{else if (eq productStatus "EXPIRED")}}
+            <span class="badge bg-secondary mb-3" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+              <i class="bi bi-x-circle-fill"></i> Expired - No Bidders
+            </span>
+          {{else if (eq productStatus "CANCELLED")}}
+            <span class="badge bg-danger mb-3" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+              <i class="bi bi-ban-fill"></i> Cancelled
+            </span>
+          {{/if}}
+        {{/if}}
+        
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <span class="text-muted small">
+            <i class="bi bi-calendar3"></i> Posted on {{format_date product.created_at}}
+          </span>
+        </div>
+      </div>
+
+      <hr class="my-4" style="border-top: 2px solid #e9ecef;">
+
+      <!-- Price Section -->
+      <div class="price-section mb-5">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div
+              class="price-card p-4 rounded-4 bg-gradient-light border-0 h-100 d-flex flex-column justify-content-center">
+              <small class="text-muted d-block mb-2 fw-500">Current Bid</small>
+              <div class="d-flex align-items-baseline gap-2">
+                <h2 class="fw-bold text-primary mb-0" style="color: #72AEC8 !important;">{{format_number
+                  product.current_price}}</h2>
+                <span class="text-muted">VND</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div
+              class="price-card price-card-buy-now p-4 rounded-4 border-0 h-100 d-flex flex-column justify-content-center">
+              <small class="text-muted d-block mb-2 fw-500">Buy Now Price</small>
+              {{#if product.buy_now_price}}
+              <div class="d-flex align-items-baseline gap-2">
+                <h2 class="fw-bold mb-0" style="color: #72AEC8;">{{format_number product.buy_now_price}}</h2>
+                <span class="text-muted">VND</span>
+              </div>
+              {{else}}
+              <div class="d-flex align-items-baseline gap-2">
+                <h2 class="fw-bold text-muted mb-0">N/A</h2>
+              </div>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auction Info -->
+      <div class="auction-info mb-5">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div
+              class="info-box p-4 rounded-3 border bg-white text-center h-100 d-flex flex-column justify-content-center">
+              <div class="mb-3">
+                <i class="bi bi-hourglass-split" style="font-size: 1.8rem; color: #dc3545;"></i>
+              </div>
+              <small class="text-muted d-block mb-2">
+                {{#if (should_show_relative_time product.end_at)}}
+                Time Left
+                {{else}}
+                Ends at
+                {{/if}}
+              </small>
+              <h5 class="fw-bold countdown-timer" data-end-date="{{product.end_at}}" {{#unless (should_show_relative_time product.end_at)}}style="color: #72AEC8;"{{/unless}}>
+                {{#if (should_show_relative_time product.end_at)}}
+                  <span class="text-danger">{{format_time_remaining product.end_at}}</span>
+                {{else}}
+                  <!-- Placeholder for end date/time - will be filled by JS -->
+                {{/if}}
+              </h5>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div
+              class="info-box p-4 rounded-3 border bg-white text-center h-100 d-flex flex-column justify-content-center">
+              <div class="mb-3">
+                <i class="bi bi-fire" style="font-size: 1.8rem; color: #ffc107;"></i>
+              </div>
+              <small class="text-muted d-block mb-2">Total Bids</small>
+              <h5 class="fw-bold text-warning">{{product.bid_count}}</h5>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div
+              class="info-box p-4 rounded-3 border bg-white text-center h-100 d-flex flex-column justify-content-center">
+              <div class="mb-3">
+                <i class="bi bi-person-check" style="font-size: 1.8rem; color: #198754;"></i>
+              </div>
+              {{#if product.is_buy_now_purchase}}
+                <small class="text-muted d-block mb-2">Purchased By</small>
+                {{#if product.bidder_name}}
+                <h5 class="fw-bold text-success" style="font-size: 0.9rem;">
+                  {{product.bidder_name}}
+                  <span class="badge bg-info text-dark ms-1" style="font-size: 0.7rem;">
+                    <i class="bi bi-lightning-fill"></i> Buy Now
+                  </span>
+                </h5>
+                {{else}}
+                <h5 class="fw-bold text-muted">-</h5>
+                {{/if}}
+              {{else}}
+                <small class="text-muted d-block mb-2">Highest Bidder</small>
+                {{#if product.bidder_name}}
+                <h5 class="fw-bold text-success" style="font-size: 0.9rem;">{{product.bidder_name}}</h5>
+                {{else}}
+                <h5 class="fw-bold text-muted">No bids yet</h5>
+                {{/if}}
+              {{/if}}
+              {{#if product.bidder_name}}
+              <hr class="my-2">
+              <small class="text-muted">
+                Rating: 
+                {{#if bidder_has_reviews}}
+                  {{#if (eq bidder_rating_point 1)}}
+                    <span class="fw-bold" style="color: #667eea;">
+                      <i class="bi bi-award-fill text-warning"></i> 100.00%
+                    </span>
+                  {{else}}
+                    <span class="fw-bold" style="color: #667eea;">
+                      <i class="bi bi-award-fill text-warning"></i> {{#if (gt bidder_rating_point 0)}}{{round (multiply bidder_rating_point 100) 2}}{{else}}0.00{{/if}}%
+                    </span>
+                  {{/if}}
+                {{else}}
+                  <span class="text-muted">No rating yet</span>
+                {{/if}}
+              </small>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons mb-4">
+        <div class="d-grid gap-2 d-md-flex">
+
+          {{!-- PENDING: Show Payment Button for Highest Bidder and Seller --}}
+          {{#if (eq productStatus "PENDING")}}
+            {{#if showPaymentButton}}
+              <a href="/products/complete-order?id={{product.id}}" class="btn btn-lg flex-fill fw-bold btn-success">
+                <i class="bi bi-credit-card"></i> Go to Payment
+              </a>
+            {{else}}
+              <button class="btn btn-lg flex-fill fw-bold" disabled>
+                <i class="bi bi-lock-fill"></i> Auction Ended - Pending Payment
+              </button>
+            {{/if}}
+          
+          {{!-- SOLD/EXPIRED/CANCELLED: Disable All Actions --}}
+          {{else if (or (eq productStatus "SOLD") (eq productStatus "EXPIRED") (eq productStatus "CANCELLED"))}}
+            <button class="btn btn-lg flex-fill fw-bold" disabled>
+              {{#if (eq productStatus "SOLD")}}
+                <i class="bi bi-check-circle-fill"></i> Product Sold
+              {{else if (eq productStatus "EXPIRED")}}
+                <i class="bi bi-x-circle-fill"></i> Auction Expired
+              {{else}}
+                <i class="bi bi-ban-fill"></i> Auction Cancelled
+              {{/if}}
+            </button>
+          
+          {{!-- ACTIVE: Normal Bidding --}}
+          {{else}}
+            {{!-- Nút Place Bid --}}
+            <button class="btn btn-lg flex-fill fw-bold btn-place-bid"
+              {{#if (and isAuthenticated (eq authUser.id product.seller_id))}}disabled{{/if}}>
+              <i class="bi bi-hammer"></i> Place Bid
+            </button>
+            {{#if isAuthenticated}}
+            {{#if product.is_favorite}}
+            <form action="/products/watchlist?_method=DELETE" method="POST" class="flex-fill">
+              <input type="hidden" name="productId" value="{{product.id}}">
+              <button type="submit" class="btn btn-lg w-100 fw-bold btn-watch text-danger" title="Remove from Watchlist">
+                <i class="bi bi-heart-fill"></i> Watching
+              </button>
+            </form>
+
+            {{else}}
+            {{!-- TRƯỜNG HỢP 2: CHƯA THÍCH -> Form POST --}}
+            <form action="/products/watchlist" method="POST" class="flex-fill">
+              <input type="hidden" name="productId" value="{{product.id}}">
+              <button type="submit" class="btn btn-lg w-100 fw-bold btn-watch" title="Add to Watchlist">
+                <i class="bi bi-heart"></i> Watch
+              </button>
+            </form>
+            {{/if}}
+
+            {{else}}
+            {{!--
+            TRƯỜNG HỢP 3: CHƯA ĐĂNG NHẬP
+            Giữ nguyên giao diện nút nhưng chuyển thành thẻ <a> để dẫn tới trang signin
+              --}}
+              <a href="/account/signin?retUrl=/products/detail/{{product.id}}"
+                class="btn btn-lg flex-fill fw-bold btn-watch d-flex align-items-center justify-content-center text-decoration-none">
+                <i class="bi bi-heart me-2"></i> Watch
+              </a>
+              {{/if}}
+          {{/if}}
+
+        </div>
+      </div>
+
+      {{!-- Buy Now Button - Only for ACTIVE --}}
+      {{#if (and product.buy_now_price (eq productStatus "ACTIVE"))}}
+      <div class="d-grid mb-4">
+        <button class="btn btn-lg fw-bold btn-buy-now" 
+                data-product-id="{{product.id}}"
+                data-buy-now-price="{{product.buy_now_price}}"
+                {{#if (and isAuthenticated (eq authUser.id product.seller_id))}}disabled{{/if}}>
+          <i class="bi bi-check-circle"></i> Buy Now
+        </button>
+      </div>
+      {{/if}}
+
+      {{!-- Combined seller message --}}
+      {{#if (and isAuthenticated (eq authUser.id product.seller_id) (eq productStatus "ACTIVE"))}}
+      <div class="text-center mb-3">
+        <small class="text-muted">
+          <i class="bi bi-info-circle"></i> You cannot 
+          {{#if product.buy_now_price}}bid and buy{{else}}bid on{{/if}} your own product
+        </small>
+      </div>
+      {{/if}}
+
+      <hr class="my-4" style="border-top: 2px solid #e9ecef;">
+
+      <!-- Seller Info -->
+      <div class="seller-info p-4 rounded-4 border bg-white">
+        <h6 class="fw-bold mb-3">
+          <i class="bi bi-shop" style="color: #72AEC8;"></i> Seller Information
+        </h6>
+        <h5 class="fw-bold mb-2">{{product.seller_name}}</h5>
+        
+        <small class="text-success d-block mb-2">
+          <i class="bi bi-check-circle-fill"></i> Verified Seller
+        </small>
+        
+        {{#if seller_has_reviews}}
+          {{#if (eq seller_rating_point 1)}}
+            <a href="/products/seller/{{product.seller_id}}/ratings" class="text-decoration-none">
+              <small class="text-muted d-block mb-2" style="cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#72AEC8'" onmouseout="this.style.color=''" title="View seller ratings">
+                <i class="bi bi-award-fill text-warning"></i> 100.00% <i class="bi bi-chevron-right ms-1"></i>
+              </small>
+            </a>
+          {{else}}
+            <a href="/products/seller/{{product.seller_id}}/ratings" class="text-decoration-none">
+              <small class="text-muted d-block mb-2" style="cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#72AEC8'" onmouseout="this.style.color=''" title="View seller ratings">
+                <i class="bi bi-award-fill text-warning"></i> {{#if (gt seller_rating_point 0)}}{{round (multiply seller_rating_point 100) 2}}{{else}}0.00{{/if}}% <i class="bi bi-chevron-right ms-1"></i>
+              </small>
+            </a>
+          {{/if}}
+        {{else}}
+          <small class="text-muted d-block mb-2">
+            <i class="bi bi-award text-muted"></i> No rating yet
+          </small>
+        {{/if}}
+        
+        <small class="text-muted d-block">
+          <i class="bi bi-calendar3"></i> Member since {{format_date product.seller_created_at}}
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Description Section -->
+  <div class="row mt-5">
+    <div class="col-lg-8">
+      <div class="description-section bg-white p-5 rounded-4 border mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4" onclick="toggleDescription()"
+          style="cursor: pointer;">
+          <h3 class="fw-bold mb-0">
+            <i class="bi bi-file-text" style="color: #72AEC8;"></i> Product Description
+          </h3>
+          <button id="descriptionToggle" class="btn btn-link p-0" style="color: #72AEC8; text-decoration: none;">
+            <i class="bi bi-chevron-up"></i>
+          </button>
+        </div>
+        <div id="descriptionContent">
+          <p class="text-muted" style="line-height: 1.8; font-size: 1.05rem;">
+            {{#if product.description}}
+            {{{product.description}}}
+            {{else}}
+            <em>No description provided for this product.</em>
+            {{/if}}
+          </p>
+
+          {{!-- Description Updates --}}
+          {{#if descriptionUpdates}}
+          {{#each descriptionUpdates}}
+          <div class="mt-4 p-3 border-start border-3 border-warning bg-light rounded">
+            <div class="d-flex align-items-center mb-2">
+              <i class="bi bi-pencil-square text-warning me-2"></i>
+              <strong class="text-warning">{{format_date this.created_at}}</strong>
+            </div>
+            <div class="text-muted" style="line-height: 1.8;">
+              {{{this.content}}}
+            </div>
+          </div>
+          {{/each}}
+          {{/if}}
+        </div>
+      </div>
+
+      <!-- Product Details Tab -->
+      <div class="details-section bg-white p-5 rounded-4 border mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4" onclick="toggleDetails()"
+          style="cursor: pointer;">
+          <h3 class="fw-bold mb-0">
+            <i class="bi bi-info-circle" style="color: #72AEC8;"></i> Product Details
+          </h3>
+          <button id="detailsToggle" class="btn btn-link p-0" style="color: #72AEC8; text-decoration: none;">
+            <i class="bi bi-chevron-up"></i>
+          </button>
+        </div>
+        <div id="detailsContent">
+          <div class="table-responsive">
+            <table class="table table-borderless">
+              <tbody>
+                {{!-- <tr class="border-bottom"> --}}
+                  {{!-- <td class="fw-bold text-muted" style="width: 30%;">Product ID</td> --}}
+                  {{!-- <td class="fw-500"> --}}
+                    {{!-- product id --}}
+                    {{!-- </td> --}}
+                  {{!-- </tr> --}}
+                <tr class="border-bottom">
+                  <td class="fw-bold text-muted">Category</td>
+                  <td class="fw-500">{{product.category_name}}</td>
+                </tr>
+                <tr class="border-bottom">
+                  <td class="fw-bold text-muted">Auction Start</td>
+                  <td class="fw-500">{{format_date product.created_at}}</td>
+                </tr>
+                <tr class="border-bottom">
+                  <td class="fw-bold text-muted">Auction End</td>
+                  <td class="fw-500">{{format_date product.end_at}}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-muted">Starting Price</td>
+                  <td class="fw-bold" style="color: #72AEC8;">{{format_number product.starting_price}} VND</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comments Section -->
+      <div id="comments" class="comments-section bg-white p-5 rounded-4 border">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h3 class="fw-bold mb-0">
+            <i class="bi bi-chat-dots" style="color: #72AEC8;"></i> Questions & Answers
+          </h3>
+        </div>
+
+        {{#if isAuthenticated}}
+        {{#if (ne authUser.id product.seller_id)}}
+        <!-- Comment Form - Only for ACTIVE products -->
+        {{#if (eq productStatus "ACTIVE")}}
+        <div class="comment-form mb-4">
+          <form action="/products/comment" method="POST">
+            <input type="hidden" name="productId" value="{{product.id}}">
+            <div class="mb-3">
+              <textarea class="form-control" name="content" rows="3" placeholder="Ask a question about this product..."
+                required maxlength="500"></textarea>
+            </div>
+            <div class="text-end">
+              <button type="submit" class="btn btn-primary" style="background-color: #72AEC8; border: none;">
+                <i class="bi bi-send me-2"></i>Post Question
+              </button>
+            </div>
+          </form>
+        </div>
+        <hr class="my-4">
+        {{else}}
+        <div class="alert alert-secondary mb-4">
+          <i class="bi bi-lock-fill me-2"></i>
+          Comments are disabled for this auction.
+        </div>
+        {{/if}}
+        {{/if}}
+        {{else}}
+        {{#if (eq productStatus "ACTIVE")}}
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle me-2"></i>
+          <a href="/account/signin?retUrl=/products/detail?id={{product.id}}" class="alert-link">Signin</a> to ask
+          questions about this product
+        </div>
+        {{/if}}
+        {{/if}}
+
+        <!-- Comments List -->
+        {{#if comments.length}}
+        <div class="comments-list">
+          {{#each comments}}
+          <div class="comment-item mb-4 pb-4 border-bottom">
+            <div class="d-flex align-items-start">
+              <div class="flex-shrink-0 me-3">
+                <div class="rounded-circle bg-primary bg-opacity-10 p-2"
+                  style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-person-fill" style="color: #667eea; font-size: 1.5rem;"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <strong>{{user_name}}</strong>
+                    {{#if (eq user_role 'seller')}}
+                    {{!-- <span class="badge bg-success ms-2">Seller</span> --}}
+                    {{/if}}
+                    <br>
+                    <small class="text-muted">{{format_date created_at}}</small>
+                  </div>
+                </div>
+                <p class="mb-2">{{content}}</p>
+
+                {{!-- Only show reply button if current user is the seller of this product, not replying to themselves,
+                and the question hasn't been answered yet --}}
+                {{#if (and ../isAuthenticated (eq ../authUser.role 'seller') (eq ../product.seller_id ../authUser.id)
+                (ne user_id ../authUser.id) (eq replies.length 0))}}
+                <button class="btn btn-sm reply-btn" data-comment-id="{{id}}" data-user-name="{{user_name}}"
+                  style="background-color: #72AEC8; color: white; border: none; border-radius: 6px; padding: 4px 12px; font-weight: 500; transition: all 0.3s ease;">
+                  <i class="bi bi-reply me-1"></i>Reply
+                </button>
+
+                <!-- Reply Form (Hidden by default) -->
+                <div class="reply-form mt-3" id="reply-form-{{id}}" style="display: none;">
+                  <form action="/products/comment" method="POST">
+                    <input type="hidden" name="productId" value="{{../product.id}}">
+                    <input type="hidden" name="parentId" value="{{id}}">
+                    <div class="mb-2 reply-textarea-wrapper">
+                      <div class="form-control form-control-sm reply-input" contenteditable="true"
+                        data-comment-id="{{id}}" placeholder="Write a reply..."
+                        style="min-height: 50px; max-height: 200px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;">
+                      </div>
+                      <input type="hidden" name="content" class="reply-content-hidden" value="">
+                    </div>
+                    <div class="text-end">
+                      <button type="button" class="btn btn-sm btn-secondary cancel-reply" data-comment-id="{{id}}"
+                        style="min-width: 80px; padding: 6px 16px; height: 32px;">Cancel</button>
+                      <button type="submit" class="btn btn-sm btn-primary reply-submit"
+                        style="background-color: #72AEC8; border: none; min-width: 80px; padding: 6px 16px; height: 32px;">Reply</button>
+                    </div>
+                  </form>
+                </div>
+                {{/if}}
+              </div>
+            </div>
+          </div>
+
+          {{!-- Display replies --}}
+          {{#if replies.length}}
+          {{#each replies}}
+          <div class="comment-item mb-4 pb-4 border-bottom">
+            <div class="d-flex align-items-start">
+              <div class="flex-shrink-0 me-3">
+                <div class="rounded-circle reply-avatar p-2"
+                  style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: #fff; border: 3px solid #72AEC8;">
+                  <i class="bi bi-person-fill" style="color: #72AEC8; font-size: 1.5rem;"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <strong>{{user_name}}</strong>
+                    {{#if (eq user_role 'seller')}}
+                    {{!-- <span class="badge bg-success ms-2">Seller</span> --}}
+                    {{/if}}
+                    {{#if (eq user_id ../../product.seller_id)}}
+                    <span class="badge bg-success ms-2">
+                      <i class="bi bi-star-fill"></i> Seller
+                    </span>
+                    {{/if}}
+                    <br>
+                    <small class="text-muted">{{format_date created_at}}</small>
+                  </div>
+                </div>
+                <p class="mb-0">{{content}}</p>
+              </div>
+            </div>
+          </div>
+          {{/each}}
+          {{/if}}
+          {{/each}}
+        </div>
+
+        <!-- Pagination -->
+        {{#if (gt totalPages 1)}}
+        <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+          <div class="text-muted">
+            <small><i class="bi bi-chat-dots-fill me-1" style="color: #72AEC8;"></i>Page
+              <strong>{{commentPage}}</strong> of <strong>{{totalPages}}</strong> </small>
+          </div>
+          <nav aria-label="Comments pagination">
+            <ul class="pagination pagination-sm mb-0" style="gap: 5px;">
+              {{#if (gt commentPage 1)}}
+              <li class="page-item">
+                <a class="page-link rounded-3"
+                  href="/products/detail?id={{product.id}}&commentPage={{subtract commentPage 1}}#comments"
+                  aria-label="Previous"
+                  style="border: 2px solid #72AEC8; color: #72AEC8; font-weight: 600; padding: 8px 12px; transition: all 0.3s;">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+              {{else}}
+              <li class="page-item disabled">
+                <span class="page-link rounded-3" style="border: 2px solid #e9ecef; color: #ccc; padding: 8px 12px;">
+                  <i class="bi bi-chevron-left"></i>
+                </span>
+              </li>
+              {{/if}}
+
+              {{#each (range 1 (add totalPages 1))}}
+              {{#if (eq this ../commentPage)}}
+              <li class="page-item active">
+                <span class="page-link rounded-3"
+                  style="background: linear-gradient(135deg, #72AEC8 0%, #5a9ab8 100%); border: none; color: white; font-weight: 600; padding: 8px 14px; box-shadow: 0 2px 8px rgba(114, 174, 200, 0.3);">{{this}}</span>
+              </li>
+              {{else}}
+              <li class="page-item">
+                <a class="page-link rounded-3"
+                  href="/products/detail?id={{../product.id}}&commentPage={{this}}#comments"
+                  style="border: 2px solid #72AEC8; color: #72AEC8; font-weight: 600; padding: 8px 14px; transition: all 0.3s;">{{this}}</a>
+              </li>
+              {{/if}}
+              {{/each}}
+
+              {{#if (lt commentPage totalPages)}}
+              <li class="page-item">
+                <a class="page-link rounded-3"
+                  href="/products/detail?id={{product.id}}&commentPage={{add commentPage 1}}#comments" aria-label="Next"
+                  style="border: 2px solid #72AEC8; color: #72AEC8; font-weight: 600; padding: 8px 12px; transition: all 0.3s;">
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+              {{else}}
+              <li class="page-item disabled">
+                <span class="page-link rounded-3" style="border: 2px solid #e9ecef; color: #ccc; padding: 8px 12px;">
+                  <i class="bi bi-chevron-right"></i>
+                </span>
+              </li>
+              {{/if}}
+            </ul>
+          </nav>
+        </div>
+        {{/if}}
+        {{else}}
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-chat-dots" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="mt-3">No questions yet. Be the first to ask!</p>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <div class="sticky-sidebar">
+        <!-- Bidding History Section -->
+        <div class="bidding-history-section bg-white p-4 rounded-4 border">
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom flex-nowrap">
+          <h5 class="fw-bold mb-0 me-2" style="white-space: nowrap;">
+            <i class="bi bi-clock-history" style="color: #72AEC8;"></i> Bidding History
+          </h5>
+          {{#if isAuthenticated}}
+          <a href="/products/bidding-history?id={{product.id}}" class="btn btn-sm fw-bold flex-shrink-0"
+            style="background: linear-gradient(135deg, #72AEC8 0%, #5a9ab8 100%); border: none; color: white;">
+            <i class="bi bi-list-ul me-1"></i>View Full
+          </a>
+          {{else}}
+          <a href="/account/signin?retUrl=/products/bidding-history?id={{product.id}}"
+            class="btn btn-outline-primary flex-shrink-0">
+            <span class="btn-text"><i class="bi bi-lock-fill me-1"></i>Signin</span>
+          </a>
+          {{/if}}
+        </div>
+
+        {{#if isAuthenticated}}
+          {{#if biddingHistory.length}}
+            <div class="bidding-list" style="max-height: 400px; overflow-y: auto;">
+              {{#each biddingHistory}}
+                <div class="bid-item p-3 mb-2 rounded border-start border-3 {{#if @first}}border-success bg-success bg-opacity-10{{else}}border-secondary bg-light{{/if}}" data-bidder-id="{{this.bidder_id}}" data-bidder-name="{{this.bidder_name}}">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <i class="bi bi-person-circle me-2 text-muted"></i>
+                      <a href="/products/bidder/{{this.bidder_id}}/ratings" class="text-decoration-none" style="color: inherit;">
+                        <strong class="small bidder-name-link">{{this.bidder_name}}</strong>
+                      </a>
+                      {{#if @first}}
+                        <span class="badge bg-success" style="font-size: 0.7rem;">Latest</span>
+                      {{/if}}
+                      {{#if this.is_buy_now}}
+                        <span class="badge bg-info text-dark" style="font-size: 0.7rem;">
+                          <i class="bi bi-lightning-fill"></i> Buy Now
+                        </span>
+                      {{/if}}
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                      {{!-- Show reject button only for seller and ACTIVE products --}}
+                      {{#if @root.isAuthenticated}}
+                        {{#if (eq @root.product.seller_id @root.authUser.id)}}
+                          {{#if (eq @root.productStatus "ACTIVE")}}
+                            <button class="btn btn-sm btn-danger reject-bidder-btn" 
+                                    data-bidder-id="{{this.bidder_id}}" 
+                                    data-bidder-name="{{this.bidder_name}}"
+                                    style="padding: 2px 8px; font-size: 0.7rem;"
+                                    title="Reject this bidder">
+                              <i class="bi bi-x-circle"></i>
+                            </button>
+                          {{/if}}
+                        {{/if}}
+                      {{/if}}
+                    </div>
+                  </div>
+                  <div class="fw-bold {{#if this.is_buy_now}}text-info{{else}}text-success{{/if}} mb-1">{{format_number this.current_price}} VND</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">
+                    <i class="bi bi-clock me-1"></i>{{format_date this.created_at}}
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="text-center text-muted py-4">
+              <i class="bi bi-clock-history" style="font-size: 3rem; opacity: 0.3;"></i>
+              <p class="mt-3 small">No bids placed yet</p>
+            </div>
+          {{/if}}
+        {{else}}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-lock" style="font-size: 3rem; opacity: 0.3;"></i>
+            <p class="mt-3 small">Sign in to view bidding history</p>
+          </div>
+        {{/if}}
+      </div>
+
+      {{!-- Rejected Bidders Section - Only visible to seller for ACTIVE products --}}
+      {{#if (and isAuthenticated (eq product.seller_id authUser.id) (eq productStatus "ACTIVE"))}}
+        {{#if rejectedBidders.length}}
+          <div class="rejected-bidders-section bg-white p-4 rounded-4 border mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom flex-nowrap">
+              <h5 class="fw-bold mb-0 me-2" style="white-space: nowrap;">
+                <i class="bi bi-person-x" style="color: #dc3545;"></i> Rejected Bidders
+              </h5>
+            </div>
+            <div class="rejected-list" style="max-height: 300px; overflow-y: auto;">
+              {{#each rejectedBidders}}
+                <div class="rejected-item p-3 mb-2 rounded border-start border-3 border-danger bg-danger bg-opacity-10">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <i class="bi bi-person-circle me-2 text-muted"></i>
+                      <strong class="small">{{this.bidder_name}}</strong>
+                    </div>
+                    <button class="btn btn-sm btn-success unreject-bidder-btn" 
+                            data-bidder-id="{{this.bidder_id}}" 
+                            data-bidder-name="{{this.bidder_name}}"
+                            style="padding: 2px 8px; font-size: 0.7rem;"
+                            title="Allow this bidder to bid again">
+                      <i class="bi bi-check-circle"></i>
+                    </button>
+                  </div>
+                  <div class="text-muted" style="font-size: 0.75rem;">
+                    <i class="bi bi-clock me-1"></i>{{format_date this.rejected_at}}
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          </div>
+        {{/if}}
+      {{/if}}
+      </div> {{!-- End sticky-sidebar --}}
+    </div>
+  </div>
+
+  <!-- Related Products Section -->
+  <div class="row mt-5">
+    <div class="col-12">
+      <h3 class="fw-bold mb-4">
+        <i class="bi bi-box-seam" style="color: #72AEC8;"></i> Related Products
+      </h3>
+      <div class="related-section">
+        <div class="row g-4">
+          <!-- Related Product Card -->
+          {{#each related_products}}
+          <div class="col-md-3">
+            <a href="/products/detail?id={{this.id}}" class="text-decoration-none">
+              <div class="related-product-card h-100 rounded-4 overflow-hidden shadow-sm border-0"
+                style="transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer;">
+                <div class="image-wrapper position-relative"
+                  style="height: 220px; overflow: hidden; background-color: #f8f9fa;">
+                  <img src="/static/{{this.thumbnail}}" alt="Related Product" class="w-100 h-100"
+                    style="object-fit: cover;">
+                  <div class="overlay"></div>
+                </div>
+                <div class="p-3">
+                  <h6 class="fw-bold text-truncate mb-2 text-dark">{{this.name}}</h6>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <p class="text-primary fw-bold mb-0" style="color: #72AEC8 !important;">$ {{format_number
+                      this.current_price}}</p>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox Gallery Modal -->
+<div id="lightbox" class="lightbox" style="display: none;">
+  <button class="lightbox-close" onclick="closeLightbox()" title="Close (Esc)">
+    <i class="bi bi-x-lg"></i>
+  </button>
+
+  <button class="lightbox-nav lightbox-prev" onclick="prevImage()" title="Previous">
+    <i class="bi bi-chevron-left"></i>
+  </button>
+
+  <div class="lightbox-content">
+    <img id="lightboxImage" src="" alt="Gallery Image" class="lightbox-img">
+    <div class="lightbox-counter">
+      <span id="currentImageNum">1</span> / <span id="totalImageNum">{{add 1 (length product.sub_images)}}</span>
+    </div>
+  </div>
+
+  <button class="lightbox-nav lightbox-next" onclick="nextImage()" title="Next">
+    <i class="bi bi-chevron-right"></i>
+  </button>
+</div>
+
+<!-- Seller Ratings Modal -->
+<div class="modal fade" id="sellerRatingsModal" tabindex="-1" aria-labelledby="sellerRatingsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-0 pb-2" style="background: linear-gradient(135deg, #72AEC8 0%, #5a9bb8 100%); color: white;">
+        <h5 class="modal-title fw-bold d-flex align-items-center" id="sellerRatingsModalLabel">
+          <i class="bi bi-star-fill me-2" style="font-size: 1.2rem;"></i>
+          <span id="sellerNameTitle">Seller Ratings</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body px-4 py-4">
+        <!-- Loading State -->
+        <div id="ratingsLoading" class="text-center py-5">
+          <div class="spinner-border" style="color: #72AEC8;" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="text-muted mt-3">Loading ratings...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="ratingsError" class="text-center py-5" style="display: none;">
+          <i class="bi bi-exclamation-triangle" style="font-size: 3rem; color: #dc3545;"></i>
+          <p class="text-muted mt-3">Failed to load ratings. Please try again.</p>
+        </div>
+
+        <!-- Ratings Content -->
+        <div id="ratingsContent" style="display: none;">
+          <!-- Rating Overview -->
+          <div class="row mb-4">
+            <div class="col-md-4 mb-3 mb-md-0">
+              <div class="text-center p-3 rounded" style="background: linear-gradient(135deg, rgba(114, 174, 200, 0.15) 0%, rgba(114, 174, 200, 0.05) 100%);">
+                <h5 class="text-muted mb-2">Overall Rating</h5>
+                <div class="fw-bold" style="font-size: 2rem; color: #72AEC8;" id="overallRating">N/A</div>
+                <p class="text-muted mb-0 small" id="totalReviewsText">No reviews</p>
+              </div>
+            </div>
+            <div class="col-md-8">
+              <div class="row h-100">
+                <div class="col-4">
+                  <div class="text-center p-3">
+                    <div class="mb-2" style="color: #72AEC8;">
+                      <i class="bi bi-chat-dots-fill" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1" id="totalReviewsCount">0</h4>
+                    <small class="text-muted">Total</small>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="text-center p-3">
+                    <div class="mb-2" style="color: #28a745;">
+                      <i class="bi bi-hand-thumbs-up-fill" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1" id="positiveCount">0</h4>
+                    <small class="text-muted">Positive</small>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="text-center p-3">
+                    <div class="mb-2" style="color: #dc3545;">
+                      <i class="bi bi-hand-thumbs-down-fill" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1" id="negativeCount">0</h4>
+                    <small class="text-muted">Negative</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Reviews List -->
+          <h6 class="fw-bold mb-3">
+            <i class="bi bi-list-ul me-2"></i>All Reviews
+          </h6>
+          <div id="reviewsList"></div>
+
+          <!-- Empty State -->
+          <div id="emptyState" class="text-center py-5" style="display: none;">
+            <i class="bi bi-inbox" style="font-size: 3rem; color: #6c757d; opacity: 0.3;"></i>
+            <h5 class="text-muted mt-3">No reviews yet</h5>
+            <p class="text-muted small">This seller hasn't received any reviews.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bid Modal -->
+<div class="modal fade" id="bidModal" tabindex="-1" aria-labelledby="bidModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-0 pb-2"
+        style="background: linear-gradient(135deg, #72AEC8 0%, #5a9bb8 100%); color: white;">
+        <h5 class="modal-title fw-bold d-flex align-items-center" id="bidModalLabel">
+          <i class="bi bi-hammer me-2" style="font-size: 1.2rem;"></i>
+          <span>Place Your Bid</span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body px-4 py-4">
+        <div class="alert border-0 mb-4"
+          style="background: linear-gradient(135deg, rgba(114, 174, 200, 0.15) 0%, rgba(114, 174, 200, 0.05) 100%); border-left: 4px solid #72AEC8 !important;">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-cash-coin me-2" style="color: #72AEC8; font-size: 1.5rem;"></i>
+              <div>
+                <small class="text-muted d-block" style="font-size: 0.75rem;">Current Price</small>
+                <strong class="fs-5" style="color: #72AEC8;">
+                  <span id="modalCurrentPrice">{{format_number product.current_price}}</span> VND
+                </strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <form id="bidForm" action="/products/bid" method="POST">
+          <input type="hidden" name="productId" value="{{product.id}}">
+          <input type="hidden" name="bidAmount" id="bidAmountRaw" value="">
+
+          <div class="mb-4">
+            <label for="bidAmount" class="form-label fw-bold mb-3">
+              <i class="bi bi-tag me-2" style="color: #72AEC8;"></i>Your Maximum Bid Amount
+            </label>
+            <div class="input-group input-group-lg shadow-sm">
+              <button type="button" class="btn btn-outline-secondary" id="decreaseBid"
+                style="border-color: #dee2e6; width: 50px; transition: all 0.3s;" title="Decrease by 1 step (Hold for continuous)">
+                <i class="bi bi-dash-lg" style="font-weight: bold;"></i>
+              </button>
+              <input type="text" class="form-control text-center fw-bold" id="bidAmount" placeholder="Enter bid amount"
+                required autofocus inputmode="numeric" pattern="[0-9,]*"
+                style="font-size: 1.5rem; color: #72AEC8; border-left: 0; border-right: 0;" readonly>
+              <button type="button" class="btn btn-outline-secondary" id="increaseBid"
+                style="border-color: #dee2e6; width: 50px; transition: all 0.3s;" title="Increase by 1 step (Hold for continuous)">
+                <i class="bi bi-plus-lg" style="font-weight: bold;"></i>
+              </button>
+              <span class="input-group-text" style="background-color: #f8f9fa; font-weight: 600; color: #495057;">
+                VND
+              </span>
+            </div>
+            
+            <!-- Quick Increment Buttons -->
+            <div class="d-flex gap-2 mt-3 justify-content-center">
+              <button type="button" class="btn btn-sm btn-outline-primary quick-increment" data-multiplier="5"
+                style="transition: all 0.3s; font-size: 0.85rem;">
+                <i class="bi bi-arrow-up-circle"></i> +5x
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-primary quick-increment" data-multiplier="10"
+                style="transition: all 0.3s; font-size: 0.85rem;">
+                <i class="bi bi-arrow-up-circle-fill"></i> +10x
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger quick-decrement" data-multiplier="5"
+                style="transition: all 0.3s; font-size: 0.85rem;">
+                <i class="bi bi-arrow-down-circle"></i> -5x
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger quick-decrement" data-multiplier="10"
+                style="transition: all 0.3s; font-size: 0.85rem;">
+                <i class="bi bi-arrow-down-circle-fill"></i> -10x
+              </button>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <small class="text-muted">
+                <i class="bi bi-arrow-up-down me-1" style="color: #72AEC8;"></i>
+                Step: <strong>{{format_number product.step_price}}</strong> VND
+              </small>
+              <small class="text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                Hold +/- for continuous
+              </small>
+            </div>
+          </div>
+
+          <!-- Confirmation Checkbox -->
+          <div class="form-check mb-3 p-3 rounded d-flex align-items-start"
+            style="background: linear-gradient(135deg, rgba(114, 174, 200, 0.15) 0%, rgba(114, 174, 200, 0.05) 100%); border-left: 4px solid #72AEC8 !important;">
+            <input class="form-check-input flex-shrink-0 mt-1" type="checkbox" id="confirmBidCheckbox" required
+              style="width: 1.25em; height: 1.25em; cursor: pointer; border-color: #72AEC8;">
+            <label class="form-check-label ms-3" for="confirmBidCheckbox" style="cursor: pointer; line-height: 1.5;">
+              <i class="bi bi-shield-check me-1" style="color: #72AEC8;"></i>
+              <span class="fw-semibold" style="color: #5a9bb8;">I confirm to place this maximum bid</span>
+              <small class="d-block text-muted mt-1">
+                By checking this box, you agree to the auction terms
+              </small>
+            </label>
+          </div>
+
+          <div class="d-grid gap-2 mt-4">
+            <button type="submit" class="btn btn-lg fw-bold shadow-sm" id="submitBidBtn" disabled
+              style="background: linear-gradient(135deg, #72AEC8 0%, #5a9bb8 100%); color: white; border: none; transition: all 0.3s; opacity: 0.6; min-width: 200px;">
+              <i class="bi bi-check-circle-fill me-2"></i>Confirm Bid
+            </button>
+            <button type="button" class="btn btn-lg btn-outline-secondary" data-bs-dismiss="modal"
+              style="transition: all 0.3s; min-width: 200px;">
+              <i class="bi bi-x-circle me-2"></i>Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

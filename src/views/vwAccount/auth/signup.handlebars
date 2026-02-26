@@ -1,0 +1,179 @@
+{{#section 'js'}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script>
+    document.getElementById("formSignup").addEventListener("submit", function(event) {
+        event.preventDefault();
+        
+        // Lấy giá trị và trim khoảng trắng thừa
+        const fullname = document.getElementById("fullname").value.trim();
+        const address = document.getElementById("address").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        const confirmPassword = document.getElementById("confirmPassword").value;
+        
+        // 1. Validate Full Name
+        if (fullname === "") {
+             Swal.fire({ icon: 'error', title: 'Error', text: 'Full name is required.' });
+             return;
+        }
+
+        // 2. Validate Address
+        if (address === "") {
+             Swal.fire({ icon: 'error', title: 'Error', text: 'Address is required.' });
+             return;
+        }
+
+        // 3. Validate Email
+        if (email === "") {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Email is required.' });
+            return;
+        }
+        // Có thể thêm regex check email format ở đây nếu muốn kỹ hơn
+
+        // 4. Validate Password
+        if (password === "") {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Password is required.' });
+            return;
+        }
+    
+
+        if (confirmPassword === "") {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Confirm password is required.' });
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Passwords do not match.' });
+            return;
+        }
+
+        // 5. Validate reCAPTCHA
+        const captchaResponse = grecaptcha.getResponse();
+        if (captchaResponse.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Verification Required',
+                text: 'Please check the "I\'m not a robot" box.'
+            });
+            return; 
+        }
+
+        // UX: Disable nút submit để tránh double click
+        const btnSubmit = event.target.querySelector('button[type="submit"]');
+        btnSubmit.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
+        btnSubmit.disabled = true;
+
+        // Submit form
+        event.target.submit();
+    });
+</script>
+{{/section}}
+
+<section class="py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+
+        <!-- Title -->
+        <div class="mb-4 text-center">
+          <h2 class="text-uppercase">Sign up</h2>
+          <p class="text-muted mb-0">Create an account to join the online auction.</p>
+        </div>
+
+        {{!-- Global messages --}}
+        {{#if error_message}}
+        <div class="alert alert-danger">{{error_message}}</div>
+        {{/if}}
+
+        {{#if success_message}}
+        <div class="alert alert-success">{{success_message}}</div>
+        {{/if}}
+
+        <form method="post" action="/account/signup" id="formSignup">
+          
+          <!-- Full name -->
+          <div class="mb-3">
+            <label for="fullname" class="form-label text-uppercase small">Full name</label>
+            <input type="text" class="form-control {{#if errors.fullname}}is-invalid{{/if}}" 
+                   id="fullname" name="fullname" placeholder="Nguyen Van B" 
+                   value="{{old.fullname}}"> <!-- Giữ lại value -->
+            {{#if errors.fullname}}
+            <div class="invalid-feedback">{{errors.fullname}}</div>
+            {{/if}}
+          </div>
+
+          <!-- Address -->
+          <div class="mb-3">
+            <label for="address" class="form-label text-uppercase small">Address</label>
+            <input type="text" class="form-control {{#if errors.address}}is-invalid{{/if}}" 
+                   id="address" name="address" placeholder="123, Street, District, City" 
+                   value="{{old.address}}"> <!-- Giữ lại value -->
+            {{#if errors.address}}
+            <div class="invalid-feedback">{{errors.address}}</div>
+            {{/if}}
+          </div>
+
+          <!-- Email -->
+          <div class="mb-3">
+            <label for="email" class="form-label text-uppercase small">Email</label>
+            <input type="email" class="form-control {{#if errors.email}}is-invalid{{/if}}" 
+                   id="email" name="email" placeholder="you@example.com" 
+                   value="{{old.email}}">
+            {{#if errors.email}}
+            <div class="invalid-feedback">{{errors.email}}</div>
+            {{else}}
+            <div class="form-text">
+              Email must be unique. We will send an OTP to verify your account.
+            </div>
+            {{/if}}
+          </div>
+
+          <!-- Password: ĐÃ XÓA value="{{old.password}}" -->
+          <div class="mb-3">
+            <label for="password" class="form-label text-uppercase small">Password</label>
+            <input type="password" class="form-control {{#if errors.password}}is-invalid{{/if}}" 
+                   id="password" name="password" placeholder="Enter your password">
+            {{#if errors.password}}
+            <div class="invalid-feedback">{{errors.password}}</div>
+            {{/if}}
+          </div>
+
+          <!-- Confirm Password: ĐÃ XÓA value="{{old.confirmPassword}}" -->
+          <div class="mb-3">
+            <label for="confirmPassword" class="form-label text-uppercase small">Confirm password</label>
+            <input type="password" class="form-control {{#if errors.confirmPassword}}is-invalid{{/if}}" 
+                   id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password">
+            {{#if errors.confirmPassword}}
+            <div class="invalid-feedback">{{errors.confirmPassword}}</div>
+            {{/if}}
+          </div>
+
+          <!-- reCAPTCHA -->
+          <div class="mb-3">
+            <label class="form-label text-uppercase small d-block">Verification</label>
+            <div>
+                <!-- Đảm bảo biến recaptchaSiteKey được truyền từ Controller -->
+              <div class="g-recaptcha" data-sitekey="{{recaptchaSiteKey}}"></div>
+              {{#if errors.captcha}} <!-- Hiển thị lỗi captcha từ server nếu có -->
+                <div class="text-danger small mt-1">{{errors.captcha}}</div>
+              {{/if}}
+            </div>
+          </div>
+
+          <!-- Submit -->
+          <div class="d-grid">
+            <button type="submit" class="btn btn-dark text-uppercase">Sign up</button>
+          </div>
+
+          <div class="mt-3 text-center">
+            <span class="text-muted small">
+              Already have an account? <a href="/account/signin" class="text-decoration-none">Sign in</a>
+            </span>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,107 @@
+<header id="header" class="site-header header-scrolled position-fixed text-black bg-light w-100 shadow-sm">
+  <nav id="header-nav" class="navbar navbar-expand-lg px-3">
+    <div class="container-fluid">
+
+      <!-- Logo -->
+      <a class="navbar-brand d-flex align-items-center" href="/">
+        <img src="/static/images/main-logo.png" class="logo" alt="Ministore">
+      </a>
+
+      <!-- Toggler -->
+      <button class="navbar-toggler d-flex d-lg-none order-3 p-2"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#bdNavbar"
+              aria-controls="bdNavbar"
+              aria-expanded="false"
+              aria-label="Toggle navigation">
+        <svg class="navbar-icon">
+          <use xlink:href="#navbar-icon"></use>
+        </svg>
+      </button>
+
+      <!-- Offcanvas / Navbar content -->
+      <div class="offcanvas offcanvas-end" tabindex="-1" id="bdNavbar"
+           aria-labelledby="bdNavbarOffcanvasLabel">
+        <div class="offcanvas-header px-4 pb-0">
+          <a class="navbar-brand d-flex align-items-center" href="/">
+            <img src="/static/images/main-logo.png" class="logo" alt="Online Auction">
+          </a>
+          <button type="button"
+                  class="btn-close btn-close-black"
+                  data-bs-dismiss="offcanvas"
+                  aria-label="Close"
+                  data-bs-target="#bdNavbar"></button>
+        </div>
+
+        <div class="offcanvas-body">
+          <!-- LEFT: main nav items -->
+          <ul id="navbar"
+              class="navbar-nav text-uppercase align-items-lg-center flex-grow-1 mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link me-lg-4 active" href="/">Home</a>
+            </li>
+
+            <!-- Categories dropdown -->
+            <li class="nav-item dropdown">
+              <a class="nav-link me-lg-4 dropdown-toggle"
+                 href="#"
+                 role="button"
+                 data-bs-toggle="dropdown"
+                 aria-expanded="false">
+                Categories
+              </a>
+              <ul class="dropdown-menu dropdown-menu-lg">
+                {{#each lcCategories1}}
+                <li class="dropdown-submenu">
+                  <a href="/products/category/?catid={{this.id}}"
+                     class="dropdown-item">
+                     {{this.name}}
+                  </a>
+                  <ul class="dropdown-menu">
+                    {{#each ../lcCategories2}}
+                      {{#if (eq this.parent_id ../id)}}
+                        <li><a href="/products/category/?catid={{this.id}}" class="dropdown-item">{{this.name}}</a></li>
+                      {{/if}}
+                    {{/each}}
+                  </ul>
+                </li>
+                {{/each}}
+              </ul>
+            </li>
+          </ul>
+
+          <!-- RIGHT: search + sign in -->
+          <div class="d-flex align-items-center justify-content-lg-end gap-3 mt-3 mt-lg-0">
+            <button type="button" class="btn btn-link p-0 search-button text-decoration-none" data-bs-toggle="modal" data-bs-target="#searchModal">
+              <svg class="search" width="20" height="20">
+                <use xlink:href="#search"></use>
+              </svg>
+            </button>
+            {{#if isAuthenticated}}
+            {{#if isAdmin}}
+              <a href="/admin/account/profile" class="btn-sign-in">
+                <span class="text-container">
+                  <span class="text">Hi, {{authUser.fullname}}</span>
+                </span>
+              </a>
+            {{else}}
+              <a href="/account/profile" class="btn-sign-in">
+                <span class="text-container">
+                  <span class="text">Hi, {{authUser.fullname}}</span>
+                </span>
+              </a>
+            {{/if}}
+            {{else}}
+            <a href="/account/signin" class="btn-join-us">
+              <span class="text-container">
+                <span class="text">Join us</span>
+              </span>
+            </a>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>

@@ -1,0 +1,161 @@
+{{#section "css"}}
+<style>
+  .history-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 20px 20px;
+  }
+
+  .history-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .history-card:hover {
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .product-info-box {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .bid-row:hover {
+    background-color: #f8f9fa;
+  }
+
+  .back-btn {
+    background: white;
+    color: #667eea;
+    border: 2px solid white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .back-btn:hover {
+    background: transparent;
+    color: white;
+    border-color: white;
+  }
+</style>
+{{/section}}
+
+<div class="history-header">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h1 class="display-5 fw-bold mb-2">
+          <i class="bi bi-clock-history me-3"></i>Bidding History
+        </h1>
+        <p class="mb-0 opacity-75">Complete bidding records for this product</p>
+      </div>
+      <a href="/products/detail?id={{product.id}}" class="back-btn text-decoration-none">
+        <i class="bi bi-arrow-left me-2"></i>Back to Product
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container mb-5">
+  <!-- Product Information -->
+  <div class="product-info-box">
+    <div class="row align-items-center">
+      <div class="col-md-2">
+        {{#if product.thumbnail}}
+          <img src="/static/{{product.thumbnail}}" alt="{{product.name}}" class="img-fluid rounded-3">
+        {{else}}
+          <img src="https://placehold.co/150x150?text=No+Image" alt="Product" class="img-fluid rounded-3">
+        {{/if}}
+      </div>
+      <div class="col-md-7">
+        <h4 class="fw-bold mb-2">{{product.name}}</h4>
+        <div class="d-flex gap-4 text-muted small">
+          <span><i class="bi bi-tag-fill me-1"></i>ID: {{product.id}}</span>
+          <span><i class="bi bi-calendar3 me-1"></i>{{format_date product.created_at}}</span>
+        </div>
+      </div>
+      <div class="col-md-3 text-md-end mt-3 mt-md-0">
+        <div class="mb-2">
+          <small class="text-muted d-block">Current Price</small>
+          <h3 class="fw-bold mb-0" style="color: #667eea;">{{format_number product.current_price}} VND</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bidding History Table -->
+  <div class="history-card">
+    <div class="p-4 border-bottom bg-light">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4 class="fw-bold mb-0">
+          <i class="bi bi-list-ul me-2" style="color: #72AEC8;"></i>All Bids
+        </h4>
+        <span class="badge bg-primary" style="background-color: #667eea !important; font-size: 1rem; padding: 0.5rem 1rem;">
+          {{biddingHistory.length}} Total Bids
+        </span>
+      </div>
+    </div>
+
+    <div class="p-4">
+      {{#if biddingHistory.length}}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr class="border-bottom">
+                <th scope="col" class="text-muted fw-bold" style="width: 35%;">Time</th>
+                <th scope="col" class="text-muted fw-bold" style="width: 35%;">Buyer</th>
+                <th scope="col" class="text-muted fw-bold" style="width: 30%;">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each biddingHistory}}
+              <tr class="bid-row">
+                <td>
+                  <div class="fw-500">{{format_date created_at}}</div>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                      <i class="bi bi-person-fill" style="color: #667eea; font-size: 1.2rem;"></i>
+                    </div>
+                    <span class="fw-500">{{bidder_name}}</span>
+                    {{#if is_buy_now}}
+                      <span class="badge bg-info text-dark ms-2" style="font-size: 0.75rem;">
+                        <i class="bi bi-lightning-fill"></i> Buy Now
+                      </span>
+                    {{/if}}
+                  </div>
+                </td>
+                <td>
+                  <span class="fw-bold {{#if is_buy_now}}text-info{{else}}text-success{{/if}}" style="font-size: 1.1rem;">
+                    {{format_number current_price}} VND
+                  </span>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{else}}
+        <div class="text-center py-5">
+          <i class="bi bi-inbox" style="font-size: 4rem; opacity: 0.2; color: #667eea;"></i>
+          <h5 class="text-muted mt-3">No bidding history yet</h5>
+          <p class="text-muted small">Be the first one to place a bid on this product!</p>
+          <a href="/products/detail?id={{product.id}}" class="btn btn-primary mt-3" style="background-color: #667eea; border: none;">
+            <i class="bi bi-hammer me-2"></i>Place Your Bid
+          </a>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>

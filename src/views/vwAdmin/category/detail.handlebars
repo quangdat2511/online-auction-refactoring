@@ -1,0 +1,133 @@
+{{#section 'css'}}
+<link rel="stylesheet" href="/static/css/admin/category/detail.css">
+{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    <!-- SIDEBAR -->
+    <div class="col-md-3 mb-4">
+        {{> admin-sidebar activeSection='categories'}}
+    </div>
+
+    <!-- CONTENT -->
+    <div class="col-md-9">
+      <div class="card shadow-sm border-0">
+        
+        <!-- Header -->
+        <div class="card-header bg-white border-bottom py-3">
+          <h5 class="mb-0 fw-bold text-danger">
+              <i class="bi bi-tag-fill me-2"></i> CATEGORY DETAILS
+          </h5>
+        </div>
+        
+        <!-- Body -->
+        <div class="card-body p-4">
+          {{#if category}}
+          
+          <!-- Category Icon & Name -->
+          <div class="text-center mb-4 pb-4 border-bottom">
+            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center shadow-lg mb-3" 
+                 style="width: 100px; height: 100px;">
+              <i class="bi bi-tag-fill" style="font-size: 2.5rem;"></i>
+            </div>
+            <h4 class="fw-bold mb-2">{{category.name}}</h4>
+            <div class="text-muted small">ID: #{{category.id}}</div>
+          </div>
+
+          <!-- Category Information -->
+          <div class="row g-3">
+            
+            <div class="col-md-6">
+              <div class="p-3 bg-light rounded">
+                <div class="small text-muted mb-1">
+                  <i class="bi bi-diagram-3 me-1"></i> Parent Category
+                </div>
+                <div class="fw-bold">
+                  {{#if category.parent_name}}
+                    <span class="badge bg-info text-dark">{{category.parent_name}}</span>
+                  {{else}}
+                    <span class="text-muted">None (Level 1)</span>
+                  {{/if}}
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="p-3 bg-light rounded">
+                <div class="small text-muted mb-1">
+                  <i class="bi bi-box-seam me-1"></i> Number of products in this category
+                </div>
+                <div>
+                  <span class="badge bg-success fs-6">
+                    {{category.product_count}} Products
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="mt-4 pt-4 border-top">
+            <div class="d-flex justify-content-between">
+              <a href="/admin/categories/list" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to List
+              </a>
+              <div>
+                <a href="/admin/categories/edit/{{category.id}}" class="btn btn-primary me-2">
+                  <i class="bi bi-pencil-square me-2"></i>Edit Category
+                </a>
+                <button type="button" class="btn btn-danger" data-category-id="{{category.id}}" data-category-name="{{category.name}}" onclick="confirmDelete(this)" {{#if category.product_count}}disabled{{/if}}>
+                  <i class="bi bi-trash me-2"></i>Delete Category
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {{else}}
+          <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle me-2"></i> Category not found.
+          </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{#section 'js'}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmDelete(button) {
+    const categoryId = button.dataset.categoryId;
+    const categoryName = button.dataset.categoryName;
+    
+    Swal.fire({
+        title: 'Are you sure?',
+        html: `You are about to delete category: <strong>${categoryName}</strong><br>This action cannot be undone!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/admin/categories/delete';
+            
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'id';
+            input.value = categoryId;
+            
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
+{{/section}}

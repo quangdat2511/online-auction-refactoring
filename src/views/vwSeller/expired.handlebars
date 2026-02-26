@@ -1,0 +1,210 @@
+{{#section 'js'}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Handle rating/editing rating bidder
+    $(document).on('click', '.btn-rate, .btn-edit-rate', function(e) {
+        e.preventDefault();
+        const $btn = $(this);
+        const id = $btn.data('id');
+        const bidderName = $btn.data('bidder');
+        const bidderId = $btn.data('bidder-id');
+        const isEdit = $btn.hasClass('btn-edit-rate');
+        
+        // Get existing rating data if editing
+        let existingRating = null;
+        let existingComment = '';
+        if (isEdit) {
+            existingRating = $btn.data('rating'); // 'positive' or 'negative'
+            existingComment = $btn.data('comment') || '';
+        }
+        
+        Swal.fire({
+            title: isEdit ? `Edit Rating for ${bidderName}` : `Rate ${bidderName}`,
+            html: `
+                <div class="mb-3">
+                    <label class="form-label">Rating:</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="rating" id="rating-positive" value="positive" autocomplete="off" ${existingRating === 'positive' ? 'checked' : ''}>
+                        <label class="btn btn-outline-success" for="rating-positive">
+                            <i class="bi bi-hand-thumbs-up"></i> Positive
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="rating" id="rating-negative" value="negative" autocomplete="off" ${existingRating === 'negative' ? 'checked' : ''}>
+                        <label class="btn btn-outline-danger" for="rating-negative">
+                            <i class="bi bi-hand-thumbs-down"></i> Negative
+                        </label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Comment (optional):</label>
+                    <textarea class="form-control" id="rating-comment" rows="3" placeholder="Write your comment...">${existingComment}</textarea>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonColor: '#72AEC8',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: isEdit ? 'Update Rating' : 'Submit Rating',
+            preConfirm: () => {
+                const rating = document.querySelector('input[name="rating"]:checked');
+                const comment = document.getElementById('rating-comment').value;
+                
+                if (!rating) {
+                    Swal.showValidationMessage('Please select a rating');
+                    return false;
+                }
+                
+                return {
+                    rating: rating.value,
+                    comment: comment
+                };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Processing...',
+                    html: isEdit ? 'Updating rating...' : 'Submitting rating...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Determine HTTP method and endpoint
+                const method = isEdit ? 'PUT' : 'POST';
+                const endpoint = `/seller/products/${id}/rate`;
+                
+                // Call API to submit/update rating
+                fetch(endpoint, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        highest_bidder_id: bidderId,
+                        rating: result.value.rating,
+                        comment: result.value.comment
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Success!', isEdit ? 'Rating updated successfully.' : 'Rating submitted successfully.', 'success')
+                            .then(() => {
+                                window.location.reload();
+                            });
+                    } else {
+                        Swal.fire('Error!', data.message || 'Failed to submit rating', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error!', 'An error occurred while submitting rating', 'error');
+                });
+            }
+        });
+    });
+</script>
+{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    {{!-- LEFT SIDEBAR --}}
+    <div class="col-lg-3 mb-4">
+        {{> seller-sidebar activeSection='expired-products'}}
+    </div>
+
+    {{!-- RIGHT CONTENT --}}
+    <div class="col-lg-9">
+      <div class="card shadow-sm border-0 h-100">
+        
+        <!-- Header -->
+        <div class="card-header bg-white border-bottom py-3">
+          <h5 class="mb-0 fw-bold">
+              <i class="bi bi-x-circle me-2 text-secondary"></i> EXPIRED PRODUCTS
+          </h5>
+          <p class="text-muted small mb-0 mt-2">Products that expired without bids or were cancelled</p>
+        </div>
+        
+        <!-- Body -->
+        <div class="card-body p-0" style="max-height: 600px; overflow-y: auto;">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary text-uppercase small">
+                        <tr>
+                            <th scope="col" class="ps-4 py-3">Product Name</th>
+                            <th scope="col" class="py-3">Starting Price</th>
+                            <th scope="col" class="py-3">Reason</th>
+                            <th scope="col" class="py-3">Expired Date</th>
+                            <th scope="col" class="text-end pe-4 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each products}}
+                        <tr>
+                            <td class="ps-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <img src="/static/{{this.thumbnail}}" alt="{{this.name}}" 
+                                        width="50" height="50" class="rounded me-3" style="object-fit: cover;">
+                                    <div>
+                                        <div class="fw-bold text-dark">{{this.name}}</div>
+                                        <div class="small text-muted">{{this.category_name}}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-muted">{{format_number this.starting_price}} VND</span>
+                            </td>
+                            <td>
+                                {{#if (eq this.status 'No Bidders')}}
+                                    <span class="badge bg-secondary">No Bidders</span>
+                                {{else}}
+                                    <span class="badge bg-danger">Cancelled</span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                {{#if this.closed_at}}
+                                <div class="small text-muted">{{format_only_date this.closed_at}}</div>    
+                                <div class="text-muted" style="font-size: 0.75rem;">{{format_only_time this.closed_at}}</div>
+                                {{else}}
+                                <div class="small text-muted">{{format_only_date this.end_at}}</div>    
+                                <div class="text-muted" style="font-size: 0.75rem;">{{format_only_time this.end_at}}</div>
+                                {{/if}}
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="/products/detail?id={{this.id}}" class="btn btn-sm btn-outline-info me-1" 
+                                   data-bs-toggle="tooltip" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                
+                                {{#if (eq this.status "Cancelled")}}
+                                    {{#if this.highest_bidder_id}}
+                                        {{#if this.hasReview}}
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-edit-rate" 
+                                                data-id="{{this.id}}" data-bidder="{{this.highest_bidder_name}}" 
+                                                data-bidder-id="{{this.highest_bidder_id}}" 
+                                                data-rating="{{this.reviewRating}}" 
+                                                data-comment="{{this.reviewComment}}" 
+                                                title="Edit Rating">
+                                            <i class="bi bi-star-fill"></i>
+                                        </button>
+                                        {{else}}
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-rate" 
+                                                data-id="{{this.id}}" data-bidder="{{this.highest_bidder_name}}" data-bidder-id="{{this.highest_bidder_id}}" title="Rate Bidder">
+                                            <i class="bi bi-star"></i>
+                                        </button>
+                                        {{/if}}
+                                    {{/if}}
+                                {{/if}}
+                            </td>
+                        </tr>    
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

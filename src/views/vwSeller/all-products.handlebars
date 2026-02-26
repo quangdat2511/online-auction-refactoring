@@ -1,0 +1,87 @@
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    {{!-- LEFT SIDEBAR --}}
+    <div class="col-lg-3 mb-4">
+        {{> seller-sidebar activeSection='all-products'}}
+    </div>
+
+    {{!-- RIGHT CONTENT --}}
+    <div class="col-lg-9">
+      <div class="card shadow-sm border-0 h-100">
+        
+        <!-- Header -->
+        <div class="card-header bg-white border-bottom py-3">
+          <h5 class="mb-0 fw-bold">
+              <i class="bi bi-box-seam-fill me-2"></i> ALL PRODUCTS
+          </h5>
+          <p class="text-muted small mb-0 mt-2">View all your products across all statuses</p>
+        </div>
+        
+        <!-- Body -->
+        <div class="card-body p-0" style="max-height: 600px; overflow-y: auto;">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary text-uppercase small">
+                        <tr>
+                            <th scope="col" class="ps-4 py-3">Product Name</th>
+                            <th scope="col" class="py-3">Current Price</th>
+                            <th scope="col" class="py-3">Bids</th>
+                            <th scope="col" class="py-3">Status</th>
+                            <th scope="col" class="py-3">End Time</th>
+                            <th scope="col" class="text-end pe-4 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each products}}
+                        <tr>
+                            <td class="ps-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <img src="/static/{{this.thumbnail}}" alt="{{this.name}}" 
+                                        width="50" height="50" class="rounded me-3" style="object-fit: cover;">
+                                    <div>
+                                        <div class="fw-bold text-dark">{{this.name}}</div>
+                                        <div class="small text-muted">{{this.category_name}}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-success">{{format_number this.current_price}} VND</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{this.bid_count}}</span>
+                            </td>
+                            <td>
+                                {{#if (eq this.status "Sold") }}
+                                    <span class="badge bg-info">Sold</span>
+                                {{else if (eq this.status "Expired") }}
+                                    <span class="badge bg-secondary">Expired</span>
+                                {{else if (eq this.status "Active") }}
+                                    <span class="badge bg-success">Active</span>
+                                {{else if (eq this.status "Pending") }}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                {{else if (eq this.status "No Bidders") }}
+                                    <span class="badge bg-secondary">No Bidders</span>
+                                {{else if (eq this.status "Cancelled") }}
+                                    <span class="badge bg-danger">Cancelled</span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                <span class="small text-muted">{{format_date this.end_at}}</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="/products/detail?id={{this.id}}" class="btn btn-sm btn-outline-info" 
+                                   data-bs-toggle="tooltip" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>    
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

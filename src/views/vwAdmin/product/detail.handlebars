@@ -1,0 +1,296 @@
+{{#section 'css'}}
+<link rel="stylesheet" href="/static/css/admin/products/detail.css">
+{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+    <div class="row">
+        
+        <!-- SIDEBAR -->
+        <div class="col-md-3 mb-4">
+            {{> admin-sidebar activeSection='products'}}
+        </div>
+
+        <!-- CONTENT -->
+        <div class="col-md-9">
+            {{#if success_message}}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>{{success_message}}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {{/if}}
+
+            {{#if error_message}}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>{{error_message}}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {{/if}}
+
+            <!-- Product Information Card -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="mb-0 fw-bold text-danger">
+                        <i class="bi bi-box-seam-fill me-2"></i>PRODUCT DETAILS
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Left Column: Product Details -->
+                        <div class="col-lg-8">
+                            <!-- Basic Info -->
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-muted mb-3">
+                                    <i class="bi bi-file-text me-1"></i> Basic Information
+                                </h6>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Product ID:</div>
+                                    <div class="info-value">#{{product.id}}</div>
+                                </div>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Product Name:</div>
+                                    <div class="info-value fw-bold">{{product.name}}</div>
+                                </div>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Description:</div>
+                                    <div class="info-value">
+                                        {{#if product.description}}
+                                            {{{product.description}}}
+                                        {{else}}
+                                            <span class="text-muted">No description provided</span>
+                                        {{/if}}
+                                    </div>
+                                </div>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Category:</div>
+                                    <div class="info-value">
+                                        <span class="badge bg-secondary">{{product.category_name}}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Seller & Bidder Info -->
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-muted mb-3">
+                                    <i class="bi bi-people me-1"></i> Related Users
+                                </h6>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Seller:</div>
+                                    <div class="info-value">
+                                        <span class="badge bg-info text-dark">{{product.seller_name}}</span>
+                                        <small class="text-muted ms-2">(ID: {{product.seller_id}})</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Highest Bidder:</div>
+                                    <div class="info-value">
+                                        {{#if product.highest_bidder_name}}
+                                            <span class="badge bg-warning text-dark">{{product.highest_bidder_name}}</span>
+                                            <small class="text-muted ms-2">(ID: {{product.highest_bidder_id}})</small>
+                                        {{else}}
+                                            <span class="text-muted">No bids yet</span>
+                                        {{/if}}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pricing Info -->
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-muted mb-3">
+                                    <i class="bi bi-cash-stack me-1"></i> Pricing
+                                </h6>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Starting Price:</div>
+                                    <div class="info-value">
+                                        <span class="text-primary fw-bold">{{format_number product.starting_price}} VND</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Current Price:</div>
+                                    <div class="info-value">
+                                        <span class="text-success fw-bold fs-5">{{format_number product.current_price}} VND</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Step Price:</div>
+                                    <div class="info-value">
+                                        <span class="text-dark">{{format_number product.step_price}} VND</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Buy Now Price:</div>
+                                    <div class="info-value">
+                                        {{#if product.buy_now_price}}
+                                            <span class="text-danger fw-bold">{{format_number product.buy_now_price}} VND</span>
+                                        {{else}}
+                                            <span class="text-muted">Not available</span>
+                                        {{/if}}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Auction Settings -->
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-muted mb-3">
+                                    <i class="bi bi-gear me-1"></i> Auction Settings
+                                </h6>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Allow Unrated Bidders:</div>
+                                    <div class="info-value">
+                                        {{#if product.allow_unrated_bidder}}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>Yes
+                                            </span>
+                                        {{else}}
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle me-1"></i>No
+                                            </span>
+                                        {{/if}}
+                                    </div>
+                                </div>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Auto Extend:</div>
+                                    <div class="info-value">
+                                        {{#if product.auto_extend}}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>Enabled
+                                            </span>
+                                        {{else}}
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-x-circle me-1"></i>Disabled
+                                            </span>
+                                        {{/if}}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Time & Status -->
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-muted mb-3">
+                                    <i class="bi bi-clock-history me-1"></i> Time & Status
+                                </h6>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Auction Created At:</div>
+                                    <div class="info-value">
+                                        <i class="bi bi-calendar3 text-muted me-1"></i>
+                                        {{format_date product.created_at}}
+                                    </div>
+                                </div>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Auction Ends At:</div>
+                                    <div class="info-value">
+                                        <i class="bi bi-calendar-x text-danger me-1"></i>
+                                        {{format_date product.end_at}}
+                                    </div>
+                                </div>
+                                
+                                <div class="info-row d-flex">
+                                    <div class="info-label">Status:</div>
+                                    <div class="info-value">
+                                        {{#if product.is_sold}}
+                                            <span class="status-badge badge bg-success">
+                                                <i class="bi bi-check-circle-fill me-1"></i>Sold
+                                            </span>
+                                        {{else}}
+                                            <span class="status-badge badge bg-primary">
+                                                <i class="bi bi-hammer me-1"></i>Ongoing
+                                            </span>
+                                        {{/if}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Thumbnail -->
+                        <div class="col-lg-4">
+                            <h6 class="text-uppercase text-muted mb-3">
+                                <i class="bi bi-image me-1"></i> Product Image
+                            </h6>
+                            {{#if product.thumbnail}}
+                                <img src="/static/{{product.thumbnail}}" alt="{{product.name}}" class="product-thumbnail img-fluid">
+                            {{else}}
+                                <div class="text-center p-5 bg-light rounded">
+                                    <i class="bi bi-image text-muted" style="font-size: 4rem;"></i>
+                                    <p class="text-muted mt-3">No image available</p>
+                                </div>
+                            {{/if}}
+                            {{#each product.sub_images}}
+                                <div class="mt-3">
+                                    <img src="/static/{{this}}" alt="Sub Image" class="img-fluid rounded">
+                                </div>
+                            {{/each}}
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <hr class="my-3">
+                            <div class="d-flex justify-content-between">
+                                <a href="/admin/products/list" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left me-2"></i>Back to List
+                                </a>
+                                <div>
+                                    <a href="/admin/products/edit/{{product.id}}" class="btn btn-primary me-2">
+                                        <i class="bi bi-pencil-square me-2"></i>Edit Product
+                                    </a>
+                                    <button type="button" class="btn btn-danger" data-product-id="{{product.id}}" data-product-name="{{product.name}}" onclick="confirmDelete(this)">
+                                        <i class="bi bi-trash me-2"></i>Delete Product
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{#section 'js'}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmDelete(button) {
+    const productId = button.dataset.productId;
+    const productName = button.dataset.productName;
+    
+    Swal.fire({
+        title: 'Are you sure?',
+        html: `You are about to delete product: <strong>${productName}</strong><br>This action cannot be undone!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/admin/products/delete';
+            
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'id';
+            input.value = productId;
+            
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
+{{/section}}

@@ -1,0 +1,232 @@
+{{#section 'css'}}
+<link rel="stylesheet" href="/static/css/seller/seller.css">
+{{/section}}
+
+{{#section 'js'}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Handle cancel auction
+    $('.btn-cancel').on('click', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        const name = $(this).data('name');
+        const bidderId = $(this).data('bidder-id');
+        
+        Swal.fire({
+            title: 'Cancel Auction?',
+            text: `Are you sure you want to cancel the auction for "${name}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, cancel it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Processing...',
+                    html: 'Cancelling auction...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Call API to cancel with fixed reason
+                fetch(`/seller/products/${id}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ highest_bidder_id: bidderId, reason: 'The bidder did not pay as agreed' })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Cancelled!', 'The auction has been cancelled.', 'success')
+                            .then(() => {
+                                window.location.href = '/seller/products/pending?message=cancelled';
+                            });
+                    } else {
+                        Swal.fire('Error!', data.message || 'Failed to cancel auction', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error!', 'Failed to cancel auction', 'error');
+                });
+            }
+        });
+    });
+
+    // Handle rating bidder
+    $('.btn-rate').on('click', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        const bidderName = $(this).data('bidder');
+        
+        Swal.fire({
+            title: `Rate ${bidderName}`,
+            html: `
+                <div class="mb-3">
+                    <label class="form-label">Rating:</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="rating" id="rating-positive" value="positive" autocomplete="off">
+                        <label class="btn btn-outline-success" for="rating-positive">
+                            <i class="bi bi-hand-thumbs-up"></i> Positive
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="rating" id="rating-negative" value="negative" autocomplete="off">
+                        <label class="btn btn-outline-danger" for="rating-negative">
+                            <i class="bi bi-hand-thumbs-down"></i> Negative
+                        </label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Comment (optional):</label>
+                    <textarea class="form-control" id="rating-comment" rows="3" placeholder="Write your comment..."></textarea>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonColor: '#72AEC8',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Submit Rating',
+            preConfirm: () => {
+                const rating = document.querySelector('input[name="rating"]:checked');
+                const comment = document.getElementById('rating-comment').value;
+                
+                if (!rating) {
+                    Swal.showValidationMessage('Please select a rating');
+                    return false;
+                }
+                
+                return {
+                    rating: rating.value,
+                    comment: comment
+                };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // TODO: Call API to submit rating
+                Swal.fire('Submitted!', 'Your rating has been submitted.', 'success');
+            }
+        });
+    });
+</script>
+{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    {{!-- LEFT SIDEBAR --}}
+    <div class="col-lg-3 mb-4">
+        {{> seller-sidebar activeSection='pending-products'}}
+    </div>
+
+    {{!-- RIGHT CONTENT --}}
+    <div class="col-lg-9">
+      <div class="card shadow-sm border-0 h-100">
+        
+        <!-- Header -->
+        <div class="card-header bg-white border-bottom py-3">
+          <h5 class="mb-0 fw-bold">
+              <i class="bi bi-hourglass-split me-2 text-warning"></i> PENDING PRODUCTS
+          </h5>
+          <p class="text-muted small mb-0 mt-2">Products awaiting payment from winners</p>
+        </div>
+        
+        <!-- Body -->
+        <div class="card-body p-0" style="max-height: 600px; overflow-y: auto;">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary text-uppercase small">
+                        <tr>
+                            <th scope="col" class="ps-4 py-3">Product Name</th>
+                            <th scope="col" class="py-3">Final Price</th>
+                            <th scope="col" class="py-3">Winner</th>
+                            <th scope="col" class="py-3">Ended</th>
+                            <th scope="col" class="text-end pe-4 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each products}}
+                        <tr>
+                            <td class="ps-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <img src="/static/{{this.thumbnail}}" alt="{{this.name}}" 
+                                         width="50" height="50" class="rounded me-3" style="object-fit: cover;">
+                                    <div>
+                                        <div class="fw-bold text-dark">{{this.name}}</div>
+                                        <div class="small text-muted">{{this.category_name}}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-warning fs-6">{{format_number this.current_price}} VND</span>
+                                <div class="small text-muted">Start: {{format_number this.starting_price}} VND</div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="fw-bold small">{{this.highest_bidder_name}}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{this.highest_bidder_email}}</div>
+                                </div>
+                            </td>
+                            <td>
+                                {{#if this.closed_at}}
+                                    <div class="small">{{format_only_date this.closed_at}}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{format_only_time this.closed_at}}</div>
+                                {{else}}
+                                    <div class="small">{{format_only_date this.end_at}}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{format_only_time this.end_at}}</div>
+                                {{/if}}
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="/products/detail?id={{this.id}}" class="btn btn-sm btn-outline-info me-1" 
+                                   data-bs-toggle="tooltip" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                
+                                <a href="/products/complete-order?id={{this.id}}" class="btn btn-sm btn-outline-success me-1" 
+                                   data-bs-toggle="tooltip" title="Complete Order">
+                                    <i class="bi bi-clipboard-check"></i>
+                                </a>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-cancel" 
+                                        data-id="{{this.id}}" data-name="{{this.name}}" data-bidder-id="{{this.highest_bidder_id}}" title="Cancel">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </td>
+                        </tr>    
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="card-footer bg-light border-top">
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <div class="p-2">
+                        <h4 class="text-warning mb-1">{{stats.total_pending}}</h4>
+                        <div class="small text-muted">Total Pending</div>
+                    </div>
+                </div>
+                <div class="col-md-4 border-start">
+                    <div class="p-2">
+                        <h4 class="text-warning mb-1">{{format_number stats.pending_revenue}} VND</h4>
+                        <div class="small text-muted">Pending Revenue</div>
+                    </div>
+                </div>
+                <div class="col-md-4 border-start">
+                    <div class="p-2">
+                        <h4 class="text-info mb-1">{{stats.total_bids}}</h4>
+                        <div class="small text-muted">Total Bids</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

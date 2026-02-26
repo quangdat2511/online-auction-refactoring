@@ -1,0 +1,78 @@
+<div class="card shadow-sm border-0">
+  <div class="card-body text-center pt-4 pb-3">
+    <div class="position-relative d-inline-block">
+      <img src="https://ui-avatars.com/api/?name={{authUser.fullname}}&background=random&size=128" 
+           class="rounded-circle mb-3 shadow-sm" 
+           width="100" height="100" 
+           style="object-fit: cover;">
+      
+      <span class="position-absolute bottom-0 start-100 translate-middle badge rounded-pill {{#if (eq authUser.role 'seller')}}bg-success{{else}}bg-secondary{{/if}} border border-white text-capitalize">
+        {{authUser.role}}
+      </span>
+    </div>
+
+    <h5 class="card-title fw-bold mb-1">{{authUser.fullname}}</h5>
+    <div class="text-muted small text-break px-3">{{authUser.email}}</div>
+  </div>
+  
+  <div class="list-group list-group-flush profile-nav small">
+    
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'profile')}}active fw-bold{{/if}}" 
+       href="/account/profile">
+      <i class="bi bi-person-gear fs-5"></i> 
+      <span>Account Settings</span>
+    </a>
+    
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'ratings')}}active fw-bold{{/if}}" 
+       href="/account/ratings">
+      <i class="bi bi-star-fill fs-5"></i> 
+      <span>My Ratings</span>
+    </a>
+    
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'watchlist')}}active fw-bold{{/if}}" 
+       href="/account/watchlist">
+      <i class="bi bi-heart fs-5"></i> 
+      <span>My Watchlist</span>
+    </a>
+
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'bidding')}}active fw-bold{{/if}}" 
+       href="/account/bidding">
+      <i class="bi bi-hammer fs-5"></i> 
+      <span>Bidding Products</span>
+    </a>
+
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'auctions')}}active fw-bold{{/if}}" 
+       href="/account/auctions">
+       <i class="bi bi-trophy fs-5"></i> 
+       <span>Won Auctions</span>
+    </a>
+
+    {{#if (eq authUser.role 'seller')}}
+       <div class="list-group-item py-3 d-flex align-items-center gap-2 text-success bg-success-subtle fw-bold">
+           <i class="bi bi-check-circle-fill fs-5"></i> 
+           <span>You are a Seller</span>
+       </div>
+
+       <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 {{#if (eq activeSection 'my-products')}}active fw-bold{{/if}}" 
+          href="/seller/">
+           <i class="bi bi-box-seam fs-5"></i> 
+           <span>Seller Center</span>
+       </a>
+    {{else}}
+       <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 
+          {{#if (eq activeSection 'upgrade')}}active fw-bold{{else}}text-primary fw-bold{{/if}}" 
+          href="/account/request-upgrade">
+           <i class="bi bi-briefcase fs-5"></i> 
+           <span>Upgrade to Seller</span>
+       </a>
+    {{/if}}
+    
+    <form id="formLogout" action="/account/logout" method="POST"></form>
+    <a class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-2 text-danger fw-bold" 
+       href="javascript: $('#formLogout').submit()">
+      <i class="bi bi-box-arrow-right fs-5"></i> 
+      <span>Sign Out</span>
+    </a>
+
+  </div>
+</div>
