@@ -136,7 +136,7 @@ const fileFilter = (req, file, cb) => {
 };
 ```
 8.  **API endpoints** (GET /api/categories)
-```
+```javascript
 app.get("/api/categories", async (req, res) => {
     try {
         const categories = await categoryModel.findAll();
@@ -154,7 +154,7 @@ app.get("/api/categories", async (req, res) => {
 ```
 
 9.  **Server startup** (port binding)
-```
+```javascript
 app.listen(PORT, function () {
     console.log(`Server is running on http://localhost:${PORT}`);
 
@@ -178,9 +178,41 @@ app.listen(PORT, function () {
 
 Tách thành các module riêng biệt:
 
-1. **Cấu hình Handlebars:** `src/config/handlebars.config.js`
-2. **Middlewares:** `src/middlewares/*.mdw.js`
-3. **Routes:** `Dời API endpoints qua routes`
+1. **Cấu hình Express:** `src/config/express.config.js`
+2. **Cấu hình Handlebars:** `src/config/handlebars.config.js`
+3. **Cấu hình Passport:** `src/config/passport.config.js`
+4. **Middlewares:** `src/middlewares/*.mdw.js`
+5. **Routes:** `Dời API endpoints qua routes`
+### Minh chứng
+Cấu trúc thư mục
+![alt text](images/index-refactoring.png)
+
+File ***index.js*** sau khi refactoring:
+```javascript
+// PHẦN IMPORT
+import ...
+...
+
+// 1. CẤU HÌNH CỐT LÕI
+configureExpress(app);
+configurePassport(app);
+
+// 2. CẤU HÌNH VIEW ENGINE (Handlebars)
+configureHandlebars(app);
+
+// 3. MIDDLEWARE TOÀN CỤC
+app.use(userSessionMiddleware);
+app.use(categoryMiddleware);
+
+// 4. CẤU HÌNH LOGIC ADMIN
+app.use('/admin', isAdmin, setAdminMode);
+
+// 5. ROUTES
+app.use('/admin/account', adminAccountRouter);
+app.use('/admin/users', adminUserRouter);
+app.use('/admin/categories', adminCategoryRouter);
+...
+```
 
 ---
 
@@ -190,13 +222,75 @@ Tách thành các module riêng biệt:
 `product.route.js` là một **God File** điển hình với đến **1860 dòng**, đảm nhận mọi trách nhiệm liên quan đến sản phẩm:
 
 1. **Duyệt sản phẩm** — lọc theo category, tìm kiếm, hiển thị danh sách
+```javascript
+router.get('/category', async (req, res) => {
+  const userId = req.session.authUser ? req.session.authUser.id : null;
+  const sort = req.query.sort || '';
+  ...
+});
+
+router.get('/search', async (req, res) => {
+  const userId = req.session.authUser ? req.session.authUser.id : null;
+  const q = req.query.q || '';
+    ...
+});
+```
 2. **Chi tiết sản phẩm** — lấy thông tin, ảnh, comments, bidding history
+```javascript
+router.get('/detail', async (req, res) => {
+  const userId = req.session.authUser ? req.session.authUser.id : null;
+  const productId = req.query.id;
+  ...
+});
+router.post('/comment', isAuthenticated, async (req, res) => {
+  const { productId, content, parentId } = req.body;
+  const userId = req.session.authUser.id;
+  ...
+});
+router.get('/bidding-history', isAuthenticated, async (req, res) => {
+  const productId = req.query.id;
+  
+  if (!productId) {
+    return res.redirect('/');
+  }
+  ...
+  
+});
+
+```
 3. **Đặt giá / Mua ngay** — xử lý toàn bộ luồng bid (450 dòng trong một handler duy nhất)
+```javascript
+// ROUTE 3: ĐẶT GIÁ (POST) - Server-side rendering with automatic bidding
+router.post('/bid', isAuthenticated, async (req, res) => {
+  ...
+
+});
+```
+
+```javascript
+// ROUTE: BUY NOW (POST) - Bidder directly purchases product at buy now price
+router.post('/buy-now', isAuthenticated, async (req, res) => {
+  ...
+});
+```
 4. **Quản lý đơn hàng** — xác nhận thanh toán, vận chuyển, giao hàng
+```javascrip
 5. **Hóa đơn** — tải lên và xử lý payment/shipping invoices
 6. **Đánh giá** — buyer đánh giá seller và ngược lại sau giao dịch
 7. **Comment** — thêm, lấy, phân trang comment
 8. **Reject bidder** — seller chặn bidder cụ thể
+```javascript
+
+// ROUTE: REJECT BIDDER (POST) - Seller rejects a bidder from a product
+router.post('/reject-bidder', isAuthenticated, async (req, res) => {
+  ...
+});
+
+// ROUTE: UNREJECT BIDDER (POST) - Seller removes a bidder from rejected list
+router.post('/unreject-bidder', isAuthenticated, async (req, res) => {
+  ...
+});
+```
 
 :::danger
 **Tác động tiêu cực:**
@@ -208,7 +302,7 @@ Tách thành các module riêng biệt:
 
 **💡 Đề xuất cải thiện:**
 Tách ra các service để xử lí business logic
-Tách thành các router/controller nhỏ theo bounded context:
+Tách thành các route nhỏ theo bounded context:
 
 ```
 src/routes/

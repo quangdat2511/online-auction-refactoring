@@ -21,3 +21,8 @@ export function isAdmin(req, res, next) {
         res.render('403');
     }
 }
+
+export function setAdminMode(req, res, next) {
+    res.locals.isAdminMode = true;
+    next();
+}
