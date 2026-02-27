@@ -1,4 +1,23 @@
 import db from '../../utils/db.js';
+import { ORDER_STATUS } from '../../config/app.config.js';
+
+/**
+ * Maps each order status to the extra DB fields that must be stamped when
+ * that status is entered.  To support a new status, add one entry here —
+ * no switch/if chain needs to be touched (Open/Closed Principle).
+ */
+const STATUS_TIMESTAMPS = {
+  [ORDER_STATUS.PAYMENT_SUBMITTED]:  ()           => ({ payment_submitted_at:  db.fn.now() }),
+  [ORDER_STATUS.PAYMENT_CONFIRMED]:  ()           => ({ payment_confirmed_at:  db.fn.now() }),
+  [ORDER_STATUS.SHIPPED]:            ()           => ({ shipped_at:            db.fn.now() }),
+  [ORDER_STATUS.DELIVERED]:          ()           => ({ delivered_at:          db.fn.now() }),
+  [ORDER_STATUS.COMPLETED]:          ()           => ({ completed_at:          db.fn.now() }),
+  [ORDER_STATUS.CANCELLED]: (userId, note) => ({
+    cancelled_at:     db.fn.now(),
+    cancelled_by:     userId,
+    ...(note ? { cancellation_reason: note } : {}),
+  }),
+};
 
 /**
  * ============================================
@@ -38,7 +57,7 @@ export async function createOrder(orderData) {
     shipping_address,
     shipping_phone,
     shipping_note,
-    status: 'pending_payment',
+    status: ORDER_STATUS.PENDING_PAYMENT,
     created_at: db.fn.now()
   }).returning('*');
 
@@ -165,31 +184,10 @@ export async function updateStatus(orderId, newStatus, userId, note = null) {
       updated_at: db.fn.now()
     };
 
-    // Cập nhật timestamp tương ứng
-    switch (newStatus) {
-      case 'payment_submitted':
-        updateData.payment_submitted_at = db.fn.now();
-        break;
-      case 'payment_confirmed':
-        updateData.payment_confirmed_at = db.fn.now();
-        break;
-      case 'shipped':
-        updateData.shipped_at = db.fn.now();
-        break;
-      case 'delivered':
-        updateData.delivered_at = db.fn.now();
-        break;
-      case 'completed':
-        updateData.completed_at = db.fn.now();
-        break;
-      case 'cancelled':
-        updateData.cancelled_at = db.fn.now();
-        updateData.cancelled_by = userId;
-        if (note) {
-          updateData.cancellation_reason = note;
-        }
-        break;
-    }
+    // Stamp the timestamp field(s) that correspond to the new status.
+    // Lookup is O(1) and adding a new status never requires editing this function.
+    const extraFields = STATUS_TIMESTAMPS[newStatus]?.(userId, note) ?? {};
+    Object.assign(updateData, extraFields);
 
     await trx('orders')
       .where('id', orderId)
@@ -262,7 +260,7 @@ export async function updateTracking(orderId, trackingData) {
  * Hủy order
  */
 export async function cancelOrder(orderId, userId, reason) {
-  return updateStatus(orderId, 'cancelled', userId, reason);
+  return updateStatus(orderId, ORDER_STATUS.CANCELLED, userId, reason);
 }
 
 /**

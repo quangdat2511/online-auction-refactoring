@@ -1,15 +1,19 @@
 import { productModel, reviewModel, biddingHistoryModel, productCommentModel, productDescUpdateModel, rejectedBidderModel } from '../../models/index.js';
-import { PAGINATION } from '../../config/app.config.js';
+import { PAGINATION, PRODUCT_STATUS } from '../../config/app.config.js';
 
 export function determineProductStatus(product) {
   const now = new Date();
   const endDate = new Date(product.end_at);
 
-  if (product.is_sold === true) return 'SOLD';
-  if (product.is_sold === false) return 'CANCELLED';
-  if ((endDate <= now || product.closed_at) && product.highest_bidder_id) return 'PENDING';
-  if (endDate <= now && !product.highest_bidder_id) return 'EXPIRED';
-  return 'ACTIVE';
+  if (product.is_sold === true) return PRODUCT_STATUS.SOLD;
+  if (product.is_sold === false) return PRODUCT_STATUS.CANCELLED;
+  if ((endDate <= now || product.closed_at) && product.highest_bidder_id) return PRODUCT_STATUS.PENDING;
+  if (endDate <= now && !product.highest_bidder_id) return PRODUCT_STATUS.EXPIRED;
+  return PRODUCT_STATUS.ACTIVE;
+}
+
+export function isSellerOrBidder(product, userId) {
+  return product.seller_id === userId || product.highest_bidder_id === userId;
 }
 
 export async function getProductDetails(productId, userId, commentPage = 1) {
@@ -28,11 +32,9 @@ export async function getProductDetails(productId, userId, commentPage = 1) {
   const productStatus = determineProductStatus(product);
 
   // Check authorization for non-ACTIVE products
-  if (productStatus !== 'ACTIVE') {
+  if (productStatus !== PRODUCT_STATUS.ACTIVE) {
     if (!userId) return { unauthorized: true };
-    const isSeller = product.seller_id === userId;
-    const isHighestBidder = product.highest_bidder_id === userId;
-    if (!isSeller && !isHighestBidder) return { unauthorized: true };
+    if (!isSellerOrBidder(product, userId)) return { unauthorized: true };
   }
 
   const commentsPerPage = PAGINATION.COMMENTS_PER_PAGE;

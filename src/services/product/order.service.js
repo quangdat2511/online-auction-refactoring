@@ -1,5 +1,6 @@
 import { productModel, reviewModel, orderModel, invoiceModel, orderChatModel } from '../../models/index.js';
-import { determineProductStatus } from './detail.service.js';
+import { determineProductStatus, isSellerOrBidder } from './detail.service.js';
+import { ORDER_STATUS, PRODUCT_STATUS } from '../../config/app.config.js';
 
 function parsePostgresArray(value) {
   if (!value || typeof value !== 'string') return value;
@@ -16,12 +17,9 @@ export async function getCompleteOrderPage(productId, userId) {
 
   const productStatus = determineProductStatus(product);
 
-  if (productStatus !== 'PENDING') return { redirect: `/products/detail?id=${productId}` };
+  if (productStatus !== PRODUCT_STATUS.PENDING) return { redirect: `/products/detail?id=${productId}` };
 
-  const isSeller = product.seller_id === userId;
-  const isHighestBidder = product.highest_bidder_id === userId;
-
-  if (!isSeller && !isHighestBidder) return { unauthorized: true };
+  if (!isSellerOrBidder(product, userId)) return { unauthorized: true };
 
   let order = await orderModel.findByProductId(productId);
   if (!order) {
@@ -55,7 +53,7 @@ export async function submitPayment(orderId, userId, { payment_method, payment_p
 
   await invoiceModel.createPaymentInvoice({ order_id: orderId, issuer_id: userId, payment_method, payment_proof_urls, note });
   await orderModel.updateShippingInfo(orderId, { shipping_address, shipping_phone });
-  await orderModel.updateStatus(orderId, 'payment_submitted', userId);
+  await orderModel.updateStatus(orderId, ORDER_STATUS.PAYMENT_SUBMITTED, userId);
 }
 
 export async function confirmPayment(orderId, userId) {
@@ -66,7 +64,7 @@ export async function confirmPayment(orderId, userId) {
   if (!paymentInvoice) throw new Error('No payment invoice found');
 
   await invoiceModel.verifyInvoice(paymentInvoice.id);
-  await orderModel.updateStatus(orderId, 'payment_confirmed', userId);
+  await orderModel.updateStatus(orderId, ORDER_STATUS.PAYMENT_CONFIRMED, userId);
 }
 
 export async function submitShipping(orderId, userId, { tracking_number, shipping_provider, shipping_proof_urls, note }) {
@@ -74,20 +72,20 @@ export async function submitShipping(orderId, userId, { tracking_number, shippin
   if (!order || order.seller_id !== userId) throw new Error('Unauthorized');
 
   await invoiceModel.createShippingInvoice({ order_id: orderId, issuer_id: userId, tracking_number, shipping_provider, shipping_proof_urls, note });
-  await orderModel.updateStatus(orderId, 'shipped', userId);
+  await orderModel.updateStatus(orderId, ORDER_STATUS.SHIPPED, userId);
 }
 
 export async function confirmDelivery(orderId, userId) {
   const order = await orderModel.findById(orderId);
   if (!order || order.buyer_id !== userId) throw new Error('Unauthorized');
-  await orderModel.updateStatus(orderId, 'delivered', userId);
+  await orderModel.updateStatus(orderId, ORDER_STATUS.DELIVERED, userId);
 }
 
 async function finalizeOrderIfBothReviewed(order, userId) {
   const buyerReview = await reviewModel.getProductReview(order.buyer_id, order.seller_id, order.product_id);
   const sellerReview = await reviewModel.getProductReview(order.seller_id, order.buyer_id, order.product_id);
   if (buyerReview && sellerReview) {
-    await orderModel.updateStatus(order.id, 'completed', userId);
+    await orderModel.updateStatus(order.id, ORDER_STATUS.COMPLETED, userId);
     await productModel.markAsSold(order.product_id);
   }
 }

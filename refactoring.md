@@ -1649,15 +1649,15 @@ startAuctionEndNotifier(AUCTION.END_NOTIFIER_INTERVAL_SECONDS);
 
 ---
 
-### 📌 Vị trí 2.10: Logic tính phân trang lặp lại (DRY)
+### 📌 Vị trí 2.10: Logic tính phân trang lặp lại
 
 **Mô tả vi phạm:**
 Khối tính toán `nPages`, `from`, `to` cho phân trang được **copy-paste 3 lần** trong 3 route handler khác nhau:
 
 ```javascript
-// src_origin/routes/product.route.js — route /category (line 67-71)
-// src_origin/routes/product.route.js — route /search  (line 120-124)
-// src_origin/routes/account.route.js — route /watchlist (line 547-551)
+// /routes/product.route.js — route /category (line 67-71)
+// /routes/product.route.js — route /search  (line 120-124)
+// /routes/account.route.js — route /watchlist (line 547-551)
 const nPages = Math.ceil(totalCount / limit);
 let from = (page - 1) * limit + 1;
 let to = page * limit;
@@ -1725,6 +1725,330 @@ const { nPages, from, to } = calcPagination(totalCount, page, limit);
 
 ---
 
+### 📌 Vị trí 2.11: Logic xác định trạng thái sản phẩm lặp lại
+
+**Mô tả vi phạm:**
+Khối if-else xác định `productStatus` được **copy-paste** ít nhất **2 lần** trong `src_origin/routes/product.route.js` — một lần ở route `/detail` (line 153) và một lần ở route `/complete-order` (line 985):
+
+```javascript
+// Lặp lại ở cả 2 route handler:
+let productStatus = 'ACTIVE';
+if (product.is_sold === true)
+  productStatus = 'SOLD';
+else if (product.is_sold === false)
+  productStatus = 'CANCELLED';
+else if ((endDate <= now || product.closed_at) && product.highest_bidder_id)
+  productStatus = 'PENDING';
+else if (endDate <= now && !product.highest_bidder_id)
+  productStatus = 'EXPIRED';
+```
+
+:::warning
+**Tác động:**
+* Thêm trạng thái mới (VD: `PAUSED`) phải cập nhật ở nhiều chỗ — dễ bỏ sót.
+* Thay đổi điều kiện một trạng thái mà quên chỗ còn lại gây hành vi không nhất quán giữa các trang.
+:::
+
+**💡 Đề xuất cải thiện:**
+Trích xuất thành một **pure function** `determineProductStatus(product)` trong `detail.service.js` và export để mọi service cùng dùng — không cần truyền thêm tham số vì đủ thông tin từ object `product`.
+
+### Minh chứng
+
+**`src/services/product/detail.service.js` — trích xuất thành hàm tái sử dụng:**
+```javascript
+export function determineProductStatus(product) {
+  const now = new Date();
+  const endDate = new Date(product.end_at);
+
+  if (product.is_sold === true) return 'SOLD';
+  if (product.is_sold === false) return 'CANCELLED';
+  if ((endDate <= now || product.closed_at) && product.highest_bidder_id) return 'PENDING';
+  if (endDate <= now && !product.highest_bidder_id) return 'EXPIRED';
+  return 'ACTIVE';
+}
+
+export async function getProductDetails(productId, userId, commentPage = 1) {
+  // ...
+  const productStatus = determineProductStatus(product); // ✅ gọi hàm chung
+  // ...
+}
+```
+
+**`src/services/product/order.service.js` — import và tái sử dụng thay vì copy-paste:**
+```javascript
+import { determineProductStatus } from './detail.service.js';
+
+export async function getCompleteOrderPage(productId, userId) {
+  // ...
+  const productStatus = determineProductStatus(product); // ✅ tái sử dụng
+  if (productStatus !== 'PENDING') return { redirect: `/products/detail?id=${productId}` };
+  // ...
+}
+```
+
+**Kết quả:** Logic xác định trạng thái sản phẩm chỉ tồn tại **1 chỗ duy nhất** — thêm/sửa trạng thái chỉ cần chỉnh `determineProductStatus`.
+
+---
+
+### 📌 Vị trí 2.12: Authorization check `isSeller`/`isHighestBidder` lặp lại
+
+**Mô tả vi phạm:**
+Khối kiểm tra quyền truy cập được **copy-paste** ở 2 route handler trong `src_origin/routes/product.route.js` (route `/detail` line 181 và route `/complete-order` line 1003):
+
+```javascript
+// Lặp lại ở cả 2 route handler:
+const isSeller = product.seller_id === userId;
+const isHighestBidder = product.highest_bidder_id === userId;
+if (!isSeller && !isHighestBidder) { /* reject */ }
+```
+
+:::warning
+**Tác động:**
+* Thay đổi quy tắc phân quyền (VD: cho phép admin) phải sửa ở nhiều chỗ — dễ bỏ sót.
+* Logic 3 dòng rải rác gây noise, khó nhận ra sự khác biệt thực sự giữa các handler.
+:::
+
+**💡 Đề xuất cải thiện:**
+Trích xuất thành **helper function** `isSellerOrBidder(product, userId)` trong `detail.service.js` — mọi service kiểm tra quyền đều gọi chung 1 hàm.
+
+### Minh chứng
+
+**`src/services/product/detail.service.js` — trích xuất thành helper tái sử dụng:**
+```javascript
+export function isSellerOrBidder(product, userId) {
+  return product.seller_id === userId || product.highest_bidder_id === userId;
+}
+
+// Dùng trong getProductDetails:
+if (!isSellerOrBidder(product, userId)) return { unauthorized: true }; // ✅ 1 dòng
+```
+
+**`src/services/product/order.service.js` — import và tái sử dụng:**
+```javascript
+import { determineProductStatus, isSellerOrBidder } from './detail.service.js';
+
+// ...
+if (!isSellerOrBidder(product, userId)) return { unauthorized: true }; // ✅ tái sử dụng
+```
+
+**Kết quả:** Logic kiểm tra quyền chỉ định nghĩa **1 lần** trong `isSellerOrBidder` — thay đổi quy tắc phân quyền chỉ cần sửa ở 1 chỗ.
+
+---
+## OPEN/CLOSED PRINCIPLE (OCP)
+
+### 📌 Vị trí 1: `src/models/postgres/order.model.js` — switch trên trạng thái order
+
+**Mô tả vi phạm:**
+Hàm `updateStatus` trong `src_origin/models/order.model.js` dùng một **khối `switch` dài** để gán timestamp tương ứng khi order chuyển sang mỗi trạng thái:
+
+```javascript
+switch (newStatus) {
+  case 'payment_submitted':
+    updateData.payment_submitted_at = db.fn.now(); break;
+  case 'payment_confirmed':
+    updateData.payment_confirmed_at = db.fn.now(); break;
+  case 'shipped':
+    updateData.shipped_at = db.fn.now(); break;
+  case 'delivered':
+    updateData.delivered_at = db.fn.now(); break;
+  case 'completed':
+    updateData.completed_at = db.fn.now(); break;
+  case 'cancelled':
+    updateData.cancelled_at = db.fn.now();
+    updateData.cancelled_by = userId;
+    if (note) updateData.cancellation_reason = note;
+    break;
+}
+```
+
+Ngoài ra, toàn bộ codebase rải string literal trạng thái (`'payment_submitted'`, `'PENDING'`, `'CANCELLED'`…) trực tiếp tại từng call site thay vì dùng constants tập trung.
+
+:::warning
+**Tác động:**
+
+* **Vi phạm OCP:** Thêm trạng thái mới (VD: `refund_requested`) bắt buộc sửa thẳng vào hàm `updateStatus` — mở rộng = phải sửa.
+* **Lỗi runtime khó phát hiện:** Gõ sai string literal `'Payment_Submitted'` thay vì `'payment_submitted'` — không có lỗi compile, chỉ bị silent bug lúc runtime.
+* **Scatter:** String literal trạng thái lặp lại ở model, service, route — đổi tên một trạng thái phải grep toàn project.
+:::
+
+**💡 Đề xuất cải thiện:**
+1. **Tập trung constants** — xuất `ORDER_STATUS` và `PRODUCT_STATUS` từ `app.config.js`.
+2. **Thay `switch` bằng data-driven map** — `STATUS_TIMESTAMPS` object ánh xạ mỗi status → hàm trả extra DB fields. Thêm trạng thái mới chỉ cần thêm một entry vào map, hàm `updateStatus` không bao giờ cần thay đổi.
+
+```javascript
+// src/config/app.config.js — constants tập trung
+export const ORDER_STATUS = {
+  PENDING_PAYMENT:   'pending_payment',
+  PAYMENT_SUBMITTED: 'payment_submitted',
+  PAYMENT_CONFIRMED: 'payment_confirmed',
+  SHIPPED:           'shipped',
+  DELIVERED:         'delivered',
+  COMPLETED:         'completed',
+  CANCELLED:         'cancelled',
+};
+
+export const PRODUCT_STATUS = {
+  ACTIVE:  'ACTIVE',  PENDING:   'PENDING',
+  SOLD:    'SOLD',    CANCELLED: 'CANCELLED',  EXPIRED:   'EXPIRED',
+};
+
+// src/models/postgres/order.model.js — map thay thế switch
+const STATUS_TIMESTAMPS = {
+  [ORDER_STATUS.PAYMENT_SUBMITTED]: () => ({ payment_submitted_at: db.fn.now() }),
+  [ORDER_STATUS.PAYMENT_CONFIRMED]: () => ({ payment_confirmed_at: db.fn.now() }),
+  [ORDER_STATUS.SHIPPED]:           () => ({ shipped_at:            db.fn.now() }),
+  [ORDER_STATUS.DELIVERED]:         () => ({ delivered_at:          db.fn.now() }),
+  [ORDER_STATUS.COMPLETED]:         () => ({ completed_at:          db.fn.now() }),
+  [ORDER_STATUS.CANCELLED]: (userId, note) => ({
+    cancelled_at: db.fn.now(),
+    cancelled_by: userId,
+    ...(note ? { cancellation_reason: note } : {}),
+  }),
+  // ← thêm trạng thái mới: chỉ cần thêm 1 dòng tại đây
+};
+```
+
+### Minh chứng
+
+**`src/config/app.config.js` — hai nhóm status constants mới:**
+
+```javascript
+// --- Order Status (DB-level, stored in orders.status column) ---
+// Adding a new order status only requires adding an entry here +
+// a matching entry in STATUS_TIMESTAMPS in order.model.js;
+// no switch/if chains to touch.
+export const ORDER_STATUS = {
+  PENDING_PAYMENT:   'pending_payment',
+  PAYMENT_SUBMITTED: 'payment_submitted',
+  PAYMENT_CONFIRMED: 'payment_confirmed',
+  SHIPPED:           'shipped',
+  DELIVERED:         'delivered',
+  COMPLETED:         'completed',
+  CANCELLED:         'cancelled',
+};
+
+// --- Product Status (app-level, computed by determineProductStatus) ---
+export const PRODUCT_STATUS = {
+  ACTIVE:    'ACTIVE',
+  PENDING:   'PENDING',
+  SOLD:      'SOLD',
+  CANCELLED: 'CANCELLED',
+  EXPIRED:   'EXPIRED',
+};
+```
+
+**`src/models/postgres/order.model.js` — `STATUS_TIMESTAMPS` map thay thế hoàn toàn `switch`:**
+
+```javascript
+import { ORDER_STATUS } from '../../config/app.config.js';
+
+/**
+ * Maps each order status to the extra DB fields that must be stamped when
+ * that status is entered.  To support a new status, add one entry here —
+ * no switch/if chain needs to be touched (Open/Closed Principle).
+ */
+const STATUS_TIMESTAMPS = {
+  [ORDER_STATUS.PAYMENT_SUBMITTED]:  ()           => ({ payment_submitted_at: db.fn.now() }),
+  [ORDER_STATUS.PAYMENT_CONFIRMED]:  ()           => ({ payment_confirmed_at: db.fn.now() }),
+  [ORDER_STATUS.SHIPPED]:            ()           => ({ shipped_at:           db.fn.now() }),
+  [ORDER_STATUS.DELIVERED]:          ()           => ({ delivered_at:         db.fn.now() }),
+  [ORDER_STATUS.COMPLETED]:          ()           => ({ completed_at:         db.fn.now() }),
+  [ORDER_STATUS.CANCELLED]: (userId, note) => ({
+    cancelled_at:     db.fn.now(),
+    cancelled_by:     userId,
+    ...(note ? { cancellation_reason: note } : {}),
+  }),
+};
+
+// Trong updateStatus — một dòng thay thế toàn bộ switch 20+ dòng:
+const extraFields = STATUS_TIMESTAMPS[newStatus]?.(userId, note) ?? {};
+Object.assign(updateData, extraFields);
+```
+
+**`src/services/product/order.service.js` — dùng constants thay string literal:**
+
+```javascript
+import { ORDER_STATUS, PRODUCT_STATUS } from '../../config/app.config.js';
+
+if (productStatus !== PRODUCT_STATUS.PENDING) return { redirect: ... };
+
+await orderModel.updateStatus(orderId, ORDER_STATUS.PAYMENT_SUBMITTED, userId);
+await orderModel.updateStatus(orderId, ORDER_STATUS.PAYMENT_CONFIRMED, userId);
+await orderModel.updateStatus(orderId, ORDER_STATUS.SHIPPED,           userId);
+await orderModel.updateStatus(orderId, ORDER_STATUS.DELIVERED,         userId);
+await orderModel.updateStatus(order.id, ORDER_STATUS.COMPLETED,        userId);
+```
+
+**`src/services/product/detail.service.js` — `determineProductStatus` dùng `PRODUCT_STATUS` constants:**
+
+```javascript
+import { PAGINATION, PRODUCT_STATUS } from '../../config/app.config.js';
+
+export function determineProductStatus(product) {
+  const now = new Date();
+  const endDate = new Date(product.end_at);
+
+  if (product.is_sold === true)  return PRODUCT_STATUS.SOLD;
+  if (product.is_sold === false) return PRODUCT_STATUS.CANCELLED;
+  if ((endDate <= now || product.closed_at) && product.highest_bidder_id) return PRODUCT_STATUS.PENDING;
+  if (endDate <= now && !product.highest_bidder_id) return PRODUCT_STATUS.EXPIRED;
+  return PRODUCT_STATUS.ACTIVE;
+}
+
+// ...
+if (productStatus !== PRODUCT_STATUS.ACTIVE) { ... }
+```
+
+**Kết quả:**
+- **Mở rộng không cần sửa:** Thêm trạng thái order mới (VD `refund_requested`) → chỉ thêm 1 entry vào `STATUS_TIMESTAMPS` + 1 key vào `ORDER_STATUS`. Hàm `updateStatus`, `order.service.js`, `detail.service.js` không cần đụng vào.
+- **Typo-safe:** IDE autocomplete trên `ORDER_STATUS.PAYMENT_SUBMITTED` thay vì nhớ/gõ tay string `'payment_submitted'`.
+- **Single source of truth:** Đổi tên trạng thái chỉ sửa 1 dòng trong `app.config.js`.
+
+---
+
+### 📌 Vị trí 2: `src/routes/product.route.js` (Lines 336-788)
+
+**Mô tả vi phạm:**
+Route `/bid` là một **God Function** với **450 dòng code**. Để thêm tính năng mới (VD: bid bằng crypto, chặn user rating thấp), phải sửa trực tiếp vào hàm này.
+
+:::warning
+**Tác động:**
+
+* **Cannot extend without modification:** Vi phạm OCP.
+* **High risk of bugs:** Sửa logic này dễ làm hỏng logic kia.
+* **Khó test:** 450 dòng logic lồng nhau rất khó viết unit test.
+:::
+
+**💡 Đề xuất cải thiện:**
+Áp dụng **Strategy Pattern** (cho Validation) và **Chain of Responsibility** (cho Processing).
+
+```javascript
+// Orchestrator
+export class BiddingService {
+    constructor() {
+        this.validators = [
+            new SellerBidValidator(),
+            new RatingValidator(), // Dễ dàng thêm validator mới
+            new BidAmountValidator()
+        ];
+        this.processors = [
+            new AutomaticBiddingProcessor(),
+            new BuyNowProcessor()
+        ];
+    }
+    
+    async placeBid(userId, productId, bidAmount) {
+        // Run validators
+        for (const validator of this.validators) await validator.validate(ctx);
+        
+        // Run processors
+        for (const processor of this.processors) await processor.process(ctx);
+    }
+}
+
+```
+
+---
 ## DEPENDENCY INVERSION PRINCIPLE (DIP)
 
 ### 📌 Vị trí: `src/routes/account.route.js`, `src/routes/product.route.js`
@@ -1982,53 +2306,7 @@ export async function checkAndNotifyEndedAuctions() {
 }
 ```
 
----
 
-## OPEN/CLOSED PRINCIPLE (OCP)
-
-### 📌 Vị trí: `src/routes/product.route.js` (Lines 336-788)
-
-**Mô tả vi phạm:**
-Route `/bid` là một **God Function** với **450 dòng code**. Để thêm tính năng mới (VD: bid bằng crypto, chặn user rating thấp), phải sửa trực tiếp vào hàm này.
-
-:::warning
-**Tác động:**
-
-* **Cannot extend without modification:** Vi phạm OCP.
-* **High risk of bugs:** Sửa logic này dễ làm hỏng logic kia.
-* **Khó test:** 450 dòng logic lồng nhau rất khó viết unit test.
-:::
-
-**💡 Đề xuất cải thiện:**
-Áp dụng **Strategy Pattern** (cho Validation) và **Chain of Responsibility** (cho Processing).
-
-```javascript
-// Orchestrator
-export class BiddingService {
-    constructor() {
-        this.validators = [
-            new SellerBidValidator(),
-            new RatingValidator(), // Dễ dàng thêm validator mới
-            new BidAmountValidator()
-        ];
-        this.processors = [
-            new AutomaticBiddingProcessor(),
-            new BuyNowProcessor()
-        ];
-    }
-    
-    async placeBid(userId, productId, bidAmount) {
-        // Run validators
-        for (const validator of this.validators) await validator.validate(ctx);
-        
-        // Run processors
-        for (const processor of this.processors) await processor.process(ctx);
-    }
-}
-
-```
-
----
 
 ## KISS (Keep It Simple, Stupid)
 

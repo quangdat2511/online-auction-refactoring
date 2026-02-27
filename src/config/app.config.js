@@ -31,3 +31,25 @@ export const SESSION = {
 export const AUCTION = {
   END_NOTIFIER_INTERVAL_SECONDS: 30, // How often the end-notifier cron job runs
 };
+
+// --- Order Status (DB-level, stored in orders.status column) ---
+// Adding a new order status only requires adding an entry here + a matching
+// entry in STATUS_TIMESTAMPS in order.model.js; no switch/if chains to touch.
+export const ORDER_STATUS = {
+  PENDING_PAYMENT:   'pending_payment',
+  PAYMENT_SUBMITTED: 'payment_submitted',
+  PAYMENT_CONFIRMED: 'payment_confirmed',
+  SHIPPED:           'shipped',
+  DELIVERED:         'delivered',
+  COMPLETED:         'completed',
+  CANCELLED:         'cancelled',
+};
+
+// --- Product Status (app-level, computed by determineProductStatus) ---
+export const PRODUCT_STATUS = {
+  ACTIVE:    'ACTIVE',
+  PENDING:   'PENDING',
+  SOLD:      'SOLD',
+  CANCELLED: 'CANCELLED',
+  EXPIRED:   'EXPIRED',
+};
