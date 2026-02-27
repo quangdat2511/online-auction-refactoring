@@ -7,8 +7,8 @@ export async function add(user) {
     .returning(['id', 'email', 'fullname', 'address', 'role', 'email_verified']);
   return rows[0]; // object: { id, email, fullname, ... }
 }
-export function findById(id) {
-  return db('users').where('id', id).first();
+export function findById(id, trx = null) {
+  return (trx || db)('users').where('id', id).first();
 }
 export function loadAllUsers() {
   return db('users').orderBy('id', 'desc');

@@ -16,11 +16,7 @@ import { startAuctionEndNotifier } from './scripts/auctionEndNotifier.js';
 import homeRouter from './routes/home.route.js';
 import productRouter from './routes/product/index.js';
 import accountRouter from './routes/account/index.js';
-import adminCategoryRouter from './routes/admin/category.route.js';
-import adminUserRouter from './routes/admin/user.route.js';
-import adminAccountRouter from './routes/admin/account.route.js';
-import adminProductRouter from './routes/admin/product.route.js';
-import adminSystemRouter from './routes/admin/system.route.js';
+import adminRouter from './routes/admin/index.js';
 import sellerRouter from './routes/seller/index.js';
 
 // Import Middlewares
@@ -71,11 +67,7 @@ app.use('/admin', isAdmin, setAdminMode);
 
 // 5. ROUTES
 // Các Route Admin
-app.use('/admin/account', adminAccountRouter);
-app.use('/admin/users', adminUserRouter);
-app.use('/admin/categories', adminCategoryRouter);
-app.use('/admin/products', adminProductRouter);
-app.use('/admin/system', adminSystemRouter);
+app.use('/admin', adminRouter);
 
 // Các Route Seller
 app.use('/seller', isAuthenticated, isSeller, sellerRouter);

@@ -494,6 +494,18 @@ export function deleteProduct(productId) {
     .del();
 }
 
+export function findForUpdate(productId, trx) {
+  return (trx || db)('products').where('id', productId).forUpdate().first();
+}
+
+export function updateProductData(productId, productData, trx = null) {
+  return (trx || db)('products').where('id', productId).update(productData);
+}
+
+export function markAsSold(productId, trx = null) {
+  return (trx || db)('products').where('id', productId).update({ is_sold: true, closed_at: new Date() });
+}
+
 // Seller Statistics Functions
 export function countProductsBySellerId(sellerId) {
   return db('products')

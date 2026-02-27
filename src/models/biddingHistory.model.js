@@ -7,12 +7,28 @@ import db from '../utils/db.js';
  * @param {number} currentPrice - Giá hiện tại của sản phẩm sau khi update
  * @returns {Promise} Kết quả insert
  */
-export async function createBid(productId, bidderId, currentPrice) {
-  return db('bidding_history').insert({
+export async function createBid(productId, bidderId, currentPrice, trx = null, options = {}) {
+  const { isBuyNow = false } = options;
+  return (trx || db)('bidding_history').insert({
     product_id: productId,
     bidder_id: bidderId,
-    current_price: currentPrice
+    current_price: currentPrice,
+    ...(isBuyNow && { is_buy_now: true }),
   }).returning('*');
+}
+
+export async function deleteByProductAndBidder(productId, bidderId, trx = null) {
+  return (trx || db)('bidding_history')
+    .where('product_id', productId)
+    .where('bidder_id', bidderId)
+    .del();
+}
+
+export async function getLastByProduct(productId, trx = null) {
+  return (trx || db)('bidding_history')
+    .where('product_id', productId)
+    .orderBy('created_at', 'desc')
+    .first();
 }
 
 /**

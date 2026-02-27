@@ -6,8 +6,8 @@ import db from '../utils/db.js';
  * @param {number} bidderId - Bidder ID
  * @returns {Promise<boolean>} True if bidder is rejected
  */
-export async function isRejected(productId, bidderId) {
-  const result = await db('rejected_bidders')
+export async function isRejected(productId, bidderId, trx = null) {
+  const result = await (trx || db)('rejected_bidders')
     .where('product_id', productId)
     .where('bidder_id', bidderId)
     .first();
@@ -22,12 +22,11 @@ export async function isRejected(productId, bidderId) {
  * @param {number} sellerId - Seller ID who rejected
  * @returns {Promise} Insert result
  */
-export async function rejectBidder(productId, bidderId, sellerId) {
-  return db('rejected_bidders').insert({
-    product_id: productId,
-    bidder_id: bidderId,
-    seller_id: sellerId
-  }).returning('*');
+export async function rejectBidder(productId, bidderId, sellerId, trx = null) {
+  return (trx || db)('rejected_bidders')
+    .insert({ product_id: productId, bidder_id: bidderId, seller_id: sellerId })
+    .onConflict(['product_id', 'bidder_id'])
+    .ignore();
 }
 
 /**

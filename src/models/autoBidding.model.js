@@ -7,9 +7,9 @@ import db from '../utils/db.js';
  * @param {number} maxPrice - Giá tối đa người này sẵn sàng trả
  * @returns {Promise} Kết quả upsert
  */
-export async function upsertAutoBid(productId, bidderId, maxPrice) {
+export async function upsertAutoBid(productId, bidderId, maxPrice, trx = null) {
   // Use PostgreSQL's ON CONFLICT to handle upsert
-  return db.raw(`
+  return (trx || db).raw(`
     INSERT INTO auto_bidding (product_id, bidder_id, max_price)
     VALUES (?, ?, ?)
     ON CONFLICT (product_id, bidder_id)
@@ -26,8 +26,8 @@ export async function upsertAutoBid(productId, bidderId, maxPrice) {
  * @param {number} bidderId - ID người đặt giá
  * @returns {Promise<Object>} Auto bid record
  */
-export async function getAutoBid(productId, bidderId) {
-  return db('auto_bidding')
+export async function getAutoBid(productId, bidderId, trx = null) {
+  return (trx || db)('auto_bidding')
     .where('product_id', productId)
     .where('bidder_id', bidderId)
     .first();
@@ -38,8 +38,8 @@ export async function getAutoBid(productId, bidderId) {
  * @param {number} productId - ID sản phẩm
  * @returns {Promise<Array>} Danh sách auto bids
  */
-export async function getAllAutoBids(productId) {
-  return db('auto_bidding')
+export async function getAllAutoBids(productId, trx = null) {
+  return (trx || db)('auto_bidding')
     .where('product_id', productId)
     .orderBy('max_price', 'desc');
 }
@@ -50,8 +50,8 @@ export async function getAllAutoBids(productId) {
  * @param {number} bidderId - ID người đặt giá
  * @returns {Promise} Kết quả xóa
  */
-export async function deleteAutoBid(productId, bidderId) {
-  return db('auto_bidding')
+export async function deleteAutoBid(productId, bidderId, trx = null) {
+  return (trx || db)('auto_bidding')
     .where('product_id', productId)
     .where('bidder_id', bidderId)
     .del();
