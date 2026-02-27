@@ -1,6 +1,7 @@
 import * as userModel from '../models/user.model.js';
+import { SESSION } from '../config/app.config.js';
 
-const SESSION_REFRESH_INTERVAL = 60_000; // 60 seconds
+const SESSION_REFRESH_INTERVAL = SESSION.REFRESH_INTERVAL_MS;
 
 export async function userSessionMiddleware(req, res, next) {
   // Bỏ qua static assets — không cần hit DB cho CSS/JS/images

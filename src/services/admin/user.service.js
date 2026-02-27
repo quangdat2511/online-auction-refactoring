@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import * as userModel from '../../models/user.model.js';
 import * as upgradeRequestModel from '../../models/upgradeRequest.model.js';
 import { sendMail } from '../../utils/mailer.js';
+import { AUTH } from '../../config/app.config.js';
 
 const DEFAULT_PASSWORD = '123';
 
@@ -14,7 +15,7 @@ export async function getUserById(id) {
 }
 
 export async function addUser({ fullname, email, address, date_of_birth, role, email_verified, password }) {
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, AUTH.BCRYPT_SALT_ROUNDS);
   await userModel.add({
     fullname,
     email,
@@ -41,7 +42,7 @@ export async function updateUser(id, { fullname, email, address, date_of_birth, 
 }
 
 export async function resetPassword(id) {
-  const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+  const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, AUTH.BCRYPT_SALT_ROUNDS);
   const user = await userModel.findById(id);
   await userModel.update(id, { password_hash: hashedPassword, updated_at: new Date() });
 

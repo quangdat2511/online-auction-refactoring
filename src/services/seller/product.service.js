@@ -3,8 +3,7 @@ import * as reviewModel from '../../models/review.model.js';
 import * as productDescUpdateModel from '../../models/productDescriptionUpdate.model.js';
 import * as biddingHistoryModel from '../../models/biddingHistory.model.js';
 import * as productCommentModel from '../../models/productComment.model.js';
-import path from 'path';
-import fs from 'fs';
+import { moveProductImages } from '../../utils/productImageHelper.js';
 
 // listing helpers
 export function getAllProducts(sellerId) {
@@ -101,43 +100,13 @@ export async function addProduct(sellerId, product, imgsList) {
 
   const newId = returnedID[0].id || returnedID[0];
 
-  // === move images (thumbnail + sub-images) ===
-  const dirPath = path.join('public', 'images', 'products').replace(/\\/g, '/');
-
-  // thumbnail
-  if (product.thumbnail) {
-    const oldMainPath = path
-      .join('public', 'uploads', path.basename(product.thumbnail))
-      .replace(/\\/g, '/');
-    const mainPath = path.join(dirPath, `p${newId}_thumb.jpg`).replace(/\\/g, '/');
-    const savedMainPath =
-      '/' + path.join('images', 'products', `p${newId}_thumb.jpg`).replace(/\\/g, '/');
-    fs.renameSync(oldMainPath, mainPath);
-    await productModel.updateProductThumbnail(newId, savedMainPath);
-  }
-
-  // sub-images
-  if (imgsList && imgsList.length) {
-    let i = 1;
-    const newImgPaths = [];
-    for (const imgPath of imgsList) {
-      const oldPath = path
-        .join('public', 'uploads', path.basename(imgPath))
-        .replace(/\\/g, '/');
-      const newPath = path
-        .join(dirPath, `p${newId}_${i}.jpg`)
-        .replace(/\\/g, '/');
-      const savedPath =
-        '/' +
-        path
-          .join('images', 'products', `p${newId}_${i}.jpg`)
-          .replace(/\\/g, '/');
-      fs.renameSync(oldPath, newPath);
-      newImgPaths.push({ product_id: newId, img_link: savedPath });
-      i++;
-    }
-    await productModel.addProductImages(newImgPaths);
-  }
+  const { thumbnailPath, imagePaths } = await moveProductImages(
+    newId,
+    product.thumbnail,
+    imgsList
+  );
+  if (thumbnailPath) await productModel.updateProductThumbnail(newId, thumbnailPath);
+  if (imagePaths.length) await productModel.addProductImages(imagePaths);
 
   return newId;
 }

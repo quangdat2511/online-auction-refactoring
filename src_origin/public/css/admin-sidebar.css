@@ -1,0 +1,66 @@
+/* ============================================
+   ADMIN SIDEBAR STYLES
+   ============================================ */
+
+/* Admin Sidebar Container */
+.profile-nav {
+  position: sticky !important;
+  top: 120px !important;
+  max-height: calc(100vh - 140px) !important;
+  overflow-y: auto !important;
+}
+
+.profile-nav .list-group-item {
+  transition: all 0.3s ease !important;
+  border-left: 3px solid transparent !important;
+  border: none !important;
+}
+
+.profile-nav .list-group-item:hover {
+  background-color: #f8f9fa !important;
+  border-left-color: #dc3545 !important;
+}
+
+.profile-nav .list-group-item.active {
+  background-color: #dc3545 !important;
+  color: white !important;
+  border-left-color: #dc3545 !important;
+}
+
+.profile-nav .list-group-item.active i {
+  color: white !important;
+}
+
+.profile-nav .list-group-item.active span {
+  color: white !important;
+}
+
+/* Scrollbar Styles */
+.profile-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.profile-nav::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.profile-nav::-webkit-scrollbar-thumb {
+  background: #dc3545;
+  border-radius: 10px;
+}
+
+.profile-nav::-webkit-scrollbar-thumb:hover {
+  background: #c82333;
+}
+
+/* Card Styles */
+.card.shadow-sm {
+  transition: box-shadow 0.3s ease;
+  border: 1px solid #dee2e6 !important;
+}
+
+.card.shadow-sm:hover {
+  box-shadow: 0 0.5rem 1rem rgba(220, 53, 69, 0.15) !important;
+  border-color: #dc3545 !important;
+}

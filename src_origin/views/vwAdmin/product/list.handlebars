@@ -1,0 +1,144 @@
+{{#section 'js'}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Xử lý sự kiện nút xóa
+    $('.btn-delete').on('click', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        const name = $(this).data('name');
+        const form = $('#formDelete');
+        
+        form.attr('action', '/admin/products/delete'); 
+        $('#txtDeleteId').val(id);
+        
+        Swal.fire({
+            title: 'Are you sure?',
+            text: `You are about to delete product: "${name}". This action cannot be undone!`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.submit();
+            }
+        });
+    });
+</script>
+{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    <!-- SIDEBAR -->
+    <div class="col-md-3 mb-4">
+        {{> admin-sidebar activeSection='products'}}
+    </div>
+
+    <!-- CONTENT -->
+    <div class="col-md-9">
+      <div class="card shadow-sm border-0 h-100">
+        
+        <!-- Header & Toolbar -->
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 fw-bold text-danger">
+              <i class="bi bi-box-seam-fill me-2"></i> MANAGE PRODUCTS
+          </h5>
+          <a href="/admin/products/add" class="btn btn-danger btn-sm rounded-pill px-3">
+              <i class="bi bi-plus-lg me-1"></i> Add New Product
+          </a>
+        </div>
+        
+        <!-- Body -->
+        <div class="card-body p-0">
+            
+            {{!-- Hiển thị thông báo thành công nếu có --}}
+            {{#if success_message}}
+            <div class="alert alert-success m-3 alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> {{success_message}}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {{/if}}
+            {{!-- Hiển thị thông báo lỗi nếu có --}}
+            {{#if error_message}}
+            <div class="alert alert-danger m-3 alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> {{error_message}}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {{/if}}
+
+            {{#if empty}}
+            <div class="text-center py-5">
+                <div class="text-muted mb-3 opacity-50"><i class="bi bi-box-seam fs-1"></i></div>
+                <h6 class="text-muted fw-normal">No products found.</h6>
+            </div>
+            {{else}}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary text-uppercase small">
+                        <tr>
+                            <th scope="col" class="ps-4 py-3">Product Name</th>
+                            <th scope="col" class="py-3">Seller</th>
+                            <th scope="col" class="py-3">Current Price</th>
+                            <th scope="col" class="py-3">Highest Bidder</th>
+                            <th scope="col" class="text-end pe-4 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each products}}
+                        <tr>
+                            <td class="ps-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded p-2 me-3">
+                                        <i class="bi bi-box-seam-fill"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">{{name}}</div>
+                                        <div class="small text-muted">ID: #{{id}}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info text-dark">{{seller_name}}</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-success">{{format_number current_price}} VND</span>
+                            </td>
+                            <td>
+                                {{#if highest_bidder_name}}
+                                    <span class="badge bg-warning text-dark">{{highest_bidder_name}}</span>
+                                {{else}}
+                                    <span class="text-muted small">No bids yet</span>
+                                {{/if}}
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="/admin/products/detail/{{id}}" class="btn btn-sm btn-outline-info me-1" data-bs-toggle="tooltip" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                
+                                <a href="/admin/products/edit/{{id}}" class="btn btn-sm btn-outline-primary shadow-sm me-1" title="Edit Product">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-delete shadow-sm" 
+                                        data-id="{{id}}" data-name="{{name}}" title="Delete Product">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+            {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{!-- Form ẩn để xóa --}}
+<form id="formDelete" method="POST" style="display: none;">
+    <input type="hidden" name="id" id="txtDeleteId">
+</form>

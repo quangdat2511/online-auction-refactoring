@@ -1,0 +1,218 @@
+{{#section 'js'}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Xử lý nút Approve
+    document.querySelectorAll('.btn-approve').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+            
+            Swal.fire({
+                title: 'Approve Upgrade?',
+                text: "This user will be promoted to Seller immediately.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, Approve!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+
+    // Xử lý nút Reject
+    document.querySelectorAll('.btn-reject').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+            const noteInput = form.querySelector('input[name="admin_note"]');
+            
+            Swal.fire({
+                title: 'Reject Request?',
+                text: "Please provide a reason for rejection:",
+                input: 'textarea',
+                inputPlaceholder: 'Reason for rejection (optional)...',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, Reject'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    noteInput.value = result.value || '';
+                    form.submit();
+                }
+            });
+        });
+    });
+</script>
+{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    <!-- SIDEBAR -->
+    <div class="col-md-3 mb-4">
+        {{> admin-sidebar activeSection='users'}}
+    </div>
+
+    <!-- CONTENT -->
+    <div class="col-md-9">
+      <div class="card shadow-sm border-0 h-100">
+        
+        <!-- Header -->
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 fw-bold text-danger">
+              <i class="bi bi-person-up me-2"></i> UPGRADE REQUESTS
+          </h5>
+          <a href="/admin/users" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i> Back to Users List
+          </a>
+        </div>
+        
+        <!-- Body -->
+        <div class="card-body p-0">
+            
+            {{#if success_message}}
+            <div class="alert alert-success m-3 alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>{{success_message}}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {{/if}}
+
+            {{#if requests.length}}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary text-uppercase small">
+                        <tr>
+                            <th scope="col" class="ps-4 py-3">Bidder Info</th>
+                            <th scope="col" class="py-3">Request Date</th>
+                            <th scope="col" class="py-3">Status</th>
+                            <th scope="col" class="text-end pe-4 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each requests}}
+                        <tr>
+                            <td class="ps-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <img src="https://ui-avatars.com/api/?name={{fullname}}&size=40&background=random" 
+                                         class="rounded-circle me-3" width="40" height="40">
+                                    <div>
+                                        <div class="fw-bold text-dark">{{fullname}}</div>
+                                        <div class="small text-muted">{{email}}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {{#if created_at}}
+                                    <span class="text-dark">{{format_date created_at}}</span>
+                                {{else}}
+                                    <span class="text-muted small">N/A</span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                {{!-- Logic hiển thị Badge màu theo Status --}}
+                                {{#if (eq status 'pending')}}
+                                    <span class="badge bg-warning text-dark text-uppercase small fw-bold">Pending</span>
+                                {{else}}
+                                    {{#if (eq status 'approved')}}
+                                        <span class="badge bg-success text-uppercase small fw-bold">Approved</span>
+                                    {{else}}
+                                        {{#if (eq status 'rejected')}}
+                                            <span class="badge bg-danger text-uppercase small fw-bold">Rejected</span>
+                                        {{else}}
+                                            <span class="badge bg-secondary text-uppercase small fw-bold">{{status}}</span>
+                                        {{/if}}
+                                    {{/if}}
+                                {{/if}}
+                            </td>
+                            <td class="text-end pe-4">
+                                {{!-- LOGIC QUAN TRỌNG: Chỉ hiện nút khi status là 'pending' --}}
+                                {{#if (eq status 'pending')}}
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <form action="/admin/users/upgrade/approve" method="POST">
+                                            <input type="hidden" name="id" value="{{id}}">
+                                            <input type="hidden" name="bidder_id" value="{{bidder_id}}">
+                                            <button type="button" class="btn btn-sm btn-success btn-approve shadow-sm px-3" title="Approve Upgrade">
+                                                <i class="bi bi-check-lg me-1"></i> Approve
+                                            </button>
+                                        </form>
+
+                                        <form action="/admin/users/upgrade/reject" method="POST">
+                                            <input type="hidden" name="id" value="{{id}}">
+                                            <input type="hidden" name="admin_note" value=""> 
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-reject shadow-sm" title="Reject Request">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                {{else}}
+                                    {{!-- Nếu đã xử lý, hiện thông báo text hoặc icon --}}
+                                    <div class="text-muted small fst-italic">
+                                        {{#if (eq status 'approved')}}
+                                            <i class="bi bi-check-circle-fill text-success"></i> Processed
+                                        {{else}}
+                                            {{#if admin_note}}
+                                                <span title="{{admin_note}}"><i class="bi bi-info-circle"></i> View Note</span>
+                                            {{else}}
+                                                <i class="bi bi-x-circle-fill text-danger"></i> Closed
+                                            {{/if}}
+                                        {{/if}}
+                                    </div>
+                                {{/if}}
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+            {{else}}
+            <div class="text-center py-5">
+                <div class="text-muted mb-3 opacity-50">
+                    <i class="bi bi-inbox fs-1"></i>
+                </div>
+                <h6 class="text-muted fw-normal">No pending upgrade requests found.</h6>
+            </div>
+            {{/if}}
+        </div>
+        
+        {{!-- Pagination --}}
+        {{#if totalPages}}
+        <div class="card-footer bg-white border-top py-3">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0 pagination-sm">
+                    {{#if (gt currentPage 1)}}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{subtract currentPage 1}}">Previous</a>
+                    </li>
+                    {{/if}}
+                    
+                    {{#each (getPaginationRange currentPage totalPages)}}
+                        {{#if (eq this.type 'number')}}
+                        <li class="page-item {{#if (eq ../currentPage this.number)}}active{{/if}}">
+                            <a class="page-link" href="?page={{this.number}}">{{this.number}}</a>
+                        </li>
+                        {{else}}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {{/if}}
+                    {{/each}}
+
+                    {{#if (lt currentPage totalPages)}}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{add currentPage 1}}">Next</a>
+                    </li>
+                    {{/if}}
+                </ul>
+            </nav>
+        </div>
+        {{/if}}
+
+      </div>
+    </div>
+
+  </div>
+</div>

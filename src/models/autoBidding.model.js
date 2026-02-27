@@ -1,5 +1,11 @@
 import db from '../utils/db.js';
 
+// ── Internal Query Helper ────────────────────────────────
+/** Returns a subquery that counts bids for the current product row. */
+const bidCountRaw = () =>
+  db.raw(`(SELECT COUNT(*) FROM bidding_history WHERE bidding_history.product_id = products.id) AS bid_count`);
+// ─────────────────────────────────────────────────────────
+
 /**
  * Thêm hoặc cập nhật auto bidding record cho một bidder
  * @param {number} productId - ID sản phẩm
@@ -79,13 +85,7 @@ export async function getBiddingProductsByBidderId(bidderId) {
           ELSE false 
         END AS is_winning
       `, [bidderId]),
-      db.raw(`
-        (
-          SELECT COUNT(*) 
-          FROM bidding_history 
-          WHERE bidding_history.product_id = products.id
-        ) AS bid_count
-      `)
+      bidCountRaw()
     )
     .orderBy('products.end_at', 'asc');
 }
@@ -123,13 +123,7 @@ export async function getWonAuctionsByBidderId(bidderId) {
           WHEN (products.end_at <= NOW() OR products.closed_at IS NOT NULL) AND products.is_sold IS NULL THEN 'Pending'
         END AS status
       `),
-      db.raw(`
-        (
-          SELECT COUNT(*) 
-          FROM bidding_history 
-          WHERE bidding_history.product_id = products.id
-        ) AS bid_count
-      `)
+      bidCountRaw()
     )
     .orderBy('products.end_at', 'desc');
 }

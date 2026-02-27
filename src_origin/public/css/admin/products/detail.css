@@ -1,0 +1,121 @@
+/* Admin Product Detail - Styles */
+
+:root {
+  --primary-color: #72AEC8;
+  --danger-color: #dc3545;
+  --secondary-color: #6c757d;
+  --dark-color: #212529;
+  --light-color: #f8f9fa;
+}
+
+/* Button styling */
+.btn {
+  font-family: "Jost", sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: var(--light-color);
+  border: none;
+  box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  color: var(--light-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: var(--light-color);
+  border: none;
+  box-shadow: 0 2px 8px rgba(114, 174, 200, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: #5a95b0;
+  color: var(--light-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(114, 174, 200, 0.4);
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  color: var(--light-color);
+  border: none;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  color: var(--light-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+/* Product info rows */
+.info-row {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+.info-row:last-child {
+    border-bottom: none;
+}
+.info-label {
+    font-weight: 600;
+    color: #495057;
+    min-width: 200px;
+    flex-shrink: 0;
+}
+.info-value {
+    color: #212529;
+    flex: 1;
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+.product-thumbnail {
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.status-badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+}
+
+/* Card styling */
+.card {
+  border-radius: 8px;
+  border: none;
+}
+
+.card-header {
+  border-radius: 8px 8px 0 0 !important;
+}

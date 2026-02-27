@@ -5,6 +5,7 @@
 
 import * as productModel from '../models/product.model.js';
 import { sendMail } from '../utils/mailer.js';
+import { AUCTION } from '../config/app.config.js';
 
 /**
  * Kiểm tra các đấu giá kết thúc và gửi email thông báo
@@ -145,7 +146,7 @@ export async function checkAndNotifyEndedAuctions() {
  * Khởi chạy job định kỳ
  * @param {number} intervalSeconds - Khoảng thời gian giữa các lần kiểm tra (giây)
  */
-export function startAuctionEndNotifier(intervalSeconds = 30) {
+export function startAuctionEndNotifier(intervalSeconds = AUCTION.END_NOTIFIER_INTERVAL_SECONDS) {
   console.log(`🚀 Auction End Notifier started (checking every ${intervalSeconds} second(s))`);
   
   // Chạy ngay lần đầu

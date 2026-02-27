@@ -1,6 +1,7 @@
 import * as watchlistModel from '../../models/watchlist.model.js';
 import * as reviewModel from '../../models/review.model.js';
 import * as autoBiddingModel from '../../models/autoBidding.model.js';
+import { PAGINATION } from '../../config/app.config.js';
 
 export async function getRatingStats(userId) {
   const ratingData = await reviewModel.calculateRatingPoint(userId);
@@ -12,7 +13,7 @@ export async function getRatingStats(userId) {
   return { rating_point, reviews, totalReviews, positiveReviews, negativeReviews };
 }
 
-export async function getWatchlistPage(userId, page = 1, limit = 3) {
+export async function getWatchlistPage(userId, page = 1, limit = PAGINATION.PRODUCTS_PER_PAGE) {
   const offset = (page - 1) * limit;
   const watchlistProducts = await watchlistModel.searchPageByUserId(userId, limit, offset);
   const total = await watchlistModel.countByUserId(userId);

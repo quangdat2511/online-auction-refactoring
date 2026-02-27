@@ -1,0 +1,154 @@
+{{#section "css"}}
+<link rel="stylesheet" href="/static/css/account/rating.css">
+{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3 mb-4">
+      {{> client-sidebar}}
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-9">
+      <div class="rating-header mb-4">
+        <h1 class="h3 fw-bold mb-2">
+          <i class="bi bi-star-fill me-3"></i>My Ratings
+        </h1>
+        <p class="mb-0 opacity-75">View your rating score and detailed reviews from other users</p>
+      </div>
+
+      <!-- Rating Overview -->
+      <div class="row mb-4">
+        <!-- Overall Rating -->
+        <div class="col-lg-4 mb-4">
+          <div class="rating-card p-4 text-center h-100">
+            <h5 class="text-muted mb-3">Overall Rating Score</h5>
+            <div class="rating-score mb-3">
+              {{#if totalReviews}}
+                {{#if (eq rating_point 1)}}
+                  100.00%
+                {{else}}
+                  {{#if (gt rating_point 0)}}{{round (multiply rating_point 100) 2}}{{else}}0.00{{/if}}%
+                {{/if}}
+              {{else}}
+                N/A
+              {{/if}}
+            </div>
+            <p class="text-muted mb-0">Based on {{totalReviews}} review(s)</p>
+          </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="col-lg-8">
+          <div class="row h-100">
+            <div class="col-md-4 mb-3 mb-md-0">
+              <div class="stat-card text-center">
+                <div class="stat-icon purple mx-auto">
+                  <i class="bi bi-chat-dots-fill"></i>
+                </div>
+                <h3 class="fw-bold mb-1">{{totalReviews}}</h3>
+                <small class="text-muted">Total Reviews</small>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+              <div class="stat-card text-center">
+                <div class="stat-icon green mx-auto">
+                  <i class="bi bi-hand-thumbs-up-fill"></i>
+                </div>
+                <h3 class="fw-bold mb-1">{{positiveReviews}}</h3>
+                <small class="text-muted">Positive</small>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-card text-center">
+                <div class="stat-icon red mx-auto">
+                  <i class="bi bi-hand-thumbs-down-fill"></i>
+                </div>
+                <h3 class="fw-bold mb-1">{{negativeReviews}}</h3>
+                <small class="text-muted">Negative</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reviews List -->
+      <div class="rating-card">
+        <div class="p-4 border-bottom bg-light">
+          <h4 class="fw-bold mb-0">
+            <i class="bi bi-list-ul me-2 list-icon"></i>All Reviews
+          </h4>
+        </div>
+
+        <div class="p-4">
+          {{#if reviews.length}}
+            <div class="list-group list-group-flush">
+              {{#each reviews}}
+              <div class="list-group-item review-item {{#if (eq rating 1)}}positive{{else}}negative{{/if}} px-0 py-4">
+                <div class="row align-items-start">
+                  <!-- Reviewer Info -->
+                  <div class="col-md-3">
+                    <div class="d-flex align-items-center mb-2">
+                      <div class="reviewer-avatar me-2">
+                        <i class="bi bi-person-fill"></i>
+                      </div>
+                      <div>
+                        <div class="fw-bold">{{reviewer_name}}</div>
+                        <small class="text-muted">{{format_date created_at}}</small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Product Info -->
+                  <div class="col-md-4 mb-2 mb-md-0">
+                    <small class="text-muted d-block mb-1">Product</small>
+                    <div class="fw-500">
+                      <i class="bi bi-box-seam me-1 product-icon"></i>
+                      {{product_name}}
+                    </div>
+                  </div>
+
+                  <!-- Rating Badge -->
+                  <div class="col-md-2 mb-2 mb-md-0">
+                    {{#if (eq rating 1)}}
+                      <span class="badge badge-positive px-3 py-2">
+                        <i class="bi bi-hand-thumbs-up-fill me-1"></i>Positive
+                      </span>
+                    {{else}}
+                      <span class="badge badge-negative px-3 py-2">
+                        <i class="bi bi-hand-thumbs-down-fill me-1"></i>Negative
+                      </span>
+                    {{/if}}
+                  </div>
+
+                  <!-- Comment -->
+                  <div class="col-md-3">
+                    {{#if comment}}
+                      <div class="bg-light p-3 rounded-3">
+                        <small class="text-muted d-block mb-1">
+                          <i class="bi bi-chat-left-quote-fill me-1"></i>Comment
+                        </small>
+                        <p class="mb-0 small">{{comment}}</p>
+                      </div>
+                    {{else}}
+                      <small class="text-muted fst-italic">No comment</small>
+                    {{/if}}
+                  </div>
+                </div>
+              </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+              <i class="bi bi-inbox empty-icon"></i>
+              <h5 class="text-muted mt-3">No reviews yet</h5>
+              <p class="text-muted small">You haven't received any reviews from other users.</p>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,1292 @@
+{{#section 'css'}}
+<style>
+  .timeline {
+    position: relative;
+    padding: 40px 0;
+  }
+  
+  .timeline-item {
+    position: relative;
+    padding-left: 80px;
+    margin-bottom: 40px;
+  }
+  
+  .timeline-icon {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: #e9ecef;
+    color: #6c757d;
+    z-index: 2;
+  }
+  
+  .timeline-item.active .timeline-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    animation: pulse 2s infinite;
+  }
+  
+  .timeline-item.completed .timeline-icon {
+    background: #28a745;
+    color: white;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  
+  .timeline-line {
+    position: absolute;
+    left: 29px;
+    top: 60px;
+    bottom: -40px;
+    width: 2px;
+    background: #dee2e6;
+  }
+  
+  .timeline-item.completed .timeline-line {
+    background: #28a745;
+  }
+  
+  .timeline-item:last-child .timeline-line {
+    display: none;
+  }
+  
+  .chat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    max-height: 500px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transition: max-height 0.3s ease;
+  }
+  
+  .chat-widget.minimized {
+    max-height: 60px;
+  }
+  
+  .chat-widget.minimized .chat-messages,
+  .chat-widget.minimized .chat-input {
+    display: none;
+  }
+  
+  .chat-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 10px 10px 0 0;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  
+  .chat-widget.minimized .chat-header {
+    border-radius: 10px;
+  }
+  
+  .chat-toggle-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+  }
+  
+  .chat-toggle-btn:hover {
+    transform: scale(1.2);
+  }
+  
+  .order-content-row {
+    align-items: flex-start;
+  }
+  
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    max-height: 300px;
+  }
+  
+  .chat-message {
+    margin-bottom: 10px;
+  }
+  
+  .chat-bubble {
+    padding: 10px 15px;
+    border-radius: 15px;
+    max-width: 80%;
+    word-wrap: break-word;
+  }
+  
+  .chat-bubble.sent {
+    background: #667eea;
+    color: white;
+    margin-left: auto;
+  }
+  
+  .chat-bubble.received {
+    background: #f1f3f5;
+    color: #212529;
+  }
+  
+  .chat-input {
+    border-top: 1px solid #dee2e6;
+    padding: 10px;
+  }
+  
+  .image-preview {
+    position: relative;
+    display: inline-block;
+    margin: 5px;
+  }
+  
+  .image-preview img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 5px;
+  }
+</style>
+{{/section}}
+
+<div class="container my-5">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex align-items-center mb-4">
+        <a href="/products/detail?id={{product.id}}" class="btn btn-outline-secondary me-3">
+          <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="mb-0"><i class="bi bi-receipt"></i> Complete Order</h2>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 order-content-row">
+    
+    {{!-- Left Column: Timeline + Info --}}
+    <div class="col-lg-8" id="leftColumn">
+      
+      {{!-- Product Info Card --}}
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title mb-3"><i class="bi bi-box-seam"></i> Product Information</h5>
+          <div class="row align-items-center">
+            <div class="col-md-3">
+              <img src="/static/{{product.thumbnail}}" class="img-fluid rounded" alt="{{product.name}}" style="max-height: 150px; object-fit: cover;">
+            </div>
+            <div class="col-md-9">
+              <h6 class="mb-2">{{product.name}}</h6>
+              <p class="mb-1 text-muted"><small><i class="bi bi-tag"></i> {{product.category_name}}</small></p>
+              <p class="mb-1"><strong>Final Price:</strong> <span class="text-success fs-5">{{format_number product.current_price}} VNĐ</span></p>
+              <p class="mb-0"><small class="text-muted"><i class="bi bi-clock"></i> Ended: {{format_date product.end_at}}</small></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Buyer & Seller Info --}}
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <h6 class="card-title"><i class="bi bi-person-circle"></i> Bidder</h6>
+              <p class="mb-1"><strong>Name:</strong> {{product.highest_bidder_name}}</p>
+              <p class="mb-0"><strong>Email:</strong> {{product.highest_bidder_email}}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <h6 class="card-title"><i class="bi bi-shop"></i> Seller</h6>
+              <p class="mb-1"><strong>Name:</strong> {{product.seller_name}}</p>
+              <p class="mb-0"><strong>Email:</strong> {{product.seller_email}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Timeline --}}
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title mb-4"><i class="bi bi-diagram-3"></i> Order Progress</h5>
+          
+          <div class="timeline">
+            
+            {{!-- Step 1: Payment --}}
+            <div class="timeline-item {{#if (eq order.status 'pending_payment')}}active{{/if}} {{#if (eq order.status 'payment_submitted')}}completed{{/if}} {{#if (eq order.status 'payment_confirmed')}}completed{{/if}} {{#if (eq order.status 'shipped')}}completed{{/if}} {{#if (eq order.status 'delivered')}}completed{{/if}} {{#if (eq order.status 'completed')}}completed{{/if}}">
+              <div class="timeline-icon">
+                <i class="bi bi-credit-card"></i>
+              </div>
+              <div class="timeline-line"></div>
+              <div class="timeline-content">
+                <h6>Step 1: Payment</h6>
+                <p class="text-muted mb-0">
+                  {{#if (eq order.status 'pending_payment')}}
+                    <span class="badge bg-warning text-dark">Waiting for bidder payment</span>
+                  {{else}}
+                    <span class="badge bg-success">Paid</span>
+                  {{/if}}
+                </p>
+              </div>
+            </div>
+
+            {{!-- Step 2: Payment Confirmation --}}
+            <div class="timeline-item {{#if (eq order.status 'payment_submitted')}}active{{/if}} {{#if (eq order.status 'payment_confirmed')}}completed{{/if}} {{#if (eq order.status 'shipped')}}completed{{/if}} {{#if (eq order.status 'delivered')}}completed{{/if}} {{#if (eq order.status 'completed')}}completed{{/if}}">
+              <div class="timeline-icon">
+                <i class="bi bi-check-circle"></i>
+              </div>
+              <div class="timeline-line"></div>
+              <div class="timeline-content">
+                <h6>Step 2: Payment Confirmation</h6>
+                <p class="text-muted mb-0">
+                  {{#if (eq order.status 'payment_submitted')}}
+                    <span class="badge bg-warning text-dark">Waiting for seller confirmation</span>
+                  {{else if (eq order.status 'payment_confirmed')}}
+                    <span class="badge bg-success">Confirmed</span>
+                  {{else if (eq order.status 'shipped')}}
+                    <span class="badge bg-success">Confirmed</span>
+                  {{else if (eq order.status 'delivered')}}
+                    <span class="badge bg-success">Confirmed</span>
+                  {{else if (eq order.status 'completed')}}
+                    <span class="badge bg-success">Confirmed</span>
+                  {{else}}
+                    <span class="badge bg-secondary">Not started</span>
+                  {{/if}}
+                </p>
+              </div>
+            </div>
+
+            {{!-- Step 3: Shipping --}}
+            <div class="timeline-item {{#if (eq order.status 'payment_confirmed')}}active{{/if}} {{#if (eq order.status 'shipped')}}completed{{/if}} {{#if (eq order.status 'delivered')}}completed{{/if}} {{#if (eq order.status 'completed')}}completed{{/if}}">
+              <div class="timeline-icon">
+                <i class="bi bi-truck"></i>
+              </div>
+              <div class="timeline-line"></div>
+              <div class="timeline-content">
+                <h6>Step 3: Shipping</h6>
+                <p class="text-muted mb-0">
+                  {{#if (eq order.status 'payment_confirmed')}}
+                    <span class="badge bg-warning text-dark">Waiting for seller to ship</span>
+                  {{else if (eq order.status 'shipped')}}
+                    <span class="badge bg-success">In delivery</span>
+                  {{else if (eq order.status 'delivered')}}
+                    <span class="badge bg-success">Delivered</span>
+                  {{else if (eq order.status 'completed')}}
+                    <span class="badge bg-success">Delivered</span>
+                  {{else}}
+                    <span class="badge bg-secondary">Not started</span>
+                  {{/if}}
+                </p>
+              </div>
+            </div>
+
+            {{!-- Step 4: Delivery Confirmation --}}
+            <div class="timeline-item {{#if (eq order.status 'shipped')}}active{{/if}} {{#if (eq order.status 'delivered')}}completed{{/if}} {{#if (eq order.status 'completed')}}completed{{/if}}">
+              <div class="timeline-icon">
+                <i class="bi bi-house-check"></i>
+              </div>
+              <div class="timeline-line"></div>
+              <div class="timeline-content">
+                <h6>Step 4: Delivery Confirmation</h6>
+                <p class="text-muted mb-0">
+                  {{#if (eq order.status 'shipped')}}
+                    <span class="badge bg-warning text-dark">Waiting for bidder confirmation</span>
+                  {{else if (eq order.status 'delivered')}}
+                    <span class="badge bg-success">Received</span>
+                  {{else if (eq order.status 'completed')}}
+                    <span class="badge bg-success">Received</span>
+                  {{else}}
+                    <span class="badge bg-secondary">Not started</span>
+                  {{/if}}
+                </p>
+              </div>
+            </div>
+
+            {{!-- Step 5: Rating --}}
+            <div class="timeline-item {{#if (eq order.status 'delivered')}}active{{/if}} {{#if (eq order.status 'completed')}}completed{{/if}}">
+              <div class="timeline-icon">
+                <i class="bi bi-star"></i>
+              </div>
+              <div class="timeline-content">
+                <h6>Step 5: Rating</h6>
+                <p class="text-muted mb-0">
+                  {{#if (eq order.status 'delivered')}}
+                    <span class="badge bg-warning text-dark">Waiting for rating</span>
+                  {{else if (eq order.status 'completed')}}
+                    <span class="badge bg-success">Completed</span>
+                  {{else}}
+                    <span class="badge bg-secondary">Not started</span>
+                  {{/if}}
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    {{!-- Right Column: Actions --}}
+    <div class="col-lg-4">
+      
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="mb-3"><i class="bi bi-gear-fill"></i> Actions</h5>
+          
+          {{#if isHighestBidder}}
+            
+            {{!-- Bidder: Payment submission --}}
+            {{#if (eq order.status "pending_payment")}}
+              <div class="alert alert-warning">
+                <strong><i class="bi bi-exclamation-triangle"></i> Next Step:</strong> 
+                Please submit payment proof with shipping address.
+              </div>
+              <button type="button" class="btn btn-lg btn-success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                <i class="bi bi-credit-card"></i> Submit Payment Proof
+              </button>
+            
+            {{!-- Bidder: Waiting for seller confirmation --}}
+            {{else if (eq order.status "payment_submitted")}}
+              <div class="alert alert-info">
+                <strong><i class="bi bi-info-circle"></i> Payment Submitted!</strong> 
+                Waiting for seller to confirm receipt of payment.
+              </div>
+              <div class="card bg-light">
+                <div class="card-body">
+                  <h6>Submitted Information:</h6>
+                  <p class="mb-1"><strong>Payment Method:</strong> <span style="text-transform: capitalize;">{{replace paymentInvoice.payment_method "_" " "}}</span></p>
+                  <p class="mb-1"><strong>Address:</strong> {{order.shipping_address}}</p>
+                  <p class="mb-0"><strong>Phone:</strong> {{order.shipping_phone}}</p>
+                </div>
+              </div>
+            
+            {{!-- Bidder: Waiting for shipment --}}
+            {{else if (eq order.status "payment_confirmed")}}
+              <div class="alert alert-success">
+                <strong><i class="bi bi-check-circle"></i> Payment Confirmed!</strong> 
+                Waiting for seller to ship the item.
+              </div>
+            
+            {{!-- Bidder: Confirm delivery --}}
+            {{else if (eq order.status "shipped")}}
+              <div class="alert alert-warning">
+                <strong><i class="bi bi-truck"></i> Item In Transit!</strong> 
+                Tracking number: <code>{{shippingInvoice.tracking_number}}</code>
+                {{#if shippingInvoice.shipping_provider}}
+                  <br>Shipping provider: {{shippingInvoice.shipping_provider}}
+                {{/if}}
+              </div>
+              
+              {{#if shippingInvoice.shipping_proof_urls}}
+                <div class="mb-3">
+                  <strong>Shipping Proof Images:</strong>
+                  <div class="row g-2 mt-1">
+                    {{#each shippingInvoice.shipping_proof_urls}}
+                      <div class="col-6 col-md-4">
+                        <img src="/static/{{this}}" class="img-thumbnail" alt="Shipping proof" style="max-height: 150px; width: 100%; object-fit: cover; cursor: pointer;" onclick="showImageModal('/static/{{this}}')">
+                      </div>
+                    {{/each}}
+                  </div>
+                </div>
+              {{/if}}
+              
+              <button type="button" class="btn btn-lg btn-success w-100 mb-2" onclick="confirmDelivery()">
+                <i class="bi bi-check-circle"></i> Confirm Receipt
+              </button>
+            
+            {{!-- Buyer: Rate transaction --}}
+            {{else if (eq order.status "delivered")}}
+              <div class="alert alert-info">
+                <strong><i class="bi bi-star"></i> Order Received!</strong> 
+                Please rate this transaction to complete.
+              </div>
+              <button type="button" class="btn btn-lg btn-primary w-100 mb-2" onclick="submitRating()">
+                <i class="bi bi-star-fill"></i> Rate Seller
+              </button>
+            
+            {{!-- Buyer: Completed --}}
+            {{else if (eq order.status "completed")}}
+              <div class="alert alert-success">
+                <strong><i class="bi bi-check-circle-fill"></i> Order Completed!</strong> 
+                Thank you for using our service.
+              </div>
+            {{/if}}
+            
+          {{/if}}
+
+          {{#if isSeller}}
+            
+            {{!-- Seller: Waiting for payment --}}
+            {{#if (eq order.status "pending_payment")}}
+              <div class="alert alert-info">
+                <strong><i class="bi bi-info-circle"></i> Waiting:</strong> 
+                Bidder submits payment proof.
+              </div>
+            
+            {{!-- Seller: Confirm payment --}}
+            {{else if (eq order.status "payment_submitted")}}
+              <div class="alert alert-warning">
+                <strong><i class="bi bi-exclamation-triangle"></i> Next Step:</strong> 
+                Confirm receipt of payment from bidder.
+              </div>
+              <div class="card bg-light mb-3">
+                <div class="card-body">
+                  <h6>Payment Information from Bidder:</h6>
+                  <p class="mb-1"><strong>Payment Method:</strong> <span style="text-transform: capitalize;">{{replace paymentInvoice.payment_method "_" " "}}</span></p>
+                  <p class="mb-1"><strong>Note:</strong> {{paymentInvoice.note}}</p>
+                  {{#if paymentInvoice.payment_proof_urls}}
+                    <div class="mt-2">
+                      <strong>Payment Proof:</strong>
+                      <div class="row g-2 mt-1">
+                        {{#each paymentInvoice.payment_proof_urls}}
+                          <div class="col-4">
+                            <img src="/static/{{this}}" class="img-thumbnail payment-proof-img" alt="Payment proof" style="width: 100%; height: 80px; object-fit: cover; cursor: pointer;" onclick="showImageModal('/static/{{this}}')">
+                          </div>
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
+                  <p class="mb-1 mt-2"><strong>Shipping Address:</strong> {{order.shipping_address}}</p>
+                  <p class="mb-0"><strong>Phone:</strong> {{order.shipping_phone}}</p>
+                </div>
+              </div>
+              <button type="button" class="btn btn-lg btn-success w-100 mb-2" onclick="confirmPayment()">
+                <i class="bi bi-check-circle"></i> Confirm Payment Received
+              </button>
+            
+            {{!-- Seller: Submit shipping --}}
+            {{else if (eq order.status "payment_confirmed")}}
+              <div class="alert alert-warning">
+                <strong><i class="bi bi-exclamation-triangle"></i> Next Step:</strong> 
+                Ship the item and update tracking number.
+              </div>
+              <button type="button" class="btn btn-lg btn-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#shippingModal">
+                <i class="bi bi-truck"></i> Update Shipping Info
+              </button>
+            
+            {{!-- Seller: Waiting for delivery confirmation --}}
+            {{else if (eq order.status "shipped")}}
+              <div class="alert alert-info">
+                <strong><i class="bi bi-truck"></i> Item Shipped!</strong> 
+                Tracking number: <code>{{shippingInvoice.tracking_number}}</code>
+                <br>Waiting for bidder to confirm receipt.
+              </div>
+            
+            {{!-- Seller: Rate transaction --}}
+            {{else if (eq order.status "delivered")}}
+              <div class="alert alert-info">
+                <strong><i class="bi bi-star"></i> Buyer Received Order!</strong> 
+                Please rate this transaction to complete.
+              </div>
+              <button type="button" class="btn btn-lg btn-primary w-100 mb-2" onclick="submitRating()">
+                <i class="bi bi-star-fill"></i> Rate Bidder
+              </button>
+            
+            {{!-- Seller: Completed --}}
+            {{else if (eq order.status "completed")}}
+              <div class="alert alert-success">
+                <strong><i class="bi bi-check-circle-fill"></i> Order Completed!</strong> 
+                Thank you for using our service.
+              </div>
+            {{/if}}
+            
+          {{/if}}
+
+          <div class="mt-3">
+            <a href="/products/detail?id={{product.id}}" class="btn btn-outline-secondary w-100">
+              <i class="bi bi-arrow-left"></i> Back to Product
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+{{!-- Chat Widget --}}
+<div class="chat-widget minimized" id="chatWidget">
+  <div class="chat-header" onclick="toggleChat()">
+    <span><i class="bi bi-chat-dots"></i> Chat with {{#if isSeller}}Bidder{{else}}Seller{{/if}}</span>
+    <button class="chat-toggle-btn" id="chatToggleBtn">
+      <i class="bi bi-chevron-up"></i>
+    </button>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    {{#each messages}}
+      <div class="chat-message {{#if (eq sender_id ../currentUserId)}}text-end{{/if}}">
+        <div class="chat-bubble {{#if (eq sender_id ../currentUserId)}}sent{{else}}received{{/if}}">
+          <div>{{message}}</div>
+          <div style="font-size: 0.7rem; margin-top: 3px; opacity: 0.8;">{{format_date created_at}}</div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+  <div class="chat-input">
+    <div class="input-group">
+      <input type="text" class="form-control" id="chatInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendChatMessage()">
+      <button class="btn btn-primary" onclick="sendChatMessage()">
+        <i class="bi bi-send"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+{{!-- Payment Modal (Buyer) --}}
+<div class="modal fade" id="paymentModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title"><i class="bi bi-credit-card"></i> Submit Payment Proof</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="paymentForm" onsubmit="submitPayment(event)">
+        <div class="modal-body">
+          
+          <div class="mb-3">
+            <label class="form-label">Payment Amount</label>
+            <input type="text" class="form-control-plaintext fw-bold text-success" value="{{format_number product.current_price}} VNĐ" readonly>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+            <select class="form-select" name="payment_method" id="paymentMethod">
+              <option value="">-- Select method --</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="momo">MoMo Wallet</option>
+              <option value="zalopay">ZaloPay</option>
+              <option value="cash">Cash</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Payment Proof <span class="text-danger">*</span></label>
+            <input type="file" class="form-control" id="paymentProofInput" accept="image/*" multiple>
+            <div class="form-text">Select 1-3 images (JPG, PNG). Each &lt; 5MB</div>
+            <div id="paymentProofPreview" class="mt-3 row g-2"></div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Note</label>
+            <textarea class="form-control" name="note" rows="2" placeholder="E.g.: Transferred at 14:30 on 04/01/2026"></textarea>
+          </div>
+
+          <hr>
+          <h6 class="mb-3"><i class="bi bi-geo-alt"></i> Shipping Address</h6>
+
+          <div class="mb-3">
+            <label class="form-label">Delivery Address <span class="text-danger">*</span></label>
+            <textarea class="form-control" name="shipping_address" id="shippingAddress" rows="2" placeholder="Street, Ward, District, City"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+            <input type="tel" class="form-control" name="shipping_phone" id="shippingPhone" placeholder="0901234567">
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-success" id="submitPaymentBtn">
+            <i class="bi bi-send"></i> Submit Payment Proof
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{!-- Shipping Modal (Seller) --}}
+<div class="modal fade" id="shippingModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="bi bi-truck"></i> Update Shipping Information</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="shippingForm" onsubmit="submitShipping(event)">
+        <div class="modal-body">
+          
+          <div class="alert alert-info">
+            <strong>Ship to:</strong><br>
+            {{order.shipping_address}}<br>
+            <strong>Phone:</strong> {{order.shipping_phone}}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Tracking Number <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="tracking_number" id="trackingNumber" placeholder="E.g.: GHTK123456789">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Shipping Provider <span class="text-danger">*</span></label>
+            <select class="form-select" name="shipping_provider" id="shippingProvider">
+              <option value="">-- Select provider --</option>
+              <option value="Giao hàng tiết kiệm">Giao hàng tiết kiệm (GHTK)</option>
+              <option value="Giao hàng nhanh">Giao hàng nhanh (GHN)</option>
+              <option value="J&T Express">J&T Express</option>
+              <option value="Viettel Post">Viettel Post</option>
+              <option value="VNPost">VNPost</option>
+              <option value="Grab Express">Grab Express</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Shipping Receipt (optional)</label>
+            <input type="file" class="form-control" id="shippingProofInput" accept="image/*" multiple>
+            <div class="form-text">Upload 0-2 receipt images (optional)</div>
+            <div id="shippingProofPreview" class="mt-3 row g-2"></div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Note</label>
+            <textarea class="form-control" name="note" rows="2" placeholder="E.g.: Fragile item, handle with care"></textarea>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary" id="submitShippingBtn">
+            <i class="bi bi-truck"></i> Update Shipping
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{!-- Rating Modal removed - using SweetAlert2 instead --}}
+
+{{#section 'js'}}
+<script>
+  const orderId = '{{order.id}}';
+  
+  // Setup image preview for payment proofs
+  document.getElementById('paymentProofInput')?.addEventListener('change', function(e) {
+    setupImagePreview(e.target, 'paymentProofPreview');
+  });
+  
+  document.getElementById('shippingProofInput')?.addEventListener('change', function(e) {
+    setupImagePreview(e.target, 'shippingProofPreview');
+  });
+  
+  function setupImagePreview(input, previewId) {
+    const preview = document.getElementById(previewId);
+    preview.innerHTML = '';
+    
+    if (input.files) {
+      Array.from(input.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const col = document.createElement('div');
+          col.className = 'col-4';
+          col.innerHTML = `<img src="${e.target.result}" class="img-thumbnail" style="width: 100%; height: 100px; object-fit: cover;">`;
+          preview.appendChild(col);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  }
+  
+  // Submit payment
+  async function submitPayment(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const submitBtn = document.getElementById('submitPaymentBtn');
+    const paymentMethod = form.querySelector('[name="payment_method"]').value;
+    const shippingAddress = form.querySelector('[name="shipping_address"]').value.trim();
+    const shippingPhone = form.querySelector('[name="shipping_phone"]').value.trim();
+    const paymentProofInput = document.getElementById('paymentProofInput');
+    
+    // Validate payment method
+    if (!paymentMethod) {
+      Swal.fire({ 
+        icon: 'error', 
+        title: 'Missing Information', 
+        text: 'Please select a payment method.',
+        confirmButtonColor: '#72AEC8'
+      });
+      document.getElementById('paymentMethod').focus();
+      return;
+    }
+    
+    // Validate payment proof images
+    if (!paymentProofInput.files || paymentProofInput.files.length === 0) {
+      Swal.fire({ 
+        icon: 'warning', 
+        title: 'Missing Image!', 
+        text: 'Please upload at least 1 payment proof image.',
+        confirmButtonColor: '#72AEC8'
+      });
+      paymentProofInput.focus();
+      return;
+    }
+    
+    if (paymentProofInput.files.length > 3) {
+      Swal.fire({ 
+        icon: 'warning', 
+        title: 'Too Many Images!', 
+        text: 'Maximum 3 images allowed!',
+        confirmButtonColor: '#72AEC8'
+      });
+      return;
+    }
+    
+    // Validate shipping address
+    if (!shippingAddress) {
+      Swal.fire({ 
+        icon: 'error', 
+        title: 'Missing Information', 
+        text: 'Please enter your delivery address.',
+        confirmButtonColor: '#72AEC8'
+      });
+      document.getElementById('shippingAddress').focus();
+      return;
+    }
+    
+    // Validate shipping phone
+    if (!shippingPhone) {
+      Swal.fire({ 
+        icon: 'error', 
+        title: 'Missing Information', 
+        text: 'Please enter your phone number.',
+        confirmButtonColor: '#72AEC8'
+      });
+      document.getElementById('shippingPhone').focus();
+      return;
+    }
+    
+    // Validate phone format (10-11 digits)
+    const phoneRegex = /^[0-9]{10,11}$/;
+    if (!phoneRegex.test(shippingPhone)) {
+      Swal.fire({ 
+        icon: 'error', 
+        title: 'Invalid Phone Number', 
+        text: 'Phone number must be 10-11 digits.',
+        confirmButtonColor: '#72AEC8'
+      });
+      document.getElementById('shippingPhone').focus();
+      return;
+    }
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
+    
+    try {
+      // Upload images
+      const formData = new FormData();
+      Array.from(paymentProofInput.files).forEach(file => {
+        formData.append('images', file);
+      });
+      
+      const uploadResponse = await fetch('/products/order/upload-images', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!uploadResponse.ok) throw new Error('Image upload failed');
+      
+      const uploadResult = await uploadResponse.json();
+      
+      // Submit payment data
+      const data = {
+        payment_method: paymentMethod,
+        payment_proof_urls: uploadResult.urls,
+        note: form.querySelector('[name="note"]').value,
+        shipping_address: shippingAddress,
+        shipping_phone: shippingPhone
+      };
+      
+      const response = await fetch('/products/order/' + orderId + '/submit-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        await Swal.fire({ 
+          icon: 'success', 
+          title: 'Success!', 
+          text: 'Payment proof submitted!',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        location.reload();
+      } else {
+        Swal.fire({ icon: 'error', title: 'Error!', text: result.error || 'Failed to submit payment' });
+      }
+    } catch (error) {
+      console.error('Submit payment error:', error);
+      Swal.fire({ icon: 'error', title: 'Error!', text: 'An error occurred: ' + error.message });
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="bi bi-send"></i> Submit Payment Proof';
+    }
+  }
+  
+  // Confirm payment (Seller)
+  async function confirmPayment() {
+    const result = await Swal.fire({
+      title: 'Confirm Payment?',
+      text: 'Have you received full payment from bidder?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Payment Received',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return;
+    
+    try {
+      const response = await fetch('/products/order/' + orderId + '/confirm-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      const res = await response.json();
+      
+      if (res.success) {
+        await Swal.fire({ 
+          icon: 'success', 
+          title: 'Confirmed!', 
+          text: 'Payment confirmed!',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        location.reload();
+      } else {
+        Swal.fire({ icon: 'error', title: 'Error!', text: res.error || 'Failed to confirm' });
+      }
+    } catch (error) {
+      console.error('Confirm payment error:', error);
+      Swal.fire({ icon: 'error', title: 'Error!', text: 'An error occurred: ' + error.message });
+    }
+  }
+  
+  // Submit shipping (Seller)
+  async function submitShipping(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const submitBtn = document.getElementById('submitShippingBtn');
+    const trackingNumber = form.querySelector('[name="tracking_number"]').value.trim();
+    const shippingProvider = form.querySelector('[name="shipping_provider"]').value;
+    const shippingProofInput = document.getElementById('shippingProofInput');
+    
+    // Validate tracking number
+    if (!trackingNumber) {
+      Swal.fire({ 
+        icon: 'error', 
+        title: 'Missing Information', 
+        text: 'Please enter the tracking number.',
+        confirmButtonColor: '#72AEC8'
+      });
+      document.getElementById('trackingNumber').focus();
+      return;
+    }
+    
+    // Validate shipping provider
+    if (!shippingProvider) {
+      Swal.fire({ 
+        icon: 'error', 
+        title: 'Missing Information', 
+        text: 'Please select a shipping provider.',
+        confirmButtonColor: '#72AEC8'
+      });
+      document.getElementById('shippingProvider').focus();
+      return;
+    }
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
+    
+    try {
+      let imageUrls = [];
+      
+      if (shippingProofInput.files && shippingProofInput.files.length > 0) {
+        if (shippingProofInput.files.length > 2) {
+          Swal.fire({ 
+            icon: 'warning', 
+            title: 'Too Many Images!', 
+            text: 'Maximum 2 images allowed!',
+            confirmButtonColor: '#72AEC8'
+          });
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-truck"></i> Update Shipping';
+          return;
+        }
+        
+        const formData = new FormData();
+        Array.from(shippingProofInput.files).forEach(file => {
+          formData.append('images', file);
+        });
+        
+        const uploadResponse = await fetch('/products/order/upload-images', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!uploadResponse.ok) throw new Error('Image upload failed');
+        
+        const uploadResult = await uploadResponse.json();
+        imageUrls = uploadResult.urls;
+      }
+      
+      const data = {
+        tracking_number: trackingNumber,
+        shipping_provider: shippingProvider,
+        shipping_proof_urls: imageUrls,
+        note: form.querySelector('[name="note"]').value
+      };
+      
+      const response = await fetch('/products/order/' + orderId + '/submit-shipping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        await Swal.fire({ 
+          icon: 'success', 
+          title: 'Success!', 
+          text: 'Shipping info updated!',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        location.reload();
+      } else {
+        Swal.fire({ icon: 'error', title: 'Error!', text: result.error || 'Failed to update' });
+      }
+    } catch (error) {
+      console.error('Submit shipping error:', error);
+      Swal.fire({ icon: 'error', title: 'Error!', text: 'An error occurred: ' + error.message });
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="bi bi-truck"></i> Update Shipping';
+    }
+  }
+  
+  // Confirm delivery (Buyer)
+  async function confirmDelivery() {
+    const result = await Swal.fire({
+      title: 'Confirm Receipt?',
+      text: 'Did you receive the item in good condition?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Confirm Receipt',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return;
+    
+    try {
+      const response = await fetch('/products/order/' + orderId + '/confirm-delivery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      const res = await response.json();
+      
+      if (res.success) {
+        await Swal.fire({ 
+          icon: 'success', 
+          title: 'Confirmed!', 
+          text: 'Receipt confirmed!',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        location.reload();
+      } else {
+        Swal.fire({ icon: 'error', title: 'Error!', text: res.error || 'Failed to confirm' });
+      }
+    } catch (error) {
+      console.error('Confirm delivery error:', error);
+      Swal.fire({ icon: 'error', title: 'Error!', text: 'An error occurred: ' + error.message });
+    }
+  }
+  
+  // Submit rating
+  async function submitRating() {
+    const isBuyer = {{eq order.buyer_id authUser.id}};
+    const targetName = isBuyer ? '{{product.seller_fullname}}' : '{{product.highest_bidder_name}}';
+    
+    const { value: formValues } = await Swal.fire({
+      title: `Rate ${targetName}`,
+      html: `
+        <div class="mb-3">
+          <label class="form-label">Rating:</label>
+          <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" name="rating" id="rating-positive" value="positive" autocomplete="off">
+            <label class="btn btn-outline-success" for="rating-positive">
+              <i class="bi bi-hand-thumbs-up"></i> Positive
+            </label>
+            
+            <input type="radio" class="btn-check" name="rating" id="rating-negative" value="negative" autocomplete="off">
+            <label class="btn btn-outline-danger" for="rating-negative">
+              <i class="bi bi-hand-thumbs-down"></i> Negative
+            </label>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Comment (optional):</label>
+          <textarea class="form-control" id="rating-comment" rows="3" placeholder="Write your comment..."></textarea>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonColor: '#72AEC8',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Submit Rating',
+      cancelButtonText: 'Skip for now',
+      preConfirm: () => {
+        const rating = document.querySelector('input[name="rating"]:checked');
+        const comment = document.getElementById('rating-comment').value;
+        
+        if (!rating) {
+          Swal.showValidationMessage('Please select a rating');
+          return false;
+        }
+        
+        return {
+          rating: rating.value,
+          comment: comment,
+          completeTransaction: true
+        };
+      }
+    });
+    
+    if (formValues) {
+      try {
+        Swal.fire({
+          title: 'Processing...',
+          html: 'Submitting rating...',
+          allowOutsideClick: false,
+          didOpen: () => { Swal.showLoading(); }
+        });
+        
+        const response = await fetch('/products/order/' + orderId + '/submit-rating', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formValues)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          await Swal.fire({ 
+            icon: 'success', 
+            title: 'Thank you!', 
+            text: 'Rating submitted successfully!',
+            timer: 2000,
+            showConfirmButton: false
+          });
+          
+          // Always redirect to respective pages after rating
+          if (isBuyer) {
+            window.location.href = '/account/auctions';
+          } else {
+            window.location.href = '/seller/products/sold';
+          }
+        } else {
+          Swal.fire({ icon: 'error', title: 'Error!', text: result.error || 'Failed to submit rating' });
+        }
+      } catch (error) {
+        console.error('Submit rating error:', error);
+        Swal.fire({ icon: 'error', title: 'Error!', text: 'An error occurred: ' + error.message });
+      }
+    } else {
+      // User clicked "Skip for now" - complete transaction without rating
+      try {
+        const response = await fetch('/products/order/' + orderId + '/complete-transaction', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Redirect to respective pages
+          if (isBuyer) {
+            window.location.href = '/account/auctions';
+          } else {
+            window.location.href = '/seller/products/sold';
+          }
+        } else {
+          Swal.fire({ icon: 'error', title: 'Error!', text: result.error || 'Failed to complete transaction' });
+        }
+      } catch (error) {
+        console.error('Complete transaction error:', error);
+        // Redirect anyway
+        if (isBuyer) {
+          window.location.href = '/account/auctions';
+        } else {
+          window.location.href = '/seller/products/sold';
+        }
+      }
+    }
+  }
+  
+  // Send chat message
+  let isSendingMessage = false;
+  
+  async function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message || isSendingMessage) return;
+    
+    // Set flag and disable input
+    isSendingMessage = true;
+    input.disabled = true;
+    
+    // Store original value and show loading
+    const originalValue = input.value;
+    input.value = 'Sending...';
+    
+    try {
+      const response = await fetch('/products/order/' + orderId + '/send-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        input.value = '';
+        // Reload chat messages without closing chat widget
+        const chatMessages = document.getElementById('chatMessages');
+        if (chatMessages) {
+          // Fetch updated messages
+          const messagesResponse = await fetch('/products/order/' + orderId + '/messages');
+          const messagesData = await messagesResponse.json();
+          
+          if (messagesData.success) {
+            // Update chat messages HTML
+            chatMessages.innerHTML = messagesData.messagesHtml || '';
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
+        }
+      } else {
+        // Restore original value on error
+        input.value = originalValue;
+        Swal.fire({ 
+          icon: 'error', 
+          title: 'Error!', 
+          text: 'Failed to send message',
+          toast: true,
+          position: 'top-end',
+          timer: 3000,
+          showConfirmButton: false
+        });
+      }
+    } catch (error) {
+      console.error('Send message error:', error);
+      // Restore original value on error
+      input.value = originalValue;
+      Swal.fire({ 
+        icon: 'error', 
+        title: 'Error!', 
+        text: 'An error occurred while sending message',
+        toast: true,
+        position: 'top-end',
+        timer: 3000,
+        showConfirmButton: false
+      });
+    } finally {
+      // Re-enable input and reset flag
+      input.disabled = false;
+      isSendingMessage = false;
+      input.focus();
+    }
+  }
+  
+  // Scroll chat to bottom
+  const chatMessages = document.getElementById('chatMessages');
+  if (chatMessages) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+  
+  // Toggle chat widget minimize/maximize
+  function toggleChat() {
+    const chatWidget = document.getElementById('chatWidget');
+    const toggleBtn = document.getElementById('chatToggleBtn');
+    
+    chatWidget.classList.toggle('minimized');
+    
+    // Change icon based on state
+    if (chatWidget.classList.contains('minimized')) {
+      toggleBtn.innerHTML = '<i class="bi bi-chevron-up"></i>';
+    } else {
+      toggleBtn.innerHTML = '<i class="bi bi-chevron-down"></i>';
+      // Scroll to bottom when maximized
+      if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    }
+  }
+  
+  // Image modal functions
+  function showImageModal(imageSrc) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    modalImg.src = imageSrc;
+    modal.style.display = 'flex';
+  }
+  
+  function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    modal.style.display = 'none';
+  }
+  
+  // Close modal when clicking outside the image
+  document.getElementById('imageModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeImageModal();
+    }
+  });
+</script>
+{{/section}}
+
+<!-- Image Modal -->
+<div id="imageModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center;">
+  <div style="position: relative; max-width: 90%; max-height: 90%;">
+    <button onclick="closeImageModal()" style="position: absolute; top: -40px; right: 0; background: white; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 24px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+      <i class="bi bi-x"></i>
+    </button>
+    <img id="modalImage" src="" style="max-width: 100%; max-height: 90vh; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+  </div>
+</div>

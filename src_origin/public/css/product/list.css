@@ -1,0 +1,135 @@
+/* Product Card Specific Styles */
+.product-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(to bottom, #ffffff 0%, #f8fbfd 100%);
+}
+
+.product-card .card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card .card-body > a.btn {
+  margin-top: auto;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(114, 174, 200, 0.15);
+  border-color: #72AEC8;
+}
+
+/* Scoped to product cards only */
+.product-card .text-primary { 
+  color: #72AEC8 !important; 
+}
+
+.product-card .bg-light { 
+  background: linear-gradient(135deg, #f0f7fa 0%, #e8f3f8 100%) !important; 
+}
+
+.product-card .btn-outline-primary {
+  color: #72AEC8;
+  border-color: #72AEC8;
+  transition: all 0.3s ease;
+}
+
+.product-card .btn-outline-primary:hover {
+  background: linear-gradient(135deg, #72AEC8 0%, #5a9ab8 100%);
+  border-color: #72AEC8;
+  color: white;
+  box-shadow: 0 4px 12px rgba(114, 174, 200, 0.3);
+}
+
+.product-card .text-success { 
+  color: #72AEC8 !important; 
+}
+
+.product-card .text-danger { 
+  color: #E74C3C !important; 
+}
+
+/* Product List Pagination Styles */
+.pagination-custom {
+  gap: 5px;
+}
+
+.page-link-custom {
+  border: 2px solid #72AEC8;
+  color: #72AEC8;
+  font-weight: 600;
+  padding: 8px 14px;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.page-link-custom:hover:not(.disabled .page-link-custom) {
+  background: linear-gradient(135deg, #72AEC8 0%, #5a9ab8 100%) !important;
+  color: white !important;
+  border-color: #72AEC8 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(114, 174, 200, 0.4);
+}
+
+.page-link-active {
+  background: linear-gradient(135deg, #72AEC8 0%, #5a9ab8 100%) !important;
+  border: none !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(114, 174, 200, 0.3);
+}
+
+.page-item.disabled .page-link-custom {
+  border: 2px solid #e9ecef;
+  color: #ccc;
+  background-color: white;
+  cursor: not-allowed;
+}
+
+/* Remove default Bootstrap styles */
+.pagination-custom .page-link {
+  margin: 0;
+}
+
+.pagination-custom .page-item.active .page-link {
+  z-index: 1;
+}
+
+/* Badge for title - Unrated Bidders */
+.badge-title-unrated {
+  display: none;
+}
+
+/* Ribbon Badge Style for Unrated Bidders */
+.ribbon-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #72AEC8 0%, #5a9ab8 100%);
+  color: white;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+  white-space: nowrap;
+  letter-spacing: 0.4px;
+}
+
+/* Style cho nút submit bên trong form */
+.btn-watchlist-submit {
+  transition: all 0.2s ease;
+  border: none;
+  background: white;
+  cursor: pointer;
+}
+.btn-watchlist-submit:hover {
+  background-color: #ffe6e6; /* Màu nền hồng nhạt khi hover */
+  transform: scale(1.1);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Thêm bóng đổ nhẹ */
+}

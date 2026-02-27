@@ -1,0 +1,305 @@
+<section id="billboard" class="position-relative overflow-hidden bg-light-blue">
+  <div class="swiper main-swiper">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide">
+        <div class="container">
+          <div class="row d-flex align-items-center" style="min-height: 600px;">
+            <div class="col-md-6">
+              <div class="banner-content">
+                <h1 class="display-2 text-uppercase text-dark pb-3">Bid Smart, Win Big!</h1>
+                <p class="lead text-dark pb-4">Join thousands of bidders competing for amazing products at unbeatable prices.</p>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="image-holder" style="opacity: 0.95; mix-blend-mode: multiply;">
+                <img src="/static/images/banner-image.png" alt="banner" class="img-fluid" style="max-height: 500px; object-fit: contain;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="swiper-slide">
+        <div class="container">
+          <div class="row d-flex flex-wrap align-items-center" style="min-height: 600px;">
+            <div class="col-md-6">
+              <div class="banner-content">
+                <h1 class="display-2 text-uppercase text-dark pb-3">Sell Your Items Fast</h1>
+                <p class="lead text-dark pb-4">List your products and reach thousands of eager buyers through competitive bidding.</p>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="image-holder" style="opacity: 0.95; mix-blend-mode: multiply;">
+                <img src="/static/images/banner-image.png" alt="banner" class="img-fluid" style="max-height: 500px; object-fit: contain;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="swiper-slide">
+        <div class="container">
+          <div class="row d-flex flex-wrap align-items-center" style="min-height: 600px;">
+            <div class="col-md-6">
+              <div class="banner-content">
+                <h1 class="display-2 text-uppercase text-dark pb-3">Fair &amp;<br>Transparent</h1>
+                <p class="lead text-dark pb-4">Every auction is monitored for fairness. Bid with confidence in our secure platform.</p>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="image-holder" style="opacity: 0.95; mix-blend-mode: multiply;">
+                <img src="/static/images/banner-image.png" alt="banner" class="img-fluid" style="max-height: 500px; object-fit: contain;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="swiper-icon swiper-arrow swiper-arrow-prev">
+    <svg class="chevron-left">
+      <use xlink:href="#chevron-left" />
+    </svg>
+  </div>
+  <div class="swiper-icon swiper-arrow swiper-arrow-next">
+    <svg class="chevron-right">
+      <use xlink:href="#chevron-right" />
+    </svg>
+  </div>
+</section>
+
+<script>
+  // Real-time countdown timer for home page
+  function updateHomeCountdowns() {
+    const countdownElements = document.querySelectorAll('.home-countdown-timer');
+    
+    countdownElements.forEach(element => {
+      const endDate = new Date(element.getAttribute('data-end-date'));
+      const now = new Date();
+      const timeLeft = endDate - now;
+      
+      if (timeLeft <= 0) {
+        element.textContent = 'Ended';
+        element.classList.remove('text-danger');
+        element.classList.add('text-muted');
+        return;
+      }
+      
+      // Calculate time units
+      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+      
+      // Format output - compact with colon notation
+      let timeString = '';
+      if (days > 0) {
+        timeString = `${days}d ${hours}h ${minutes}m`;
+      } else if (hours > 0) {
+        timeString = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      } else if (minutes > 0) {
+        timeString = `${minutes}:${String(seconds).padStart(2, '0')}`;
+      } else {
+        timeString = `${seconds}s`;
+      }
+      
+      element.textContent = timeString;
+      
+      // Change color based on urgency
+      if (days === 0 && hours < 1) {
+        element.classList.remove('text-danger');
+        element.classList.add('text-danger', 'fw-bold');
+      }
+    });
+  }
+  
+  // Update immediately and then every second
+  document.addEventListener('DOMContentLoaded', function() {
+    updateHomeCountdowns();
+    setInterval(updateHomeCountdowns, 1000);
+    
+    // Initialize main banner swiper
+    new Swiper('.main-swiper', {
+      slidesPerView: 1,
+      spaceBetween: 0,
+      loop: true,
+      autoplay: {
+        delay: 5000,
+        disableOnInteraction: false,
+      },
+      navigation: {
+        nextEl: '.swiper-arrow-next',
+        prevEl: '.swiper-arrow-prev',
+      },
+    });
+    
+    // Initialize all product swipers
+    document.querySelectorAll('.product-swiper').forEach(function(swiper) {
+      new Swiper(swiper, {
+        slidesPerView: 1,
+        spaceBetween: 20,
+        loop: false,
+        pagination: {
+          el: swiper.querySelector('.swiper-pagination'),
+          clickable: true,
+        },
+        breakpoints: {
+          576: {
+            slidesPerView: 2,
+            spaceBetween: 20,
+          },
+          768: {
+            slidesPerView: 3,
+            spaceBetween: 20,
+          },
+          992: {
+            slidesPerView: 4,
+            spaceBetween: 30,
+          },
+          1200: {
+            slidesPerView: 5,
+            spaceBetween: 30,
+          }
+        }
+      });
+    });
+  });
+</script>
+<section id="mobile-products" class="product-store position-relative padding-large no-padding-top">
+  <div class="container">
+
+    {{!-- TOP 5 ENDING --}}
+    <div class="row mt-5">
+      <div class="display-header d-flex justify-content-between pb-3">
+        <h2 class="display-7 text-dark text-uppercase">Top 5 products that are about to end</h2>
+      </div>
+      <div class="swiper product-swiper">
+        <div class="swiper-wrapper">
+          {{#each topEndingProducts}}
+            <div class="swiper-slide">
+              <div class="product-card position-relative h-100 d-flex flex-column border rounded overflow-hidden bg-white shadow-sm">
+                <div class="image-holder">
+                  <a href="/products/detail?id={{this.id}}">
+                    <img src="/static/{{this.thumbnail}}" alt="{{this.name}}" class="img-fluid w-100" style="height: 250px; object-fit: cover;">
+                  </a>
+                </div>
+                <div class="cart-concern position-absolute">
+                  <div class="cart-button d-flex">
+                    <a href="/products/detail?id={{this.id}}" class="btn btn-medium btn-black">View Details</a>
+                  </div>
+                </div>  
+                <div class="card-detail p-3 d-flex flex-column h-100">
+                  <h3 class="card-title text-uppercase mb-3">
+                    {{this.name}}
+                  </h3>
+                  
+                  <div class="border-top pt-2 mt-auto">
+                    <div class="d-flex align-items-center gap-2 flex-nowrap">
+                      <span class="text-muted small text-uppercase" style="white-space: nowrap;">Ends in:</span>
+                      <div class="d-flex align-items-center text-danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stopwatch me-1" viewBox="0 0 16 16">
+                          <path d="M8.5 5.6a.5.5 0 1 0-1 0v2.9h-3a.5.5 0 0 0 0 1H8a.5.5 0 0 0 .5-.5V5.6z"/>
+                          <path d="M6.5 1A.5.5 0 0 1 7 .5h2a.5.5 0 0 1 0 1v.57c1.36.196 2.594.78 3.584 1.64a.715.715 0 0 1 .012-.013l.354-.354-.354-.353a.5.5 0 0 1 .707-.708l1.414 1.415a.5.5 0 1 1-.707.707l-.353-.354-.354.354a.715.715 0 0 1-.012.012A6.973 6.973 0 0 1 11.379 3.56c.955.5 1.828 1.178 2.533 2.001.752.881 1.225 1.974 1.225 3.193 0 4.136-3.356 7.492-7.496 7.492-4.14 0-7.5-3.356-7.5-7.492 0-1.219.473-2.312 1.225-3.193.705-.823 1.578-1.501 2.533-2.002.12-.816.577-1.47 1.212-1.872V1.5a.5.5 0 0 1 .5-.5zM8 14A5.993 5.993 0 0 0 14 8c0-3.317-2.69-6-6.004-6C4.69 2 2 4.683 2 8c0 3.317 2.69 6 6 6z"/>
+                        </svg>
+                        <span class="fw-bold fs-6 home-countdown-timer" data-end-date="{{this.end_at}}"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+        <div class="swiper-pagination position-absolute text-center"></div>
+      </div>
+    </div>
+
+    {{!-- TOP 5 MOST BIDS --}}
+    <div class="row mt-5">
+      <div class="display-header d-flex justify-content-between pb-3">
+        <h2 class="display-7 text-dark text-uppercase">Top 5 products with the most bids</h2>
+      </div>
+      <div class="swiper product-swiper">
+        <div class="swiper-wrapper">
+          {{#each topBidsProducts}}
+            <div class="swiper-slide">
+              <div class="product-card position-relative h-100 d-flex flex-column border rounded overflow-hidden bg-white shadow-sm">
+                <div class="image-holder">
+                  <a href="/products/detail?id={{this.id}}">
+                    <img src="/static/{{this.thumbnail}}" alt="{{this.name}}" class="img-fluid w-100" style="height: 250px; object-fit: cover;">
+                  </a>
+                </div>
+                <div class="cart-concern position-absolute">
+                  <div class="cart-button d-flex">
+                    <a href="/products/detail?id={{this.id}}" class="btn btn-medium btn-black">View Details</a>
+                  </div>
+                </div>
+                <div class="card-detail p-3 d-flex flex-column h-100">
+                  <h3 class="card-title text-uppercase mb-3">
+                    {{this.name}}
+                  </h3>
+                  
+                  <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-auto">
+                    <span class="text-muted small text-uppercase">Total Bids:</span>
+                    <div class="d-flex align-items-center text-primary">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-graph-up-arrow me-1" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M0 0h1v15h15v1H0V0Zm10 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4.9l-3.613 4.417a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61L13.445 4H10.5a.5.5 0 0 1-.5-.5Z"/>
+                      </svg>
+                      <span class="fw-bold fs-6">{{this.bid_count}}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+        <div class="swiper-pagination position-absolute text-center"></div>
+      </div>
+    </div>
+
+    {{!-- TOP 5 HIGHEST PRICE --}}
+    <div class="row mt-5">
+      <div class="display-header d-flex justify-content-between pb-3">
+        <h2 class="display-7 text-dark text-uppercase">Top 5 products with the highest current price</h2>
+      </div>
+      <div class="swiper product-swiper">
+        <div class="swiper-wrapper">
+          {{#each topPriceProducts}}
+            <div class="swiper-slide">
+              <div class="product-card position-relative h-100 d-flex flex-column border rounded overflow-hidden bg-white shadow-sm">
+                <div class="image-holder">
+                  <a href="/products/detail?id={{this.id}}">
+                    <img src="/static/{{this.thumbnail}}" alt="{{this.name}}" class="img-fluid w-100" style="height: 250px; object-fit: cover;">
+                  </a>
+                </div>
+                <div class="cart-concern position-absolute">
+                  <div class="cart-button d-flex">
+                    <a href="/products/detail?id={{this.id}}" class="btn btn-medium btn-black">View Details</a>
+                  </div>
+                </div>
+                <div class="card-detail p-3 d-flex flex-column h-100">
+                  <h3 class="card-title text-uppercase mb-3">
+                    {{this.name}}
+                  </h3>
+                  
+                  <div class="border-top pt-2 mt-auto">
+                    <div class="mb-1">
+                      <span class="text-muted small text-uppercase">Current Price:</span>
+                    </div>
+                    <div class="d-flex align-items-center text-success">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-tag-fill me-1" viewBox="0 0 16 16">
+                        <path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1H2zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                      </svg>
+                      <span class="item-price fw-bold fs-6">{{format_number this.current_price}} VND</span>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+        <div class="swiper-pagination position-absolute text-center"></div>
+      </div>
+    </div>
+
+  </div>
+</section>

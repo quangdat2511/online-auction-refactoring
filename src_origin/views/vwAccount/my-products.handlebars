@@ -1,0 +1,154 @@
+{{#section "css"}}
+<link rel="stylesheet" href="/static/css/product-list.css">
+{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    {{!-- LEFT SIDEBAR --}}
+    <div class="col-md-3 mb-4">
+        {{> client-sidebar activeSection='my-products'}}
+    </div>
+
+    {{!-- RIGHT CONTENT --}}
+    <div class="col-md-9">
+      
+      {{!-- HEADER --}}
+      <div class="display-header d-flex justify-content-between align-items-center pb-3">
+        <div>
+          <h2 class="display-7 text-dark text-uppercase mb-0">
+             MY PRODUCTS
+          </h2>
+          
+          <div class="mt-2">
+            {{#if (eq totalCount 0)}}
+              <small class="text-muted">No products found.</small>
+            {{else}}
+              <small class="text-muted">
+                Showing <span class="fw-bold text-dark">{{from}}</span> – <span class="fw-bold text-dark">{{to}}</span> of <span class="fw-bold text-dark">{{totalCount}}</span> results
+              </small>
+            {{/if}}
+          </div>
+        </div>
+        <div>
+          <a href="/seller/products/add" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add New Product
+          </a>
+        </div>
+      </div>
+      <hr class="my-2 mb-4">
+
+      {{!-- CONTENT --}}
+      {{#if (eq products.length 0)}}
+        <div class="alert alert-info text-center py-5 rounded">
+          <h5 class="mb-3">You haven't listed any products yet</h5>
+          <a href="/seller/products/add" class="btn btn-primary">Create your first product</a>
+        </div>
+      {{else}}
+      
+      {{!-- PRODUCT GRID --}}
+      <div class="row g-4">
+      {{#each products}}
+        <div class="col-md-6 col-xl-4">
+          <div class="product-card h-100 position-relative shadow-sm rounded overflow-hidden {{#if this.is_new}}card-new{{/if}}">
+            
+            <div class="image-holder position-relative overflow-hidden" style="height: 250px;">
+              <a href="/products/{{this.id}}">
+                {{#if this.thumbnail}}
+                  <img src="/static/{{this.thumbnail}}" alt="{{this.name}}" class="img-fluid w-100 h-100" style="object-fit: cover;">
+                {{else}}
+                  <img src="https://placehold.co/400x300?text=No+Image" class="img-fluid w-100 h-100">
+                {{/if}}
+              </a>
+              
+              {{#if this.is_new}}
+              <div class="position-absolute top-0 start-0 m-2">
+                <span class="badge bg-success">New</span>
+              </div>
+              {{/if}}
+            </div>
+
+            <div class="card-body p-3 d-flex flex-column">
+              
+              <h5 class="card-title mb-2" style="min-height: 48px;">
+                <a href="/products/{{this.id}}" class="text-decoration-none text-dark fw-bold text-uppercase" style="font-size: 1rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                  {{this.name}}
+                </a>
+              </h5>
+
+              <p class="card-text small text-muted mb-2">
+                <i class="bi bi-calendar3"></i> Posted: {{format_date this.created_at}}
+              </p>
+
+              <hr class="my-2">
+
+              <div class="mb-2">
+                <span class="small text-muted">Starting Price:</span>
+                <div class="h5 text-primary fw-bold mb-0">
+                  {{format_number this.start_price}}&nbsp;VND
+                </div>
+              </div>
+
+              <div class="mb-2">
+                <span class="small text-muted">Current Price:</span>
+                <div class="h5 text-success fw-bold mb-0">
+                  {{format_number this.current_price}}&nbsp;VND
+                </div>
+              </div>
+
+              <div class="mb-3 d-flex justify-content-between align-items-center bg-light p-2 rounded">
+                <span class="small text-muted">Bids:</span>
+                <span class="fw-bold text-dark">{{this.bid_count}}</span>
+              </div>
+
+              {{!-- ACTION BUTTONS --}}
+              <div class="d-flex gap-2 mt-auto">
+                <a href="/seller/products/{{this.id}}/edit" class="btn btn-sm btn-warning flex-fill">
+                  <i class="bi bi-pencil"></i> Edit
+                </a>
+                <button class="btn btn-sm btn-danger flex-fill btn-delete-product" data-product-id="{{this.id}}">
+                  <i class="bi bi-trash"></i> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+      </div>
+      {{/if}}
+
+    </div>
+  </div>
+</div>
+
+{{#section "js"}}
+<script>
+document.querySelectorAll('.btn-delete-product').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    e.preventDefault();
+    const productId = this.getAttribute('data-product-id');
+    
+    if (confirm('Are you sure you want to delete this product?')) {
+      fetch(`/seller/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('Error: ' + (data.message || 'Failed to delete product'));
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Error deleting product');
+      });
+    }
+  });
+});
+</script>
+{{/section}}

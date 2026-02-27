@@ -1,0 +1,154 @@
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    {{!-- LEFT SIDEBAR --}}
+    <div class="col-lg-3 mb-4">
+        {{> seller-sidebar activeSection='dashboard'}}
+    </div>
+
+    {{!-- RIGHT CONTENT --}}
+    <div class="col-lg-9">
+
+      {{!-- WELCOME MESSAGE --}}
+      <div class="mb-4">
+        <h2 class="fw-bold mb-1">Dashboard Overview</h2>
+        <p class="text-muted">Welcome back, <strong>{{authUser.fullname}}</strong>! Here's your selling performance at a glance.</p>
+      </div>
+
+      {{!-- STATS CARDS --}}
+      <div class="row g-4 mb-4">
+        
+        {{!-- Total Products --}}
+        <div class="col-md-4 col-lg">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="text-center">
+                <i class="bi bi-box-seam fs-2 text-primary opacity-50 mb-2"></i>
+                <p class="text-muted small mb-1">Total</p>
+                <h3 class="text-primary fw-bold mb-0">{{stats.total_products}}</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Active Products --}}
+        <div class="col-md-4 col-lg">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="text-center">
+                <i class="bi bi-play-circle fs-2 text-success opacity-50 mb-2"></i>
+                <p class="text-muted small mb-1">Active</p>
+                <h3 class="text-success fw-bold mb-0">{{stats.active_products}}</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Pending Products --}}
+        <div class="col-md-4 col-lg">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="text-center">
+                <i class="bi bi-hourglass-split fs-2 text-warning opacity-50 mb-2"></i>
+                <p class="text-muted small mb-1">Pending</p>
+                <h3 class="text-warning fw-bold mb-0">{{stats.pending_products}}</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Sold Products --}}
+        <div class="col-md-4 col-lg">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="text-center">
+                <i class="bi bi-bag-check fs-2 text-info opacity-50 mb-2"></i>
+                <p class="text-muted small mb-1">Sold</p>
+                <h3 class="text-info fw-bold mb-0">{{stats.sold_products}}</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Expired Products --}}
+        <div class="col-md-4 col-lg">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+              <div class="text-center">
+                <i class="bi bi-x-circle fs-2 text-secondary opacity-50 mb-2"></i>
+                <p class="text-muted small mb-1">Expired</p>
+                <h3 class="text-secondary fw-bold mb-0">{{stats.expired_products}}</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {{!-- REVENUE STATS --}}
+      <div class="row g-4 mb-4">
+        
+        {{!-- Pending Revenue --}}
+        <div class="col-md-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-4">
+              <div class="text-center">
+                <i class="bi bi-hourglass-split display-4 text-warning mb-2"></i>
+                <p class="text-warning mb-2 fw-bold">Pending Revenue</p>
+                <h3 class="text-warning fw-bold mb-0">{{format_number stats.pending_revenue}}</h3>
+                <small class="text-muted">VND</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Potential Revenue --}}
+        <div class="col-md-4">
+          <div class="card border-primary border-2 shadow-sm h-100">
+            <div class="card-body py-4">
+              <div class="text-center">
+                <i class="bi bi-cash-coin display-4 text-primary mb-2"></i>
+                <p class="text-primary mb-2 fw-bold">Potential Revenue</p>
+                <h3 class="text-primary fw-bold mb-0">{{format_number stats.total_revenue}}</h3>
+                <small class="text-muted">VND</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Completed Revenue --}}
+        <div class="col-md-4">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body py-4">
+              <div class="text-center">
+                <i class="bi bi-check-circle display-4 text-success mb-2"></i>
+                <p class="text-success mb-2 fw-bold">Completed Revenue</p>
+                <h3 class="text-success fw-bold mb-0">{{format_number stats.completed_revenue}}</h3>
+                <small class="text-muted">VND</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {{!-- QUICK START --}}
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-rocket-takeoff fs-1 text-primary mb-3 d-block"></i>
+          <h5 class="mb-3">Ready to sell more?</h5>
+          <p class="text-muted mb-4">Start by adding a new product or manage your existing listings</p>
+          <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <a href="/seller/products/add" class="btn btn-primary btn-lg">
+              <i class="bi bi-plus-circle"></i> Add New Product
+            </a>
+            <a href="/seller/products" class="btn btn-outline-primary btn-lg">
+              <i class="bi bi-list"></i> Manage Products
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -1,0 +1,128 @@
+{{#section 'js'}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  document.getElementById("formAdminProfile").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const newPass = document.getElementById("new_password").value;
+    const confirmPass = document.getElementById("confirm_new_password").value;
+    const oldPass = document.getElementById("old_password").value;
+
+    if (!oldPass) {
+        Swal.fire({ 
+            icon: 'warning', 
+            title: 'Authentication Required', 
+            text: 'Please enter your current password to confirm these changes.' 
+        });
+        document.getElementById("old_password").focus();
+        return;
+    }
+
+    if (newPass || confirmPass) {
+        if (newPass !== confirmPass) {
+            Swal.fire({ icon: 'error', title: 'Mismatch', text: 'New passwords do not match.' });
+            return;
+        }
+    }
+    
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+    e.target.submit();
+  });
+</script>
+{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    <!-- CỘT TRÁI: SIDEBAR -->
+    <div class="col-md-3 mb-4">
+        {{> admin-sidebar activeSection='profile'}}
+    </div>
+
+    <!-- CỘT PHẢI: NỘI DUNG FORM -->
+    <div class="col-md-9">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-white border-bottom py-3">
+          <h5 class="mb-0 fw-bold text-danger">
+              <i class="bi bi-person-gear me-2"></i> UPDATE PROFILE
+          </h5>
+        </div>
+        
+        <div class="card-body p-4">
+            
+            {{#if success_message}}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> {{success_message}}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {{/if}}
+
+            {{#if error_message}}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> {{error_message}}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {{/if}}
+
+            <form id="formAdminProfile" action="/admin/profile?_method=PUT" method="POST">
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Full Name</label>
+                        <input type="text" class="form-control" id="fullname" name="fullname" value="{{authUser.fullname}}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Email</label>
+                        <input type="email" class="form-control" name="email" value="{{authUser.email}}" required>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Address</label>
+                        <input type="text" class="form-control" name="address" value="{{authUser.address}}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Date of Birth</label>
+                        <input type="date" class="form-control" name="date_of_birth" value="{{format_date_input authUser.date_of_birth}}">
+                    </div>
+                </div>
+
+                <hr class="my-4 text-muted">
+                
+                <h6 class="fw-bold mb-3 text-danger"><i class="bi bi-shield-lock me-2"></i> Security</h6>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">New Password</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" placeholder="Leave blank to keep current">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-muted small text-uppercase">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" placeholder="Re-enter new password">
+                    </div>
+                </div>
+
+                <div class="alert alert-light border mt-4 border-danger-subtle">
+                    <div class="mb-3">
+                        <label class="form-label text-danger fw-bold">Old Password *</label>
+                        <input type="password" class="form-control" id="old_password" name="old_password" required placeholder="Required to save changes">
+                        <div class="form-text">Please enter your current password to confirm these changes.</div>
+                    </div>
+                </div>
+
+                <div class="text-end">
+                    <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">
+                        <i class="bi bi-save me-2"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

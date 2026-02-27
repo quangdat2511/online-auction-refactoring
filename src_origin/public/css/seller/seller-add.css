@@ -1,0 +1,320 @@
+/* ============================================
+   SELLER ADD PRODUCT PAGE STYLES
+   ============================================ */
+
+/* Form Styles */
+.form-label.required::after {
+  content: " *";
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.card-header {
+  font-weight: 600;
+  border-bottom: 2px solid rgba(0,0,0,0.05);
+}
+
+/* Image Upload & Preview */
+.image-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.image-preview-item {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.image-preview-item:hover {
+  border-color: #72AEC8;
+  box-shadow: 0 4px 8px rgba(114, 174, 200, 0.3);
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-preview-item .remove-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.image-preview-item .remove-btn:hover {
+  background: rgba(220, 53, 69, 1);
+  transform: scale(1.1);
+}
+
+/* Quill Editor Styles */
+#editor-container {
+  height: 300px;
+  background: white;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+}
+
+#editor-container:focus-within {
+  border-color: #72AEC8;
+  box-shadow: 0 0 0 0.25rem rgba(114, 174, 200, 0.25);
+}
+
+.ql-editor {
+  min-height: 250px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.ql-editor.ql-blank::before {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.ql-toolbar {
+  background: #f8f9fa;
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+}
+
+/* Uppy Dashboard Styles */
+.uppy-Dashboard-inner {
+  border: 2px dashed #72AEC8 !important;
+  border-radius: 0.375rem !important;
+  background-color: #f8f9fa !important;
+}
+
+/* Thumbnail Upload Specific Styles */
+#uppy-thumbnail .uppy-Dashboard-inner {
+  border: 2px dashed #5a92ab !important;
+  background-color: #f0f8fb !important;
+}
+
+#uppy-thumbnail .uppy-Dashboard-AddFiles-title {
+  color: #5a92ab !important;
+}
+
+/* Sub Images Upload Specific Styles */
+#uppy-subimages .uppy-Dashboard-inner {
+  border: 2px dashed #72AEC8 !important;
+}
+
+.uppy-Dashboard-AddFiles {
+  border: none !important;
+}
+
+.uppy-Dashboard-AddFiles-title {
+  color: #3A3A3A !important;
+  font-size: 1.2rem !important;
+  font-weight: 600 !important;
+}
+
+.uppy-Dashboard-browse {
+  color: #72AEC8 !important;
+  font-weight: 600 !important;
+}
+
+.uppy-Dashboard-AddFiles-info {
+  color: #717171 !important;
+}
+
+.uppy-DashboardContent-bar {
+  background-color: #72AEC8 !important;
+  position: sticky !important;
+  z-index: 10 !important;
+}
+
+.uppy-DashboardContent-addMore {
+  background-color: #72AEC8 !important;
+  border-color: #72AEC8 !important;
+}
+
+.uppy-DashboardContent-addMore:hover {
+  background-color: #5a92ab !important;
+}
+
+.uppy-StatusBar.is-complete .uppy-StatusBar-progress {
+  background-color: #72AEC8 !important;
+}
+
+.uppy-c-btn-primary {
+  background-color: #72AEC8 !important;
+  border-color: #72AEC8 !important;
+}
+
+.uppy-c-btn-primary:hover {
+  background-color: #5a92ab !important;
+  border-color: #5a92ab !important;
+}
+
+.uppy-Dashboard-AddFiles-list {
+  display: flex !important;
+  justify-content: center !important;
+  margin-top: 15px !important;
+}
+
+/* Fix Uppy file item buttons */
+.uppy-DashboardItem-action,
+.uppy-DashboardItem-preview,
+button[aria-label*="remove"],
+button[aria-label*="Remove"] {
+  z-index: 11 !important;
+}
+
+/* Fix Uppy status badge (checkmark) overlapping navbar */
+.uppy-StatusBar,
+.uppy-StatusBar-content,
+.uppy-StatusBar-status,
+.uppy-StatusBar-statusPrimary,
+.uppy-Dashboard-AddFiles,
+.uppy-DashboardTab,
+.uppy-Dashboard,
+.uppy-Root,
+[data-uppy-drag-drop-supported],
+.uppy-Dashboard--modal {
+  z-index: 1 !important;
+}
+
+/* Ensure Uppy container doesn't overflow */
+#uppy-thumbnail,
+#uppy-subimages {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: block;
+}
+
+#uppy-thumbnail .uppy-Dashboard,
+#uppy-subimages .uppy-Dashboard {
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+}
+
+#uppy-thumbnail .uppy-Dashboard-inner,
+#uppy-subimages .uppy-Dashboard-inner {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Form Validation Styles */
+.was-validated .form-control:invalid,
+.was-validated .form-select:invalid {
+  border-color: #dc3545;
+  padding-right: calc(1.5em + 0.75rem);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.was-validated .form-control:valid,
+.was-validated .form-select:valid {
+  border-color: #198754;
+  padding-right: calc(1.5em + 0.75rem);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.invalid-feedback {
+  display: none;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: 0.875em;
+  color: #dc3545;
+}
+
+.was-validated .form-control:invalid ~ .invalid-feedback,
+.was-validated .form-select:invalid ~ .invalid-feedback {
+  display: block;
+}
+
+/* Switch Toggle Styles */
+.form-check-input:checked {
+  background-color: #72AEC8;
+  border-color: #72AEC8;
+}
+
+.form-check-input:focus {
+  border-color: #72AEC8;
+  box-shadow: 0 0 0 0.25rem rgba(114, 174, 200, 0.25);
+}
+
+/* Button Styles */
+.btn {
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Alert Styles */
+.alert {
+  border-left: 4px solid;
+  border-radius: 0.375rem;
+}
+
+.alert-danger {
+  border-left-color: #dc3545;
+}
+
+.alert-success {
+  border-left-color: #198754;
+}
+
+.alert-info {
+  border-left-color: #0dcaf0;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 991.98px) {
+  #editor-container {
+    height: 250px;
+  }
+  
+  .image-preview-item {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .display-6 {
+    font-size: 2rem;
+  }
+  
+  .image-preview-item {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .btn-lg {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+  }
+}

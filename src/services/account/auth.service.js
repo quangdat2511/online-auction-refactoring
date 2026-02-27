@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import * as userModel from '../../models/user.model.js';
 import { sendMail } from '../../utils/mailer.js';
+import { AUTH } from '../../config/app.config.js';
 
 function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -26,14 +27,14 @@ export async function verifyRecaptcha(token) {
 
 async function createAndSendOtp(userId, email, fullname, purpose, subject, html) {
   const otp = generateOtp();
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
+  const expiresAt = new Date(Date.now() + AUTH.OTP_EXPIRY_MS);
   await userModel.createOtp({ user_id: userId, otp_code: otp, purpose, expires_at: expiresAt });
   await sendMail({ to: email, subject, html: html(otp) });
   return otp;
 }
 
 export async function register({ fullname, email, address, password }) {
-  const hashedPassword = bcrypt.hashSync(password, 10);
+  const hashedPassword = bcrypt.hashSync(password, AUTH.BCRYPT_SALT_ROUNDS);
   const newUser = await userModel.add({
     email,
     fullname,
@@ -169,7 +170,7 @@ export async function resetPassword(email, newPassword, confirmPassword) {
   const user = await userModel.findByEmail(email);
   if (!user) return { success: false, reason: 'user_not_found' };
 
-  const hashedPassword = bcrypt.hashSync(newPassword, 10);
+  const hashedPassword = bcrypt.hashSync(newPassword, AUTH.BCRYPT_SALT_ROUNDS);
   await userModel.update(user.id, { password_hash: hashedPassword });
   return { success: true };
 }

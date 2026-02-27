@@ -1,6 +1,7 @@
 import * as productModel from '../../models/product.model.js';
 import * as categoryModel from '../../models/category.model.js';
 import * as systemSettingModel from '../../models/systemSetting.model.js';
+import { PAGINATION } from '../../config/app.config.js';
 
 async function prepareProductList(products) {
   const now = new Date();
@@ -16,7 +17,7 @@ async function prepareProductList(products) {
   });
 }
 
-export async function getProductsByCategory({ categoryId, page = 1, sort = '', userId = null, limit = 3 }) {
+export async function getProductsByCategory({ categoryId, page = 1, sort = '', userId = null, limit = PAGINATION.PRODUCTS_PER_PAGE }) {
   const offset = (page - 1) * limit;
 
   const category = await categoryModel.findByCategoryId(categoryId);
@@ -51,7 +52,7 @@ export async function getProductsByCategory({ categoryId, page = 1, sort = '', u
   };
 }
 
-export async function searchProducts({ keywords, page = 1, sort = '', logic = 'and', userId = null, limit = 3 }) {
+export async function searchProducts({ keywords, page = 1, sort = '', logic = 'and', userId = null, limit = PAGINATION.PRODUCTS_PER_PAGE }) {
   if (!keywords || keywords.trim().length === 0) {
     return {
       products: [],

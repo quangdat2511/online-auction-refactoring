@@ -1,5 +1,17 @@
 import db from '../utils/db.js';
 
+// ── Internal Query Helper ────────────────────────────────────
+/** Base query joining users to product_comments — reused by get/replies functions. */
+function commentWithUserQuery() {
+  return db('product_comments')
+    .join('users', 'product_comments.user_id', 'users.id')
+    .select(
+      'product_comments.*',
+      'users.fullname as user_name',
+      'users.role as user_role'
+    );
+}
+
 /**
  * Tạo comment mới cho sản phẩm
  */
@@ -17,21 +29,15 @@ export async function createComment(productId, userId, content, parentId = null)
  * Lấy tất cả comments của sản phẩm với pagination
  */
 export async function getCommentsByProductId(productId, limit = null, offset = 0) {
-  let query = db('product_comments')
-    .join('users', 'product_comments.user_id', 'users.id')
+  let query = commentWithUserQuery()
     .where('product_comments.product_id', productId)
     .whereNull('product_comments.parent_id')
-    .select(
-      'product_comments.*',
-      'users.fullname as user_name',
-      'users.role as user_role'
-    )
     .orderBy('product_comments.created_at', 'desc');
-  
+
   if (limit !== null) {
     query = query.limit(limit).offset(offset);
   }
-  
+
   return query;
 }
 
@@ -51,14 +57,8 @@ export async function countCommentsByProductId(productId) {
  * Lấy replies của một comment
  */
 export async function getRepliesByCommentId(commentId) {
-  return db('product_comments')
-    .join('users', 'product_comments.user_id', 'users.id')
+  return commentWithUserQuery()
     .where('product_comments.parent_id', commentId)
-    .select(
-      'product_comments.*',
-      'users.fullname as user_name',
-      'users.role as user_role'
-    )
     .orderBy('product_comments.created_at', 'asc');
 }
 
@@ -72,14 +72,8 @@ export async function getRepliesByCommentIds(commentIds) {
     return [];
   }
   
-  return db('product_comments')
-    .join('users', 'product_comments.user_id', 'users.id')
+  return commentWithUserQuery()
     .whereIn('product_comments.parent_id', commentIds)
-    .select(
-      'product_comments.*',
-      'users.fullname as user_name',
-      'users.role as user_role'
-    )
     .orderBy('product_comments.created_at', 'asc');
 }
 

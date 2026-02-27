@@ -11,6 +11,7 @@ import { categoryMiddleware } from './middlewares/category.mdw.js';
 
 // Import Scheduled Jobs
 import { startAuctionEndNotifier } from './scripts/auctionEndNotifier.js';
+import { AUCTION } from './config/app.config.js';
 
 // Import Routes
 import homeRouter from './routes/home.route.js';
@@ -96,5 +97,5 @@ app.use('/account', accountRouter);
 
 app.listen(PORT, function () {
   console.log(`Server is running on http://localhost:${PORT}`);
-  startAuctionEndNotifier(30);
+  startAuctionEndNotifier(AUCTION.END_NOTIFIER_INTERVAL_SECONDS);
 });

@@ -1,0 +1,120 @@
+{{#section 'css'}}
+<style>
+  .btn-admin-primary {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+  }
+  .btn-admin-primary:hover {
+    background-color: #bb2d3b;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+  }
+  .btn-admin-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+  }
+  .btn-admin-secondary {
+    transition: all 0.3s ease;
+  }
+  .btn-admin-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+  }
+</style>
+{{/section}}
+
+{{#section 'js'}}
+<script>
+    $(document).ready(function() {
+        // Validation form trước khi submit
+        $('#formAddCategory').on('submit', function(e) {
+            const name = $('#txtName').val().trim();
+            
+            if (!name) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    text: 'Category name is required!'
+                });
+                return false;
+            }
+        });
+    });
+</script>
+{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    <!-- SIDEBAR -->
+    <div class="col-md-3 mb-4">
+        {{> admin-sidebar activeSection='categories'}}
+    </div>
+
+    <!-- CONTENT -->
+    <div class="col-md-9">
+      <div class="card shadow-sm border-0">
+        
+        <!-- Header -->
+        <div class="card-header bg-white border-bottom py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-danger">
+                <i class="bi bi-plus-circle-fill me-2"></i> ADD NEW CATEGORY
+            </h5>
+          </div>
+        </div>
+        
+        <!-- Body -->
+        <div class="card-body p-4">
+          {{#if error_message}}
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i> {{error_message}}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {{/if}}
+
+          <form id="formAddCategory" method="POST" action="/admin/categories/add">
+            
+            <!-- Category Name -->
+            <div class="mb-4">
+              <label for="txtName" class="form-label fw-bold">
+                  <i class="bi bi-tag me-1"></i> Category Name <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control form-control-lg" id="txtName" name="name" 
+                     placeholder="Enter category name" required>
+              <div class="form-text">Enter a unique and descriptive name for the category.</div>
+            </div>
+
+            <!-- Parent Category -->
+            <div class="mb-4">
+              <label for="selParent" class="form-label fw-bold">
+                  <i class="bi bi-diagram-3 me-1"></i> Parent Category
+              </label>
+              <select class="form-select form-select-lg" id="selParent" name="parent_id">
+                  <option value="">— None (Level 1 Category) —</option>
+                  {{#each parentCategories}}
+                  <option value="{{id}}">{{name}}</option>
+                  {{/each}}
+              </select>
+              <div class="form-text">Leave empty for a top-level category, or select a parent for a sub-category.</div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="d-flex gap-2 mt-4 pt-3 border-top">
+              <button type="submit" class="btn btn-lg px-5 btn-admin-primary">
+                  <i class="bi bi-check-circle me-2"></i>Create Category
+              </button>
+              <a href="/admin/categories/list" class="btn btn-outline-secondary btn-lg px-4 btn-admin-secondary">
+                  <i class="bi bi-x-circle me-2"></i>Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

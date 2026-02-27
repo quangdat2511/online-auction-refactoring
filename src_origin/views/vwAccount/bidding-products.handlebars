@@ -1,0 +1,101 @@
+{{#section "title"}}Bidding Products{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3 mb-4">
+      {{> client-sidebar}}
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-9">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-hammer text-primary" style="font-size: 1.5rem;"></i>
+            <div>
+              <h4 class="mb-0 fw-bold">Bidding Products</h4>
+              <small class="text-muted">Products you are currently bidding on</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-4" style="max-height: 600px; overflow-y: auto;">
+          {{#if products.length}}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Current Price</th>
+                    <th>My Max Bid</th>
+                    <th>Status</th>
+                    <th>Ends In</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#each products}}
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center gap-3">
+                        <img src="/static/{{this.thumbnail}}" alt="{{this.name}}" 
+                             class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
+                        <div>
+                          <div class="fw-bold">{{this.name}}</div>
+                          <small class="text-muted">{{this.bid_count}} bids</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge bg-secondary">{{this.category_name}}</span>
+                    </td>
+                    <td>
+                      <strong class="text-primary">{{format_number this.current_price}} VND</strong>
+                    </td>
+                    <td>
+                      <span class="text-success">{{format_number this.my_max_bid}} VND</span>
+                    </td>
+                    <td>
+                      {{#if this.is_winning}}
+                        <span class="badge bg-success">
+                          <i class="bi bi-trophy-fill"></i> Winning
+                        </span>
+                      {{else}}
+                        <span class="badge bg-warning text-dark">
+                          <i class="bi bi-exclamation-triangle-fill"></i> Outbid
+                        </span>
+                      {{/if}}
+                    </td>
+                    <td>
+                      <div class="text-muted small">
+                        <i class="bi bi-clock"></i>
+                        {{format_time_remaining this.end_at}}
+                      </div>
+                    </td>
+                    <td>
+                      <a href="/products/detail?id={{this.id}}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i>
+                      </a>
+                    </td>
+                  </tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
+          {{else}}
+            <div class="text-center py-5">
+              <i class="bi bi-hammer text-muted" style="font-size: 4rem;"></i>
+              <h5 class="mt-3 text-muted">No Active Bids</h5>
+              <p class="text-muted">You are not currently bidding on any products.</p>
+              <a href="/" class="btn btn-primary mt-3">
+                <i class="bi bi-search"></i> Browse Products
+              </a>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

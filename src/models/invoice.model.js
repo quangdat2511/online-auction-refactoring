@@ -154,35 +154,26 @@ export async function findByOrderId(orderId) {
     .orderBy('invoices.created_at', 'desc');
 }
 
-/**
- * Lấy payment invoice của một order
- */
-export async function getPaymentInvoice(orderId) {
+// ── Internal Query Helper ────────────────────────────────
+function findInvoiceByType(orderId, type) {
   return db('invoices')
     .leftJoin('users as issuer', 'invoices.issuer_id', 'issuer.id')
     .where('invoices.order_id', orderId)
-    .where('invoices.invoice_type', 'payment')
-    .select(
-      'invoices.*',
-      'issuer.fullname as issuer_name'
-    )
+    .where('invoices.invoice_type', type)
+    .select('invoices.*', 'issuer.fullname as issuer_name')
     .first();
 }
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Lấy payment invoice của một order
+ */
+export const getPaymentInvoice  = (orderId) => findInvoiceByType(orderId, 'payment');
 
 /**
  * Lấy shipping invoice của một order
  */
-export async function getShippingInvoice(orderId) {
-  return db('invoices')
-    .leftJoin('users as issuer', 'invoices.issuer_id', 'issuer.id')
-    .where('invoices.order_id', orderId)
-    .where('invoices.invoice_type', 'shipping')
-    .select(
-      'invoices.*',
-      'issuer.fullname as issuer_name'
-    )
-    .first();
-}
+export const getShippingInvoice = (orderId) => findInvoiceByType(orderId, 'shipping');
 
 /**
  * Xác minh invoice

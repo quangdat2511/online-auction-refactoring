@@ -1,0 +1,124 @@
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    <!-- SIDEBAR -->
+    <div class="col-md-3 mb-4">
+        {{> client-sidebar activeSection='upgrade'}}
+    </div>
+
+    <!-- CONTENT -->
+    <div class="col-md-9">
+      <div class="card shadow-sm border-0 h-100">
+        
+        {{!-- 1. HEADER LOGIC: Thay đổi màu sắc và icon dựa theo trạng thái --}}
+        <div class="card-header border-bottom py-3 text-white
+            {{#if (eq user.role 'seller')}}bg-success
+            {{else if (eq upgrade_request.status 'pending')}}bg-warning text-dark
+            {{else if (eq upgrade_request.status 'rejected')}}bg-danger
+            {{else}}bg-primary{{/if}}">
+            
+            <h5 class="mb-0 fw-bold">
+                {{#if (eq user.role 'seller')}}
+                    <i class="bi bi-check-circle-fill me-2"></i> SELLER ACTIVE
+                {{else if (eq upgrade_request.status 'pending')}}
+                    <i class="bi bi-hourglass-split me-2"></i> REQUEST PENDING
+                {{else if (eq upgrade_request.status 'rejected')}}
+                    <i class="bi bi-x-circle-fill me-2"></i> REQUEST REJECTED
+                {{else}}
+                    <i class="bi bi-briefcase-fill me-2"></i> BECOME A SELLER
+                {{/if}}
+            </h5>
+        </div>
+
+        <div class="card-body p-5">
+
+            {{!-- CASE 1: ĐÃ LÀ SELLER --}}
+            {{#if (eq user.role 'seller')}}
+                <div class="text-center py-3">
+                    <div class="display-1 text-success mb-3"><i class="bi bi-shop"></i></div>
+                    <h2 class="fw-bold">Congratulations!</h2>
+                    <p class="text-muted lead">You are already a Seller on our platform.</p>
+                    <div class="mt-4">
+                        <a href="/seller/products/upload" class="btn btn-success btn-lg shadow-sm">
+                            <i class="bi bi-plus-lg me-2"></i> Post New Auction
+                        </a>
+                    </div>
+                </div>
+
+            {{!-- CASE 2: PENDING (ĐANG CHỜ DUYỆT) --}}
+            {{else if (eq upgrade_request.status 'pending')}}
+                <div class="text-center py-3">
+                    <div class="display-1 text-warning mb-3"><i class="bi bi-clock-history"></i></div>
+                    <h3 class="fw-bold">We are reviewing your request</h3>
+                    <p class="text-muted">Submitted on: <strong>{{format_date upgrade_request.created_at}}</strong></p>
+                    
+                    <div class="alert alert-warning d-inline-block mt-3 bg-warning-subtle border-0 text-warning-emphasis">
+                        <i class="bi bi-info-circle me-2"></i> Please wait up to <strong>7 days</strong> for Admin approval.
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="/account/profile" class="btn btn-outline-secondary">Back to Profile</a>
+                    </div>
+                </div>
+
+            {{!-- CASE 3: REJECTED (BỊ TỪ CHỐI - HIỂN THỊ LÝ DO) --}}
+            {{else if (eq upgrade_request.status 'rejected')}}
+                <div class="text-center mb-4">
+                    <div class="text-danger display-4 mb-2"><i class="bi bi-file-earmark-x"></i></div>
+                    <h4 class="fw-bold text-danger">Request Denied</h4>
+                    <p class="text-muted">Your request was reviewed but not approved.</p>
+                </div>
+
+                {{!-- Hiển thị Admin Note --}}
+                <div class="card bg-danger-subtle border-danger mb-4">
+                    <div class="card-body text-danger-emphasis">
+                        <h6 class="fw-bold text-uppercase small mb-2"><i class="bi bi-chat-quote-fill me-2"></i>Note from admin:</h6>
+                        <p class="mb-0 fst-italic lead">"{{upgrade_request.admin_note}}"</p>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <p class="small text-muted mb-3">You can address the issues above and submit a new request.</p>
+                    {{!-- Form gửi lại yêu cầu --}}
+                    <form action="/account/request-upgrade" method="POST">
+                        <button type="submit" class="btn btn-danger btn-lg shadow-sm">
+                            <i class="bi bi-arrow-repeat me-2"></i> Submit New Request
+                        </button>
+                    </form>
+                </div>
+
+            {{!-- CASE 4: DEFAULT HOẶC EXPIRED (CHƯA GỬI HOẶC HẾT HẠN) --}}
+            {{else}}
+                {{#if (eq upgrade_request.status 'expired')}}
+                    <div class="alert alert-secondary border-0 mb-4">
+                        <i class="bi bi-calendar-x me-2"></i> Your previous request expired (7 days). You can submit a new one.
+                    </div>
+                {{/if}}
+
+                {{!-- Form Đăng ký mặc định --}}
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold">Ready to start selling?</h2>
+                    <p class="text-muted">Join our community and reach thousands of buyers.</p>
+                </div>
+
+                <div class="alert alert-info border-0 bg-light">
+                    <h6 class="fw-bold"><i class="bi bi-shield-check me-2"></i> Policy:</h6>
+                    <ul class="mb-0 small text-muted ps-3">
+                        <li>Once approved, you will have <strong>Permanent Seller Status</strong>.</li>
+                        <li>Requests are valid for <strong>7 days</strong>. If not processed, they expire automatically.</li>
+                    </ul>
+                </div>
+
+                <form action="/account/request-upgrade" method="POST" class="mt-4 text-center">
+                    <button type="submit" class="btn btn-primary btn-lg px-5 shadow fw-bold">
+                        <i class="bi bi-send-check me-2"></i> SEND REQUEST
+                    </button>
+                </form>
+            {{/if}}
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

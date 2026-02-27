@@ -66,13 +66,17 @@ export async function findByProductId(productId) {
 /**
  * Lấy order kèm thông tin đầy đủ (product, buyer, seller)
  */
-export async function findByIdWithDetails(orderId) {
+// internal helper that builds the common join/select block used by
+// "withDetails" queries.  this keeps the WHERE clause (and any
+// pagination/filtering) separate from the shared wiring of products,
+// buyer, seller and category.  other functions can call this and then
+// add their own where/limit/etc.
+function orderWithDetailsQuery() {
   return db('orders')
     .leftJoin('products', 'orders.product_id', 'products.id')
     .leftJoin('users as buyer', 'orders.buyer_id', 'buyer.id')
     .leftJoin('users as seller', 'orders.seller_id', 'seller.id')
     .leftJoin('categories', 'products.category_id', 'categories.id')
-    .where('orders.id', orderId)
     .select(
       'orders.*',
       'products.name as product_name',
@@ -86,7 +90,12 @@ export async function findByIdWithDetails(orderId) {
       'seller.id as seller_id',
       'seller.fullname as seller_name',
       'seller.email as seller_email'
-    )
+    );
+}
+
+export async function findByIdWithDetails(orderId) {
+  return orderWithDetailsQuery()
+    .where('orders.id', orderId)
     .first();
 }
 
@@ -94,43 +103,32 @@ export async function findByIdWithDetails(orderId) {
  * Lấy order theo product_id kèm thông tin đầy đủ
  */
 export async function findByProductIdWithDetails(productId) {
-  return db('orders')
-    .leftJoin('products', 'orders.product_id', 'products.id')
-    .leftJoin('users as buyer', 'orders.buyer_id', 'buyer.id')
-    .leftJoin('users as seller', 'orders.seller_id', 'seller.id')
-    .leftJoin('categories', 'products.category_id', 'categories.id')
+  return orderWithDetailsQuery()
     .where('orders.product_id', productId)
-    .select(
-      'orders.*',
-      'products.name as product_name',
-      'products.thumbnail as product_thumbnail',
-      'products.end_at as product_end_at',
-      'products.closed_at as product_closed_at',
-      'categories.name as category_name',
-      'buyer.id as buyer_id',
-      'buyer.fullname as buyer_name',
-      'buyer.email as buyer_email',
-      'seller.id as seller_id',
-      'seller.fullname as seller_name',
-      'seller.email as seller_email'
-    )
     .first();
 }
 
 /**
  * Lấy tất cả orders của một seller
  */
-export async function findBySellerId(sellerId) {
+// small helper for queries that only need product info plus a single
+// user (either buyer or seller).  the caller just specifies the alias
+// and the label that will be used in the select clause.
+function ordersWithProductAndUserQuery(userAlias, selectName) {
   return db('orders')
     .leftJoin('products', 'orders.product_id', 'products.id')
-    .leftJoin('users as buyer', 'orders.buyer_id', 'buyer.id')
-    .where('orders.seller_id', sellerId)
+    .leftJoin(`users as ${userAlias}`, `orders.${userAlias}_id`, `${userAlias}.id`)
     .select(
       'orders.*',
       'products.name as product_name',
       'products.thumbnail as product_thumbnail',
-      'buyer.fullname as buyer_name'
-    )
+      `${userAlias}.fullname as ${selectName}`
+    );
+}
+
+export async function findBySellerId(sellerId) {
+  return ordersWithProductAndUserQuery('buyer', 'buyer_name')
+    .where('orders.seller_id', sellerId)
     .orderBy('orders.created_at', 'desc');
 }
 
@@ -138,16 +136,8 @@ export async function findBySellerId(sellerId) {
  * Lấy tất cả orders của một buyer
  */
 export async function findByBuyerId(buyerId) {
-  return db('orders')
-    .leftJoin('products', 'orders.product_id', 'products.id')
-    .leftJoin('users as seller', 'orders.seller_id', 'seller.id')
+  return ordersWithProductAndUserQuery('seller', 'seller_name')
     .where('orders.buyer_id', buyerId)
-    .select(
-      'orders.*',
-      'products.name as product_name',
-      'products.thumbnail as product_thumbnail',
-      'seller.fullname as seller_name'
-    )
     .orderBy('orders.created_at', 'desc');
 }
 

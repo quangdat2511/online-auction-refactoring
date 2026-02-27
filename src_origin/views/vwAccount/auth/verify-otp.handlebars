@@ -1,0 +1,58 @@
+<section class="py-5"> 
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-5">
+
+        <div class="mb-4 text-center">
+          <h2 class="text-uppercase">Verify email</h2>
+          <p class="text-muted mb-0">
+            Enter the OTP we sent to <strong>{{email}}</strong>.
+          </p>
+        </div>
+
+        {{#if error_message}}
+        <div class="alert alert-danger">
+          {{error_message}}
+        </div>
+        {{/if}}
+
+        {{#if info_message}}
+        <div class="alert alert-info">
+          {{info_message}}
+        </div>
+        {{/if}}
+
+        <!-- Form nhập OTP -->
+        <form method="post" action="/account/verify-email" class="mb-3">
+          <input type="hidden" name="email" value="{{email}}">
+
+          <div class="mb-3">
+            <label for="otp" class="form-label text-uppercase small">OTP Code</label>
+            <input
+              type="text"
+              class="form-control"
+              id="otp"
+              name="otp"
+              placeholder="Enter 6-digit OTP">
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-dark text-uppercase">
+              Verify
+            </button>
+          </div>
+        </form>
+
+        <!-- Nút Resend OTP -->
+        <form method="post" action="/account/resend-otp" class="text-center">
+          <input type="hidden" name="email" value="{{email}}">
+
+          <button type="submit" class="btn btn-link text-decoration-none p-0">
+            Didn’t receive the code? <strong>Resend OTP</strong>
+          </button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</section>

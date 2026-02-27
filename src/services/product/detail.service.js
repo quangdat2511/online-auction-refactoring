@@ -4,6 +4,7 @@ import * as biddingHistoryModel from '../../models/biddingHistory.model.js';
 import * as productCommentModel from '../../models/productComment.model.js';
 import * as productDescUpdateModel from '../../models/productDescriptionUpdate.model.js';
 import * as rejectedBidderModel from '../../models/rejectedBidder.model.js';
+import { PAGINATION } from '../../config/app.config.js';
 
 export function determineProductStatus(product) {
   const now = new Date();
@@ -39,7 +40,7 @@ export async function getProductDetails(productId, userId, commentPage = 1) {
     if (!isSeller && !isHighestBidder) return { unauthorized: true };
   }
 
-  const commentsPerPage = 2;
+  const commentsPerPage = PAGINATION.COMMENTS_PER_PAGE;
   const offset = (commentPage - 1) * commentsPerPage;
 
   const [descriptionUpdates, biddingHistory, comments, totalComments, relatedProducts] = await Promise.all([

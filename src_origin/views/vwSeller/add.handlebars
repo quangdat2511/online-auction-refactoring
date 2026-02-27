@@ -1,0 +1,575 @@
+{{#section "css"}}
+<!-- Quill CSS -->
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<!-- Uppy CSS -->
+<link href="https://releases.transloadit.com/uppy/v5.2.0/uppy.min.css" rel="stylesheet">
+<!-- Seller Custom CSS -->
+<link rel="stylesheet" href="/static/css/seller/seller.css">
+<link rel="stylesheet" href="/static/css/seller/seller-add.css">
+{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    {{!-- LEFT SIDEBAR --}}
+    <div class="col-lg-3 mb-4">
+        {{> seller-sidebar activeSection='active-products'}}
+    </div>
+
+    {{!-- RIGHT CONTENT --}}
+    <div class="col-lg-9">
+      
+      {{!-- HEADER --}}
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="display-6 text-dark mb-1">Add New Product</h2>
+          <p class="text-muted">Create a new auction product</p>
+        </div>
+        <a href="/seller/products" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Back to Products
+        </a>
+      </div>
+
+      {{!-- ERROR/SUCCESS MESSAGES --}}
+      {{#if error_message}}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{error_message}}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {{/if}}
+
+      {{#if success_message}}
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>{{success_message}}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {{/if}}
+
+      {{!-- FORM --}}
+      <form id="addProductForm" method="POST" action="/seller/products/add" enctype="application/x-www-form-urlencoded">
+        
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header text-white" style="background-color: #72AEC8;">
+            <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Basic Information</h5>
+          </div>
+          <div class="card-body">
+            
+            {{!-- Product Name --}}
+            <div class="mb-3">
+              <label for="productName" class="form-label required">Product Name</label>
+              <input type="text" class="form-control" id="productName" name="name" maxlength="255">
+              <div class="invalid-feedback" id="productNameError">Please enter a product name.</div>
+            </div>
+
+            {{!-- Category --}}
+            <div class="mb-3">
+              <label for="category" class="form-label required">Category</label>
+              <select class="form-select" id="category" name="category_id">
+                <option value="">Select a category</option>
+                {{#each lcCategories1}}
+                  <option value="{{this.id}}">{{this.name}}</option>
+                {{/each}}
+                {{#each lcCategories2}}
+                  <option value="{{this.id}}">{{this.name}}</option>
+                {{/each}}
+              </select>
+              <div class="invalid-feedback" id="categoryError">Please select a category.</div>
+            </div>
+
+            {{!-- Description --}}
+            <div class="mb-3">
+              <label for="description" class="form-label">Product Description</label>
+              <div id="editor-container"></div>
+              <input type="hidden" name="description" id="descriptionInput">
+              <div class="invalid-feedback" id="descriptionError">Please enter a product description.</div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header text-white" style="background-color: #72AEC8;">
+            <h5 class="mb-0"><i class="bi bi-currency-dollar me-2"></i>Pricing & Duration</h5>
+          </div>
+          <div class="card-body">
+            
+            {{!-- Starting Price --}}
+            <div class="mb-3">
+              <label for="startPrice" class="form-label required">Starting Price (VND)</label>
+              <input class="form-control" id="startPrice" name="start_price">
+              <div class="invalid-feedback" id="startPriceError">Please enter a valid starting price (minimum 1,000 VND).</div>
+            </div>
+
+            {{!-- Step Price --}}
+            <div class="mb-3">
+              <label for="stepPrice" class="form-label required">Bid Step (VND)</label>
+              <input class="form-control" id="stepPrice" name="step_price">
+              <small class="form-text text-muted">Minimum amount each bid must increase.</small>
+              <div class="invalid-feedback" id="stepPriceError">Please enter a valid bid step (minimum 1,000 VND).</div>
+            </div>
+            {{!-- Buy Now Price --}}
+            <div class="mb-3">
+              <label for="buyNowPrice" class="form-label">Buy Now Price (VND) - Optional</label>
+              <input class="form-control" id="buyNowPrice" name="buy_now_price">
+              <small class="form-text text-muted">Leave empty if you don't want to enable "Buy Now" option.</small>
+              <div class="invalid-feedback" id="buyNowPriceError">Buy now price must be greater than starting price.</div>
+            </div>
+
+            {{!-- Auction End Date/Time --}}
+            <div class="mb-3">
+              <label for="endDate" class="form-label required">Auction End Date/Time</label>
+              <input type="datetime-local" class="form-control" id="endDate" name="end_date_display" style="max-width: 300px;">
+              <input type="hidden" id="endDateFormatted" name="end_date">
+              <div class="invalid-feedback" id="endDateError" style="display: none;">Please select a valid end date and time.</div>
+            </div>
+
+            {{!-- Created At (Hidden) --}}
+            <input type="hidden" id="createdAt" name="created_at">
+
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header text-white" style="background-color: #5a92ab;">
+            <h5 class="mb-0"><i class="bi bi-images me-2"></i>Product Images</h5>
+          </div>
+          <div class="card-body">
+            
+            {{!-- Main Thumbnail --}}
+            <div class="mb-4">
+              <label class="form-label required">Main Thumbnail (1 image)</label>
+              <div id="uppy-thumbnail"></div>
+              <div class="invalid-feedback" id="thumbnailError">Please upload a main thumbnail image.</div>
+              <small class="form-text text-muted d-block mt-2">
+                <i class="bi bi-info-circle"></i> This will be the primary image displayed for your product.
+              </small>
+              <input type="hidden" name="thumbnail" id="txt_thumbnail">
+            </div>
+
+            <hr class="my-4">
+
+            {{!-- Sub Images --}}
+            <div class="mb-3">
+              <label class="form-label required">Additional Images (Minimum 3 images)</label>
+              <div id="uppy-subimages"></div>
+              <div class="invalid-feedback" id="subImagesError">Please upload at least 3 additional images.</div>
+              <small class="form-text text-muted d-block mt-2">
+                <i class="bi bi-info-circle"></i> These images will be shown in the product gallery.
+              </small>
+              <input type="hidden" name="imgs_list" id="txt_imgs_list">
+            </div>
+
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header text-white" style="background-color: #89c4dc;">
+            <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Auction Settings</h5>
+          </div>
+          <div class="card-body">
+            
+            {{!-- Auto-extend --}}
+            <div class="mb-3">
+              <input type="hidden" name="auto_extend" value="0">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="autoExtend" name="auto_extend" value="1">
+                <label class="form-check-label" for="autoExtend">
+                  <strong>Enable Auto-extend</strong>
+                </label>
+              </div>
+            </div>
+
+            {{!-- Allow New Bidders --}}
+            <div class="mb-3">
+              <input type="hidden" name="allow_new_bidders" value="0">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="allowNewBidders" name="allow_new_bidders" value="1" checked>
+                <label class="form-check-label" for="allowNewBidders">
+                  <strong>Allow New Bidders</strong>
+                </label>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {{!-- Submit Buttons --}}
+        <div class="d-flex gap-2 mb-4">
+          <button type="submit" class="btn btn-lg px-5" style="background-color: #72AEC8; color: white; border: none;">
+            <i class="bi bi-check-circle me-2"></i>Create Product
+          </button>
+          <a href="/seller/products" class="btn btn-outline-secondary btn-lg px-4">
+            <i class="bi bi-x-circle me-2"></i>Cancel
+          </a>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+{{#section "js"}}
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  // Global variables to track uploaded images
+  let thumbnail = '';
+  let subImgs = [];
+</script>
+<script type="module">
+  import { Uppy, Dashboard, XHRUpload } from "https://releases.transloadit.com/uppy/v5.2.0/uppy.min.mjs"
+  
+  // Uppy for Main Thumbnail
+  const uppyThumbnail = new Uppy({
+    restrictions: {
+      maxNumberOfFiles: 1,
+      minNumberOfFiles: 1,
+      allowedFileTypes: ['image/jpeg', 'image/png', 'image/webp']
+    }
+  })
+  uppyThumbnail.use(Dashboard, { 
+    target: '#uppy-thumbnail', 
+    inline: true,
+    height: 300,
+    proudlyDisplayPoweredByUppy: false
+  })
+  uppyThumbnail.use(XHRUpload, {
+    endpoint: '/seller/products/upload-thumbnail',
+    fieldName: 'thumbnail',
+    formData: true
+  })
+
+  uppyThumbnail.on('file-added', (file) => {
+    const thumbnailError = document.getElementById('thumbnailError');
+    thumbnailError.style.display = 'none';
+  });
+
+  uppyThumbnail.on('upload-success', (file, response) => {
+    if (response.body.file) {
+      thumbnail = response.body.file.filename;
+      document.getElementById('txt_thumbnail').value = thumbnail;
+      console.log('Thumbnail uploaded:', thumbnail);
+    }
+  });
+
+  // Uppy for Sub Images
+  const uppySubImages = new Uppy({
+    restrictions: {
+      maxNumberOfFiles: 10,
+      minNumberOfFiles: 3,
+      allowedFileTypes: ['image/jpeg', 'image/png', 'image/webp']
+    }
+  })
+  uppySubImages.use(Dashboard, { 
+    target: '#uppy-subimages', 
+    inline: true,
+    height: 300,
+    proudlyDisplayPoweredByUppy: false
+  })
+  uppySubImages.use(XHRUpload, {
+    endpoint: '/seller/products/upload-subimages',
+    fieldName: 'images',
+    formData: true
+  })
+
+  uppySubImages.on('file-added', (file) => {
+    const subImagesError = document.getElementById('subImagesError');
+    subImagesError.style.display = 'none';
+  });
+
+  uppySubImages.on('upload-success', (file, response) => {
+    if (response.body.files) {
+      response.body.files.forEach(f => {
+        subImgs.push(f.filename);
+      });
+      document.getElementById('txt_imgs_list').value = JSON.stringify(subImgs);
+      console.log('Sub images uploaded:', subImgs.length);
+    }
+  });
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
+<script>
+  new Cleave('#startPrice', {
+    numeral: true,
+    numeralThousandsGroupStyle: 'thousand'
+  });
+
+  new Cleave('#stepPrice', {
+    numeral: true,
+    numeralThousandsGroupStyle: 'thousand'
+  });
+
+  new Cleave('#buyNowPrice', {
+    numeral: true,
+    numeralThousandsGroupStyle: 'thousand'
+  });
+</script>
+
+<script>
+// Initialize Quill Editor
+const quill = new Quill('#editor-container', {
+  theme: 'snow',
+  placeholder: 'Enter detailed product description...',
+  modules: {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'color': [] }, { 'background': [] }],
+      ['link', 'image'],
+      ['clean']
+    ]
+  }
+});
+document.querySelector('#addProductForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  document.getElementById('descriptionInput').value = quill.root.innerHTML.trim();
+  // Trigger the actual validation handler
+  document.getElementById('addProductForm').dispatchEvent(new Event('submit', { bubbles: true }));
+});
+// Remove error styling when user types
+document.getElementById('productName').addEventListener('input', function() {
+  this.classList.remove('is-invalid');
+  document.getElementById('productNameError').classList.remove('d-block');
+});
+
+document.getElementById('category').addEventListener('change', function() {
+  this.classList.remove('is-invalid');
+  document.getElementById('categoryError').classList.remove('d-block');
+});
+
+document.getElementById('startPrice').addEventListener('input', function() {
+  this.classList.remove('is-invalid');
+  document.getElementById('startPriceError').classList.remove('d-block');
+});
+
+document.getElementById('stepPrice').addEventListener('input', function() {
+  this.classList.remove('is-invalid');
+  document.getElementById('stepPriceError').classList.remove('d-block');
+});
+
+document.getElementById('buyNowPrice').addEventListener('input', function() {
+  this.classList.remove('is-invalid');
+  document.getElementById('buyNowPriceError').classList.remove('d-block');
+});
+
+document.getElementById('endDate').addEventListener('change', function() {
+  this.classList.remove('is-invalid');
+  document.getElementById('endDateError').style.display = 'none';
+  
+  // Convert datetime-local value to UTC ISO string
+  if (this.value) {
+    // datetime-local format: YYYY-MM-DDTHH:mm (local time)
+    // Convert to UTC ISO string for database
+    const localDate = new Date(this.value);
+    const utcISOString = localDate.toISOString(); // UTC time
+    document.getElementById('endDateFormatted').value = utcISOString;
+  }
+});
+
+// Set created_at to current timestamp when page loads (UTC)
+document.addEventListener('DOMContentLoaded', function() {
+  const now = new Date();
+  // Send UTC ISO string to server
+  document.getElementById('createdAt').value = now.toISOString();
+});
+
+// Form Submission
+document.getElementById('addProductForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const productName = document.getElementById('productName').value.trim();
+  const category = document.getElementById('category').value;
+  //const description = quill.root.innerHTML.trim();
+  const startPrice = document.getElementById('startPrice').value;
+  const stepPrice = document.getElementById('stepPrice').value;
+  const buyNowPrice = document.getElementById('buyNowPrice').value;
+  const endDateDisplay = document.getElementById('endDate').value;
+  const imagesError = document.getElementById('imagesError');
+  // Basic Validation
+  if (productName === '') {
+    const inputElement = document.getElementById('productName');
+    const errorElement = document.getElementById('productNameError');
+    inputElement.classList.add('is-invalid');
+    errorElement.classList.add('d-block');
+    inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    inputElement.focus();
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Please enter a product name.',
+      confirmButtonColor: '#72AEC8'
+    });
+    return;
+  }
+  if (category === '') {
+    const inputElement = document.getElementById('category');
+    const errorElement = document.getElementById('categoryError');
+    inputElement.classList.add('is-invalid');
+    errorElement.classList.add('d-block');
+    inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    inputElement.focus();
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Please select a category.',
+      confirmButtonColor: '#72AEC8'
+    });
+    return;
+  }
+  console.log('Start Price:', startPrice);
+  if (startPrice === '' || isNaN(parseInt(startPrice.replace(/,/g, ''))) || parseInt(startPrice.replace(/,/g, '')) < 1000) {
+    const inputElement = document.getElementById('startPrice');
+    const errorElement = document.getElementById('startPriceError');
+    inputElement.classList.add('is-invalid');
+    errorElement.classList.add('d-block');
+    inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    inputElement.focus();
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Please enter a valid starting price (minimum 1,000 VND).',
+      confirmButtonColor: '#72AEC8'
+    });
+    return;
+  }
+  if (stepPrice === '' || isNaN(parseInt(stepPrice.replace(/,/g, ''))) || parseInt(stepPrice.replace(/,/g, '')) < 1000) {
+    const inputElement = document.getElementById('stepPrice');
+    const errorElement = document.getElementById('stepPriceError');
+    inputElement.classList.add('is-invalid');
+    errorElement.classList.add('d-block');
+    inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    inputElement.focus();
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Please enter a valid bid step (minimum 1,000 VND).',
+      confirmButtonColor: '#72AEC8'
+    });
+    return;
+  }
+  if (buyNowPrice !== '' && (isNaN(parseInt(buyNowPrice.replace(/,/g, ''))) || parseInt(buyNowPrice.replace(/,/g, '')) <= parseInt(startPrice.replace(/,/g, '')))) {
+    const inputElement = document.getElementById('buyNowPrice');
+    const errorElement = document.getElementById('buyNowPriceError');
+    inputElement.classList.add('is-invalid');
+    errorElement.classList.add('d-block');
+    inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    inputElement.focus();
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Buy now price must be greater than starting price.',
+      confirmButtonColor: '#72AEC8'
+    });
+    return;
+  }
+
+  if (endDateDisplay === '') {
+    const inputElement = document.getElementById('endDate');
+    const errorElement = document.getElementById('endDateError');
+    inputElement.classList.add('is-invalid');
+    errorElement.style.display = 'block';
+    inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    inputElement.focus();
+    
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Please select a valid end date and time.',
+      confirmButtonColor: '#72AEC8'
+    });
+    return;
+  }
+
+  // Validate end date is in the future
+  const endDateTime = new Date(endDateDisplay);
+  const now = new Date();
+  if (endDateTime <= now) {
+    const inputElement = document.getElementById('endDate');
+    const errorElement = document.getElementById('endDateError');
+    inputElement.classList.add('is-invalid');
+    errorElement.style.display = 'block';
+    inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    inputElement.focus();
+    
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'End date and time must be in the future.',
+      confirmButtonColor: '#72AEC8'
+    });
+    return;
+  }
+  
+  // Update the formatted end_date before submission (convert local to UTC)
+  const utcISOString = endDateTime.toISOString();
+  document.getElementById('endDateFormatted').value = utcISOString;
+
+  // Validate thumbnail
+  if (thumbnail === '') {
+    const thumbnailError = document.getElementById('thumbnailError');
+    thumbnailError.style.display = 'block';
+    const uppyThumbnailElement = document.getElementById('uppy-thumbnail');
+    uppyThumbnailElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const focusableElement = uppyThumbnailElement.querySelector('button, input, [tabindex]');
+    if (focusableElement) {
+      focusableElement.focus();
+    }
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Please upload a main thumbnail image.',
+      confirmButtonColor: '#72AEC8'
+    });
+    return;
+  } else {
+    document.getElementById('thumbnailError').style.display = 'none';
+  }
+
+  // Validate sub images
+  if (subImgs.length < 3) {
+    const subImagesError = document.getElementById('subImagesError');
+    subImagesError.style.display = 'block';
+    const uppySubImagesElement = document.getElementById('uppy-subimages');
+    uppySubImagesElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const focusableElement = uppySubImagesElement.querySelector('button, input, [tabindex]');
+    if (focusableElement) {
+      focusableElement.focus();
+    }
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Please upload at least 3 additional images.',
+      confirmButtonColor: '#72AEC8'
+    });
+    return;
+  } else {
+    document.getElementById('subImagesError').style.display = 'none';
+  }
+
+  // Handle checkbox values before submit
+  // Remove hidden inputs if checkbox is checked
+  const autoExtendCheckbox = document.getElementById('autoExtend');
+  const allowNewBiddersCheckbox = document.getElementById('allowNewBidders');
+  
+  const autoExtendHidden = document.querySelector('input[name="auto_extend"][type="hidden"]');
+  const allowNewBiddersHidden = document.querySelector('input[name="allow_new_bidders"][type="hidden"]');
+  
+  if (autoExtendCheckbox.checked) {
+    autoExtendHidden.disabled = true;
+  }
+  
+  if (allowNewBiddersCheckbox.checked) {
+    allowNewBiddersHidden.disabled = true;
+  }
+
+  // Submit form
+  const formData = new FormData(e.target);
+  console.log('Form Data:', Object.fromEntries(formData));
+  e.target.submit();
+});
+</script>
+{{/section}}

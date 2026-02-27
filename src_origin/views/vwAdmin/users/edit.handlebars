@@ -1,0 +1,239 @@
+{{#section 'css'}}
+<style>
+  .btn-admin-primary {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+  }
+  .btn-admin-primary:hover {
+    background-color: #bb2d3b;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+  }
+  .btn-admin-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+  }
+  .btn-admin-secondary {
+    transition: all 0.3s ease;
+  }
+  .btn-admin-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+  }
+  .btn-admin-warning {
+    transition: all 0.3s ease;
+  }
+  .btn-admin-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+  }
+</style>
+{{/section}}
+
+{{#section 'js'}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    $(document).ready(function() {
+        // Validation form trước khi submit
+        $('#formEditUser').on('submit', function(e) {
+            const fullname = $('#txtFullname').val().trim();
+            const email = $('#txtEmail').val().trim();
+            const address = $('#txtAddress').val().trim();
+            
+            if (!fullname || !email || !address) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    text: 'Please fill in all required fields!'
+                });
+                return false;
+            }
+
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Email',
+                    text: 'Please enter a valid email address!'
+                });
+                return false;
+            }
+        });
+
+        // Reset Password Handler
+        $('#btnResetPassword').on('click', function(e) {
+            e.preventDefault();
+            const userId = $(this).data('user-id');
+            const userName = $(this).data('user-name');
+            
+            Swal.fire({
+                title: 'Reset Password?',
+                html: `Are you sure you want to reset password for <strong>${userName}</strong> to default password?<br><br><small class="text-muted">Default password: <code>123</code></small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, reset it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#formResetPassword').submit();
+                }
+            });
+        });
+    });
+</script>
+{{/section}}
+
+<div class="container-fluid mt-4 mb-5">
+  <div class="row">
+    
+    <!-- SIDEBAR -->
+    <div class="col-md-3 mb-4">
+        {{> admin-sidebar activeSection='users'}}
+    </div>
+
+    <!-- CONTENT -->
+    <div class="col-md-9">
+      <div class="card shadow-sm border-0">
+        
+        <!-- Header -->
+        <div class="card-header bg-white border-bottom py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-danger">
+                <i class="bi bi-pencil-square me-2"></i> EDIT USER
+            </h5>
+          </div>
+        </div>
+        
+        <!-- Body -->
+        <div class="card-body p-4">
+          {{#if error_message}}
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i> {{error_message}}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {{/if}}
+
+          {{#if user}}
+          <form id="formEditUser" method="POST" action="/admin/users/edit">
+            <input type="hidden" name="id" value="{{user.id}}">
+            
+            <!-- User ID & Avatar -->
+            <div class="mb-4 text-center">
+              <img src="https://ui-avatars.com/api/?name={{user.fullname}}&size=100&background=random" 
+                   class="rounded-circle shadow mb-3" width="100" height="100">
+              <div class="text-muted small">User ID: #{{user.id}}</div>
+            </div>
+
+            <div class="row">
+              <!-- Full Name -->
+              <div class="col-md-6 mb-4">
+                <label for="txtFullname" class="form-label fw-bold">
+                    <i class="bi bi-person me-1"></i> Full Name <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" id="txtFullname" name="fullname" 
+                       value="{{user.fullname}}" placeholder="Enter full name" required>
+              </div>
+
+              <!-- Email -->
+              <div class="col-md-6 mb-4">
+                <label for="txtEmail" class="form-label fw-bold">
+                    <i class="bi bi-envelope me-1"></i> Email <span class="text-danger">*</span>
+                </label>
+                <input type="email" class="form-control" id="txtEmail" name="email" 
+                       value="{{user.email}}" placeholder="Enter email" required>
+              </div>
+
+              <!-- Address -->
+              <div class="col-12 mb-4">
+                <label for="txtAddress" class="form-label fw-bold">
+                    <i class="bi bi-geo-alt me-1"></i> Address <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" id="txtAddress" name="address" 
+                       value="{{user.address}}" placeholder="Enter address" required>
+              </div>
+
+              <!-- Date of Birth -->
+              <div class="col-md-6 mb-4">
+                <label for="txtDOB" class="form-label fw-bold">
+                    <i class="bi bi-calendar me-1"></i> Date of Birth
+                </label>
+                <input type="date" class="form-control" id="txtDOB" name="date_of_birth" 
+                       value="{{user.date_of_birth}}">
+              </div>
+
+              <!-- Role -->
+              <div class="col-md-6 mb-4">
+                <label for="selRole" class="form-label fw-bold">
+                    <i class="bi bi-shield me-1"></i> Role <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" id="selRole" name="role" required>
+                    <option value="bidder" {{#if (eq user.role 'bidder')}}selected{{/if}}>Bidder</option>
+                    <option value="seller" {{#if (eq user.role 'seller')}}selected{{/if}}>Seller</option>
+                    <option value="admin" {{#if (eq user.role 'admin')}}selected{{/if}}>Admin</option>
+                </select>
+              </div>
+
+              <!-- Email Verified -->
+              <div class="col-md-6 mb-4">
+                <label class="form-label fw-bold d-block">
+                    <i class="bi bi-envelope-check me-1"></i> Email Verification
+                </label>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="chkEmailVerified" name="email_verified" 
+                         value="true" {{#if user.email_verified}}checked{{/if}}>
+                  <label class="form-check-label" for="chkEmailVerified">
+                      Email Verified
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Account Info (Read-only) -->
+            <div class="alert alert-light border">
+              <div class="row small">
+                <div class="col-md-6">
+                  <strong><i class="bi bi-clock-history me-1"></i> Created:</strong> {{format_date user.created_at}}
+                </div>
+                <div class="col-md-6">
+                  <strong><i class="bi bi-clock me-1"></i> Updated:</strong> {{format_date user.updated_at}}
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="d-flex gap-2 mt-4 pt-4 border-top">
+              <button type="submit" class="btn btn-lg px-5 btn-admin-primary">
+                  <i class="bi bi-check-circle me-2"></i>Update User
+              </button>
+              <button type="button" id="btnResetPassword" class="btn btn-warning btn-lg px-4 btn-admin-warning" 
+                      data-user-id="{{user.id}}" data-user-name="{{user.fullname}}">
+                  <i class="bi bi-key me-2"></i>Reset Password
+              </button>
+              <a href="/admin/users/list" class="btn btn-outline-secondary btn-lg px-4 btn-admin-secondary">
+                <i class="bi bi-x-circle me-2"></i>Cancel
+             </a>
+            </div>
+          </form>
+          {{else}}
+          <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle me-2"></i> User not found.
+          </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{!-- Form ẩn để reset password --}}
+<form id="formResetPassword" method="POST" action="/admin/users/reset-password" style="display: none;">
+    <input type="hidden" name="id" value="{{user.id}}">
+</form>

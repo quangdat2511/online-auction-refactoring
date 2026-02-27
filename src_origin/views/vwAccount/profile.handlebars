@@ -1,0 +1,95 @@
+<div class="container-fluid mt-4 mb-5">
+<div class="row">
+
+<div class="col-md-3 mb-4">
+    {{> client-sidebar activeSection='profile'}}
+</div>
+
+<div class="col-md-9">
+<div class="card shadow-sm border-0 h-100">
+    <div class="card-header bg-white border-bottom py-3">
+    <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-person-gear me-2"></i> UPDATE PROFILE</h5>
+    </div>
+    
+    <div class="card-body p-4">
+        
+        {{#if err_message}}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> {{err_message}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{/if}}
+        
+        {{#if success_message}}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> {{success_message}}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {{/if}} 
+
+        <form action="/account/profile?_method=PUT" method="POST">
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted small text-uppercase">Full Name</label>
+                    <input type="text" class="form-control" name="fullname" value="{{user.fullname}}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted small text-uppercase">Email</label>
+                    <input type="email" class="form-control" name="email" value="{{user.email}}" required>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted small text-uppercase">Address</label>
+                    <input type="text" class="form-control" name="address" value="{{user.address}}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted small text-uppercase">Date of Birth</label>
+                    <input type="date" class="form-control" name="date_of_birth" value="{{format_date_input user.date_of_birth}}">
+                </div>
+            </div>
+
+            {{#unless user.oauth_provider}}
+            <hr class="my-4 text-muted">
+            
+            <h6 class="fw-bold mb-3"><i class="bi bi-shield-lock me-2"></i> Security</h6>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted small text-uppercase">New Password</label>
+                    <input type="password" class="form-control" name="new_password" placeholder="Leave blank to keep current">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-muted small text-uppercase">Confirm New Password</label>
+                    <input type="password" class="form-control" name="confirm_new_password" placeholder="Re-enter new password">
+                </div>
+            </div>
+
+            <div class="alert alert-light border mt-4">
+                <div class="mb-3">
+                    <label class="form-label text-danger fw-bold">Old Password *</label>
+                    <input type="password" class="form-control" name="old_password" required placeholder="Required to save changes">
+                    <div class="form-text">Please enter your current password to confirm these changes.</div>
+                </div>
+            </div>
+            {{else}}
+            <div class="alert alert-info border mt-4">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>OAuth Account:</strong> You signed in with {{user.oauth_provider}}. Password management is not available for OAuth accounts.
+            </div>
+            {{/unless}}
+
+            <div class="text-end">
+                <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">
+                    <i class="bi bi-save me-2"></i> Save Changes
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+</div>
+
+</div>
+</div>

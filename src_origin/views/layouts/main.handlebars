@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{#if title}}{{title}} | {{/if}}Online Auction</title>
+
+    <!-- Common CSS -->
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/layouts/main.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <!-- Modernizr -->
+    <script src="/static/js/modernizr.js"></script>
+
+    {{{_sections.css}}}
+    
+    <!-- CSS riêng cho Admin nếu đang ở chế độ Admin -->
+    {{#if isAdminMode}}
+    <link rel="stylesheet" type="text/css" href="/static/css/admin-sidebar.css">
+    <style>
+        body { background-color: #f4f6f9; }
+        .admin-navbar { background-color: #212529; z-index: 1030; }
+        .sidebar-container { min-height: calc(100vh - 56px); background-color: #fff; border-right: 1px solid #dee2e6; }
+        .admin-main-content { padding: 20px; }
+        /* Ensure header and dropdowns appear above everything */
+        .site-header { z-index: 9998 !important; }
+        .site-header .navbar { z-index: 9998 !important; overflow: visible !important; }
+        .site-header .navbar-collapse { overflow: visible !important; }
+        .site-header .offcanvas-body { overflow: visible !important; }
+        .site-header .dropdown-menu { z-index: 99999 !important; position: absolute !important; }
+        .site-header .dropdown-submenu > .dropdown-menu { z-index: 99999 !important; }
+    </style>
+    {{else if isSellerMode}}
+    <link rel="stylesheet" type="text/css" href="/static/css/seller.css">
+    {{else}}
+    <link rel="stylesheet" type="text/css" href="/static/css/client-sidebar.css">
+    {{/if}}
+</head>
+
+<body data-bs-spy="scroll" data-bs-target="#navbar" tabindex="0" class="d-flex flex-column min-vh-100">
+
+    {{> svg-icons}}
+    
+    {{> header}}
+
+    <main id="main-content" style="padding-top: 100px;">
+        {{{body}}}
+    </main>
+
+    {{> footer}}
+
+    <!-- Search Modal (Chỉ cần cho Client) -->
+    <div class="modal fade" id="searchModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0 pb-2" style="background: linear-gradient(135deg, #72AEC8 0%, #5a9bb8 100%); color: white;">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-search me-2"></i>Search Products
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form action="/products/search" method="GET">
+                        <!-- Search Input -->
+                        <div class="mb-4">
+                            <label for="searchInput" class="form-label fw-bold">
+                                <i class="bi bi-pencil-square me-1" style="color: #72AEC8;"></i>Search Keywords
+                            </label>
+                            <input class="form-control form-control-lg" type="search" name="q" 
+                                placeholder="Type product name or category..." id="searchInput" autofocus required>
+                        </div>
+
+                        <!-- Search Logic -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-filter me-1" style="color: #72AEC8;"></i>Search Mode
+                            </label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="logic" id="logicAnd" value="and" checked>
+                                    <label class="form-check-label" for="logicAnd">
+                                        <strong>AND</strong> 
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="logic" id="logicOr" value="or">
+                                    <label class="form-check-label" for="logicOr">
+                                        <strong>OR</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <i class="bi bi-info-circle"></i> 
+                                <strong>AND:</strong> Results must contain all keywords. 
+                                <strong>OR:</strong> Results contain at least one keyword.
+                            </small>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-lg fw-bold flex-fill shadow-sm" type="submit"
+                                style="background: linear-gradient(135deg, #72AEC8 0%, #5a9bb8 100%); color: white; border: none;">
+                                <i class="bi bi-search me-2"></i>Search
+                            </button>
+                            <button class="btn btn-lg btn-outline-secondary" type="button" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle me-1"></i>Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/jquery-1.11.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="text/javascript" src="/static/js/script.js"></script>
+
+    {{{_sections.js}}}
+    
+    {{!-- Script riêng cho Search Modal (chỉ chạy khi có modal) --}}
+    <script>
+      const searchModal = document.getElementById('searchModal')
+      const searchInput = document.getElementById('searchInput')
+      if (searchModal && searchInput) {
+        searchModal.addEventListener('shown.bs.modal', () => searchInput.focus())
+      }
+    </script>
+</body>
+</html>
