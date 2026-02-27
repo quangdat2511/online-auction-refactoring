@@ -4,6 +4,12 @@ import fs from 'fs';
 // Di chuyển thumbnail và sub‑images, trả về đường dẫn đã lưu để cập nhật DB.
 export async function moveProductImages(productId, thumbnail, imgsList) {
   const dirPath = path.join('public', 'images', 'products').replace(/\\/g, '/');
+
+  // Đảm bảo thư mục đích tồn tại trước khi rename
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+
   const result = { thumbnailPath: null, imagePaths: [] };
 
   if (thumbnail) {

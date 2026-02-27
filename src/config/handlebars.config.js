@@ -6,6 +6,20 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Hàm nội bộ: parse date → object các phần đã pad, tránh lặp lại boilerplate padStart
+function parseDateParts(date) {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return null;
+  return {
+    year:   d.getFullYear(),
+    month:  String(d.getMonth() + 1).padStart(2, '0'),
+    day:    String(d.getDate()).padStart(2, '0'),
+    hour:   String(d.getHours()).padStart(2, '0'),
+    minute: String(d.getMinutes()).padStart(2, '0'),
+    second: String(d.getSeconds()).padStart(2, '0'),
+  };
+}
+
 export const handlebarsEngine = engine({
   defaultLayout: 'main',
   helpers: {
@@ -37,71 +51,29 @@ export const handlebarsEngine = engine({
       if (!str) return '';
       return str.replace(new RegExp(search, 'g'), replaceWith);
     },
-    truncate(str, len) {
-      if (!str) return '';
-      if (str.length <= len) return str;
-      return str.substring(0, len) + '...';
-    },
-    mask_name(fullname) {
-      if (!fullname) return null;
-      const name = fullname.trim();
-      if (name.length === 0) return null;
-      if (name.length === 1) return '*';
-      if (name.length === 2) return name[0] + '*';
-      let masked = '';
-      for (let i = 0; i < name.length; i++) {
-        masked += i % 2 === 0 ? name[i] : '*';
-      }
-      return masked;
-    },
     format_date(date) {
       if (!date) return '';
-      const d = new Date(date);
-      if (isNaN(d.getTime())) return '';
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      const hour = String(d.getHours()).padStart(2, '0');
-      const minute = String(d.getMinutes()).padStart(2, '0');
-      const second = String(d.getSeconds()).padStart(2, '0');
-      return `${hour}:${minute}:${second} ${day}/${month}/${year}`;
+      const p = parseDateParts(date);
+      if (!p) return '';
+      return `${p.hour}:${p.minute}:${p.second} ${p.day}/${p.month}/${p.year}`;
     },
     format_only_date(date) {
       if (!date) return '';
-      const d = new Date(date);
-      if (isNaN(d.getTime())) return '';
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${day}/${month}/${year}`;
+      const p = parseDateParts(date);
+      if (!p) return '';
+      return `${p.day}/${p.month}/${p.year}`;
     },
     format_only_time(time) {
       if (!time) return '';
-      const d = new Date(time);
-      if (isNaN(d.getTime())) return '';
-      const hour = String(d.getHours()).padStart(2, '0');
-      const minute = String(d.getMinutes()).padStart(2, '0');
-      const second = String(d.getSeconds()).padStart(2, '0');
-      return `${hour}:${minute}:${second}`;
+      const p = parseDateParts(time);
+      if (!p) return '';
+      return `${p.hour}:${p.minute}:${p.second}`;
     },
     format_date_input(date) {
       if (!date) return '';
-      const d = new Date(date);
-      if (isNaN(d.getTime())) return '';
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    },
-    time_remaining(date) {
-      const now = new Date();
-      const end = new Date(date);
-      const diff = end - now;
-      if (diff <= 0) return '00:00:00';
-      const hours = String(Math.floor(diff / (1000 * 60 * 60))).padStart(2, '0');
-      const minutes = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
-      const seconds = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
-      return `${hours}:${minutes}:${seconds}`;
+      const p = parseDateParts(date);
+      if (!p) return '';
+      return `${p.year}-${p.month}-${p.day}`;
     },
     format_time_remaining(date) {
       const now = new Date();
@@ -116,14 +88,9 @@ export const handlebarsEngine = engine({
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
       if (days > 3) {
-        if (isNaN(end.getTime())) return '';
-        const year = end.getFullYear();
-        const month = String(end.getMonth() + 1).padStart(2, '0');
-        const day = String(end.getDate()).padStart(2, '0');
-        const hour = String(end.getHours()).padStart(2, '0');
-        const minute = String(end.getMinutes()).padStart(2, '0');
-        const second = String(end.getSeconds()).padStart(2, '0');
-        return `${hour}:${minute}:${second} ${day}/${month}/${year}`;
+        const p = parseDateParts(end);
+        if (!p) return '';
+        return `${p.hour}:${p.minute}:${p.second} ${p.day}/${p.month}/${p.year}`;
       }
       if (days >= 1) return `${days} days left`;
       if (hours >= 1) return `${hours} hours left`;

@@ -97,13 +97,6 @@ export async function findByProductIdForAdmin(productId, userId) {
   return product;
 }
 
-export function findPage(limit, offset) {
-  return db('products')
-    .leftJoin('users', 'products.highest_bidder_id', 'users.id')
-    .select('products.*', maskedBidderRaw(), bidCountRaw())
-    .limit(limit).offset(offset);
-}
-
 // 1. Hàm tìm kiếm phân trang (Simplified FTS - Search in product name and category)
 export function searchPageByKeywords(keywords, limit, offset, userId, logic = 'or', sort = '') {
   // Remove accents from keywords for search
@@ -208,74 +201,6 @@ export function countByKeywords(keywords, logic = 'or') {
       }
     })
     .count('products.id as count')
-    .first();
-}
-export function countAll() {
-  return db('products').count('id as count').first();
-}
-
-export function findByCategoryId(categoryId, limit, offset, sort, currentUserId) {
-  // currentUserId: ID của người đang xem (nếu chưa đăng nhập thì truyền null hoặc undefined)
-
-  return db('products')
-    .leftJoin('users', 'products.highest_bidder_id', 'users.id')
-    
-    // --- ĐOẠN MỚI THÊM VÀO ---
-    // Join bảng watchlists với điều kiện product_id khớp VÀ user_id phải là người đang xem
-    .leftJoin('watchlists', function() {
-      this.on('products.id', '=', 'watchlists.product_id')
-        .andOnVal('watchlists.user_id', '=', currentUserId || -1); 
-        // Nếu currentUserId là null/undefined (khách vãng lai), dùng -1 để không khớp với ai cả
-    })
-    // --------------------------
-    // đang active
-    // chọn buy now hoặc người đặt giá đặt giá cao hơn giá buy now -> closed_at bằng thời điểm buy, chuyển trạn thái sản phẩm qua pending
-    // pending tức là đang chờ thanh toán
-    // từ pending(is_sold = null) mà thanh toán thành công -> closed_at được cập nhật theo thời điểm thanh toán thành công, is_sold = true
-
-    .where('products.category_id', categoryId)
-    // Chỉ hiển thị sản phẩm ACTIVE (chưa kết thúc, chưa đóng)
-    .where('products.end_at', '>', new Date())
-    .whereNull('products.closed_at')
-    .select(
-      'products.*',
-      
-      // Logic che tên người đấu giá (giữ nguyên)
-      maskedBidderRaw(),
-
-      // Logic đếm số lượt đấu giá (giữ nguyên)
-      bidCountRaw(),
-
-      // --- ĐOẠN MỚI THÊM VÀO ---
-      // Nếu cột product_id bên bảng watchlists có dữ liệu -> Đã like (True), ngược lại là False
-      db.raw('watchlists.product_id IS NOT NULL AS is_favorite')
-      // --------------------------
-    )
-    .modify((queryBuilder) => {
-      if (sort === 'price_asc') {
-        queryBuilder.orderBy('products.current_price', 'asc');
-      }
-      else if (sort === 'price_desc') {
-        queryBuilder.orderBy('products.current_price', 'desc');
-      }
-      else if (sort === 'newest') {
-        queryBuilder.orderBy('products.created_at', 'desc');
-      }
-      else if (sort === 'oldest') {
-        queryBuilder.orderBy('products.created_at', 'asc');
-      }
-      else {
-        queryBuilder.orderBy('products.created_at', 'desc');
-      }
-    })
-    .limit(limit)
-    .offset(offset);
-}
-
-export function countByCategoryId(categoryId) {
-  return db('products')
-    .where('category_id', categoryId)
-    .count('id as count')
     .first();
 }
 

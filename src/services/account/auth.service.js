@@ -1,10 +1,12 @@
 import bcrypt from 'bcryptjs';
+import { randomInt } from 'crypto';
 import { userModel } from '../../models/index.js';
 import { sendMail } from '../../utils/mailer.js';
 import { AUTH } from '../../config/app.config.js';
 
+// crypto.randomInt đảm bảo tính ngẫu nhiên mật mã học, an toàn hơn Math.random()
 function generateOtp() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return randomInt(100000, 1000000).toString();
 }
 
 export async function isEmailTaken(email) {

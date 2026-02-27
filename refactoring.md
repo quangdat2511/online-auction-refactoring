@@ -1,4 +1,4 @@
-# Báo cáo Refactoring dự án Online Auction
+﻿# Báo cáo Refactoring dự án Online Auction
 
 <style>
   div p {
@@ -182,7 +182,7 @@ Tách thành các module riêng biệt:
 2. **Cấu hình Handlebars:** `src/config/handlebars.config.js`
 3. **Cấu hình Passport:** `src/config/passport.config.js`
 4. **Middlewares:** `src/middlewares/*.mdw.js`
-5. **Routes:** `Dời API endpoints qua routes`
+5. **Routes:** Dời API endpoints qua `src/routes/api.route.js`, logic qua `src/services/category.service.js`
 ### Minh chứng
 Cấu trúc thư mục
 ![alt text](images/index-refactoring.png)
@@ -208,10 +208,28 @@ app.use(categoryMiddleware);
 app.use('/admin', isAdmin, setAdminMode);
 
 // 5. ROUTES
-app.use('/admin/account', adminAccountRouter);
-app.use('/admin/users', adminUserRouter);
-app.use('/admin/categories', adminCategoryRouter);
-...
+app.use('/api', apiRouter);      
+app.use('/admin', adminRouter);
+app.use('/seller', isAuthenticated, isSeller, sellerRouter);
+app.use('/', homeRouter);
+app.use('/products', productRouter);
+app.use('/account', accountRouter);
+```
+
+**`src/services/category.service.js` — logic tách riêng:**
+```javascript
+export async function getCategoriesWithLevel() {
+  const categories = await categoryModel.findAll();
+  return categories.map(cat => ({ ...cat, level: cat.parent_id ? 2 : 1 }));
+}
+```
+
+**`src/routes/api.route.js` — route tách riêng:**
+```javascript
+router.get('/categories', async (req, res) => {
+  const categories = await getCategoriesWithLevel(); // ✅ gọi service, không inline logic
+  res.json({ categories });
+});
 ```
 
 ---
@@ -1836,7 +1854,7 @@ if (!isSellerOrBidder(product, userId)) return { unauthorized: true }; // ✅ t�
 ---
 ## OPEN/CLOSED PRINCIPLE (OCP)
 
-### 📌 Vị trí 1: `src/models/postgres/order.model.js` — switch trên trạng thái order
+### 📌 1. `src/models/postgres/order.model.js` — switch trên trạng thái order
 
 **Mô tả vi phạm:**
 Hàm `updateStatus` trong `src_origin/models/order.model.js` dùng một **khối `switch` dài** để gán timestamp tương ứng khi order chuyển sang mỗi trạng thái:
@@ -2006,112 +2024,87 @@ if (productStatus !== PRODUCT_STATUS.ACTIVE) { ... }
 
 ---
 
-### 📌 Vị trí 2: `src/routes/product.route.js` (Lines 336-788)
+### 📌 2. `src/routes/` — Routes phụ thuộc trực tiếp vào từng model file
 
 **Mô tả vi phạm:**
-Route `/bid` là một **God Function** với **450 dòng code**. Để thêm tính năng mới (VD: bid bằng crypto, chặn user rating thấp), phải sửa trực tiếp vào hàm này.
+Mọi route trong `src` đều import **trực tiếp từng model file riêng lẻ** theo đường dẫn cụ thể:
+
+```javascript
+// src_origin/routes/product.route.js
+import * as productModel          from '../models/product.model.js';
+import * as reviewModel           from '../models/review.model.js';
+import * as userModel             from '../models/user.model.js';
+import * as orderModel            from '../models/order.model.js';
+import * as biddingHistoryModel   from '../models/biddingHistory.model.js';
+// ... 10+ model imports mỗi file route
+```
+
+Routes bị **hard-coupled** vào cả hai điều: cấu trúc thư mục lẫn database engine (Knex/PostgreSQL). Muốn đổi sang MongoDB phải sửa import trong **tất cả** các route file.
 
 :::warning
 **Tác động:**
-
-* **Cannot extend without modification:** Vi phạm OCP.
-* **High risk of bugs:** Sửa logic này dễ làm hỏng logic kia.
-* **Khó test:** 450 dòng logic lồng nhau rất khó viết unit test.
+* **Vi phạm OCP:** Đổi database buộc phải sửa từng route — thay đổi infrastructure kéo theo sửa business logic layer.
+* **Không thể swap database:** Không có điểm trung gian nào để chuyển đổi implementation.
+* **Khó test:** Route phụ thuộc vào Knex model cụ thể, không thể inject mock.
 :::
 
 **💡 Đề xuất cải thiện:**
-Áp dụng **Strategy Pattern** (cho Validation) và **Chain of Responsibility** (cho Processing).
-
-```javascript
-// Orchestrator
-export class BiddingService {
-    constructor() {
-        this.validators = [
-            new SellerBidValidator(),
-            new RatingValidator(), // Dễ dàng thêm validator mới
-            new BidAmountValidator()
-        ];
-        this.processors = [
-            new AutomaticBiddingProcessor(),
-            new BuyNowProcessor()
-        ];
-    }
-    
-    async placeBid(userId, productId, bidAmount) {
-        // Run validators
-        for (const validator of this.validators) await validator.validate(ctx);
-        
-        // Run processors
-        for (const processor of this.processors) await processor.process(ctx);
-    }
-}
+Thêm một **abstraction layer** (`models/index.js`) làm điểm trung gian duy nhất. Mỗi database engine có thư mục riêng với cùng tên export — muốn đổi database chỉ sửa **1 dòng** trong `models/index.js`.
 
 ```
+models/
+├── postgres/
+│   ├── product.model.js   # Knex implementation
+│   ├── user.model.js
+│   └── index.js           # export * as productModel from './product.model.js'; ...
+│
+├── mongodb/               # (nếu cần) — cùng tên export, khác implementation
+│   ├── product.model.js
+│   └── index.js
+│
+└── index.js               # ← ABSTRACTION LAYER: chỉ sửa 1 dòng để đổi DB
+                           # export * from './postgres/index.js';
+```
+
+### Minh chứng
+
+**`src/models/index.js` — abstraction layer, đổi DB chỉ sửa 1 dòng:**
+```javascript
+// To switch databases, change only this one import:
+//   PostgreSQL  →  export * from './postgres/index.js';  ✅ current
+//   MongoDB     →  export * from './mongodb/index.js';
+//   SQLite      →  export * from './sqlite/index.js';
+export * from './postgres/index.js';
+```
+
+**`src/models/postgres/index.js` — re-export tất cả models với tên ổn định:**
+```javascript
+export * as productModel        from './product.model.js';
+export * as userModel           from './user.model.js';
+export * as orderModel          from './order.model.js';
+// ... tất cả models
+```
+
+**Mọi service chỉ import từ abstraction layer, không biết DB cụ thể:**
+```javascript
+// src/services/product/detail.service.js
+import { productModel, biddingHistoryModel, ... } from '../../models/index.js'; // ✅
+
+// src/services/product/order.service.js
+import { productModel, orderModel, invoiceModel, ... } from '../../models/index.js'; // ✅
+```
+
+**Kết quả:**
+- Đổi toàn bộ database chỉ cần sửa **1 dòng** trong `models/index.js`.
+- Routes/services không biết gì về Knex hay PostgreSQL — chỉ gọi qua abstraction.
+- Dễ mock khi test: thay `models/index.js` bằng in-memory implementation.
 
 ---
+
 ## DEPENDENCY INVERSION PRINCIPLE (DIP)
 
-### 📌 Vị trí: `src/routes/account.route.js`, `src/routes/product.route.js`
 
-**Mô tả vi phạm:**
-Routes phụ thuộc **trực tiếp** vào implementations cụ thể (models, utils), không dùng abstractions.
-
-```javascript
-// account.route.js
-import * as userModel from '../models/user.model.js'; // Direct coupling
-import { sendMail } from '../utils/mailer.js';        // Direct coupling
-
-router.post('/signin', async function (req, res) {
-    const user = await userModel.findByEmail(email);  
-    await sendMail({ ... });
-});
-
-```
-
-:::danger
-**Vấn đề:**
-
-* **Hard to test:** Không thể mock dependencies dễ dàng.
-* **Tight coupling:** Thay đổi model signature → phải sửa nhiều routes.
-* **Violates Open/Closed:** Không thể thay đổi implementation mà không sửa routes.
-:::
-
-**💡 Đề xuất cải thiện:**
-Tách logic nghiệp vụ ra **Service Layer**, inject vào route qua một middleware đơn giản.
-
-1. **Service:** `UserService` tập trung toàn bộ logic xác thực, ẩn đi model và mailer.
-2. **Middleware:** `injectServices.mdw.js` tạo các service instance và gắn vào `req.services`.
-3. **Route:** Chỉ gọi service, không còn biết đến model hay mailer.
-
-```javascript
-// src/services/user.service.js
-export class UserService {
-    async authenticate(email, password) {
-        const user = await userModel.findByEmail(email);
-        // ... kiểm tra password, gửi mail OTP nếu chưa verify ...
-        return { success: true, user };
-    }
-}
-
-// src/middlewares/injectServices.mdw.js
-import { UserService } from '../services/user.service.js';
-const userService = new UserService(); // singleton
-
-export function injectServices(req, res, next) {
-    req.services = { userService };
-    next();
-}
-
-// src/routes/account.route.js  — route không còn import model hay mailer
-router.post('/signin', async function (req, res) {
-    const result = await req.services.userService.authenticate(email, password);
-    // ...
-});
-```
-
----
-
-### 📌 Vị trí 2: `src/routes/product.route.js` — Direct DB Access trong Route
+### 📌 1. `src/routes/product.route.js` — Direct DB Access trong Route
 
 **Mô tả vi phạm:**
 Ngoài việc import trực tiếp 12 models + `sendMail`, `product.route.js` còn vi phạm DIP ở mức **nghiêm trọng hơn**: import và gọi thẳng instance `db` (Knex) bên trong route handler, **hoàn toàn bỏ qua cả tầng model**:
@@ -2147,24 +2140,51 @@ await db('products').where('id', order.product_id).update({
 :::
 
 **💡 Đề xuất cải thiện:**
-Chuyển toàn bộ `db.*` call trong route vào đúng model tương ứng:
+Tách toàn bộ business logic và DB access ra **Service Layer**. Route chỉ gọi service, không biết gì về Knex hay schema DB:
 
 ```javascript
-// product.model.js — thêm hàm còn thiếu
-export async function markAsSold(productId, trx = db) {
-    return trx('products').where('id', productId).update({
-        is_sold: true,
-        closed_at: new Date()
-    });
-}
+// src/services/product/order.service.js — ẩn toàn bộ DB logic
+export async function submitPayment(orderId, userId, data) { ... }
+export async function confirmDelivery(orderId, userId) { ... }
 
-// Trong route — không còn biết đến db
-await productModel.markAsSold(order.product_id);
+// Route — chỉ biết service API, không biết DB
+import * as orderService from '../../services/product/order.service.js';
+router.post('/order/:id/submit-payment', async (req, res) => {
+  await orderService.submitPayment(req.params.id, userId, req.body);
+});
 ```
+
+### Minh chứng
+
+**Tất cả routes trong `src/routes/` hiện chỉ import services — không còn import model hay `db` trực tiếp:**
+
+```javascript
+// src/routes/product/order.route.js
+import * as orderService from '../../services/product/order.service.js'; // ✅ service only
+
+// src/routes/seller/product.route.js
+import * as sellerProductService from '../../services/seller/product.service.js'; // ✅
+
+// src/routes/seller/rating.route.js
+import * as sellerRating from '../../services/seller/rating.service.js'; // ✅
+```
+
+**`src/services/product/order.service.js` — toàn bộ DB transaction logic nằm trong service:**
+
+```javascript
+import { productModel, orderModel, invoiceModel, ... } from '../../models/index.js';
+
+export async function submitPayment(orderId, userId, { payment_method, ... }) {
+  await invoiceModel.createPaymentInvoice({ ... });
+  await orderModel.updateStatus(orderId, ORDER_STATUS.PAYMENT_SUBMITTED, userId);
+}
+```
+
+**Kết quả:** Route layer hoàn toàn không biết về DB schema. Swap Knex → TypeORM chỉ cần thay đổi trong `models/postgres/`, không đụng vào route hay service.
 
 ---
 
-### 📌 Vị trí 3: `src/routes/seller.route.js`
+### 📌 2. `src/routes/seller.route.js`
 
 **Mô tả vi phạm:**
 `seller.route.js` import trực tiếp **5 models** và **`sendMail`**, nhúng toàn bộ logic nghiệp vụ của seller (quản lý sản phẩm, cancel auction, gửi email thông báo bidder) vào tầng route:
@@ -2186,27 +2206,36 @@ import { sendMail } from '../utils/mailer.js';                             // Di
 :::
 
 **💡 Đề xuất cải thiện:**
-Tách logic ra `SellerService`:
+Tách logic ra các **seller service modules** — mỗi file service đảm nhận một bounded context:
 
 ```javascript
-// src/services/seller.service.js
-export class SellerService {
-    async cancelAuction(productId, sellerId) {
-        // Kiểm tra quyền sở hữu, cancel product, lấy danh sách bidder, gửi mail
-    }
-    async addProduct(sellerId, productData, imageFiles) { ... }
-}
-
-// seller.route.js — chỉ gọi service
-router.post('/products/cancel', async (req, res) => {
-    await req.services.sellerService.cancelAuction(productId, sellerId);
-    res.redirect('/seller/products/pending');
-});
+// src/routes/seller/product.route.js — chỉ biết service
+import * as sellerProductService from '../../services/seller/product.service.js';
+import * as sellerRating         from '../../services/seller/rating.service.js';
 ```
+
+### Minh chứng
+
+**`src/routes/seller/product.route.js` — chỉ import service, không còn model hay sendMail:**
+
+```javascript
+import * as sellerProductService from '../../services/seller/product.service.js'; // ✅
+import { upload } from '../../utils/upload.js';
+```
+
+**`src/routes/seller/dashboard.route.js`, `rating.route.js`, `rejectBidder.route.js` — mỗi route chỉ biết service của mình:**
+
+```javascript
+import * as sellerDashboard from '../../services/seller/dashboard.service.js';   // ✅
+import * as sellerRating    from '../../services/seller/rating.service.js';       // ✅
+import * as rejectService   from '../../services/seller/rejectBidder.service.js'; // ✅
+```
+
+**Kết quả:** `seller.route.js` 700 dòng gộp chung bị tách thành 4 route file nhỏ, mỗi file chỉ gọi 1 service — không biết gì về model hay mailer.
 
 ---
 
-### 📌 Vị trí 4: `src/routes/admin/user.route.js`
+### 📌 3. `src/routes/admin/user.route.js`
 
 **Mô tả vi phạm:**
 Route admin quản lý user import trực tiếp `upgradeRequestModel`, `userModel`, `sendMail` và tự xử lý toàn bộ logic nghiệp vụ phê duyệt/từ chối nâng cấp tài khoản ngay trong route handler:
@@ -2231,28 +2260,36 @@ router.post('/upgrade-requests/:id/approve', async (req, res) => {
 :::
 
 **💡 Đề xuất cải thiện:**
+Tách logic ra `src/services/admin/user.service.js` — route chỉ ủy thác cho service:
 
 ```javascript
-// src/services/admin.service.js
-export class AdminService {
-    async approveUpgrade(requestId) {
-        const request = await upgradeRequestModel.findById(requestId);
-        await upgradeRequestModel.approveUpgradeRequest(requestId);
-        await userModel.update(request.bidder_id, { role: 'seller' });
-        await sendMail({ to: ..., subject: 'Account upgraded', ... });
-    }
-}
+// src/routes/admin/user.route.js
+import * as userService from '../../services/admin/user.service.js';
 
-// admin/user.route.js — route không còn phụ thuộc model hay mailer
 router.post('/upgrade-requests/:id/approve', async (req, res) => {
-    await req.services.adminService.approveUpgrade(req.params.id);
-    res.redirect('/admin/users/upgrade-requests');
+  await userService.approveUpgrade(req.params.id);
+  res.redirect('/admin/users/upgrade-requests');
 });
 ```
 
+### Minh chứng
+
+**`src/routes/admin/user.route.js` — chỉ import `userService`, không còn model hay sendMail:**
+
+```javascript
+import * as userService from '../../services/admin/user.service.js'; // ✅ service only
+
+router.get('/list',           async (req, res) => { const users = await userService.listUsers(); ... });
+router.get('/detail/:id',     async (req, res) => { ... });
+router.post('/add',           async (req, res) => { await userService.addUser(req.body); ... });
+router.post('/reset-pwd/:id', async (req, res) => { await userService.resetPassword(req.params.id); ... });
+```
+
+**Kết quả:** Route không biết về model hay email — mọi side-effect (hash password, sendMail) nằm trong `admin/user.service.js`.
+
 ---
 
-### 📌 Vị trí 5: `src/scripts/auctionEndNotifier.js`
+### 📌 4. `src/scripts/auctionEndNotifier.js`
 
 **Mô tả vi phạm:**
 Script cron job import trực tiếp `productModel` và `sendMail`, trộn lẫn logic nghiệp vụ (xác định đấu giá kết thúc, quyết định ai cần thông báo) với chi tiết triển khai (nội dung HTML email):
@@ -2260,18 +2297,6 @@ Script cron job import trực tiếp `productModel` và `sendMail`, trộn lẫn
 ```javascript
 import * as productModel from '../models/product.model.js'; // Direct coupling
 import { sendMail } from '../utils/mailer.js';              // Direct coupling
-
-export async function checkAndNotifyEndedAuctions() {
-    const endedAuctions = await productModel.getNewlyEndedAuctions();
-    for (const auction of endedAuctions) {
-        if (auction.winner_email) {
-            await sendMail({
-                to: auction.winner_email,
-                html: `<div style="...">...</div>` // 80+ dòng HTML template cứng trong business logic
-            });
-        }
-    }
-}
 ```
 
 :::warning
@@ -2283,65 +2308,43 @@ export async function checkAndNotifyEndedAuctions() {
 :::
 
 **💡 Đề xuất cải thiện:**
-Tách thành `NotificationService` với interface rõ ràng:
+Thay `import * as productModel from '../models/product.model.js'` bằng abstraction layer `models/index.js` — đổi DB chỉ sửa 1 dòng:
 
 ```javascript
-// src/services/notification.service.js
-export class NotificationService {
-    async notifyAuctionWinner(auction) { ... }
-    async notifyAuctionSeller(auction) { ... }
-    async notifyOutbidBidder(auction, previousBidderId) { ... }
-}
+import { productModel } from '../models/index.js'; // ✅ qua abstraction layer
+```
 
-// src/scripts/auctionEndNotifier.js — chỉ orchestrate, không biết cách gửi mail
-import { NotificationService } from '../services/notification.service.js';
-const notifier = new NotificationService();
+### Minh chứng
 
-export async function checkAndNotifyEndedAuctions() {
-    const endedAuctions = await auctionService.getNewlyEnded();
-    for (const auction of endedAuctions) {
-        await notifier.notifyAuctionWinner(auction);
-        await notifier.notifyAuctionSeller(auction);
-    }
+**`src/scripts/auctionEndNotifier.js` — import qua `models/index.js` thay vì file cụ thể:**
+
+```javascript
+import { productModel } from '../models/index.js';  // ✅ abstraction layer
+import { sendMail }    from '../utils/mailer.js';
+import { AUCTION }     from '../config/app.config.js';
+
+export function startAuctionEndNotifier(intervalSeconds = AUCTION.END_NOTIFIER_INTERVAL_SECONDS) {
+  setInterval(checkAndNotifyEndedAuctions, intervalSeconds * 1000);
 }
 ```
+
+**`src/models/index.js` — single swap point cho toàn bộ database implementation:**
+
+```javascript
+// To switch databases, change only this one import:
+//   PostgreSQL  →  export * from './postgres/index.js';  ✅ current
+//   MongoDB     →  export * from './mongodb/index.js';
+export * from './postgres/index.js';
+```
+
+**Kết quả:** Script không còn hard-couple vào file `product.model.js` cụ thể — đổi DB engine chỉ sửa `models/index.js`.
 
 
 
 ## KISS (Keep It Simple, Stupid)
 
-### 📌 Vị trí 1: `src/middlewares/auth.mdw.js`
 
-**Mô tả vi phạm:**
-Middleware authentication có lỗi tiềm ẩn vì không kiểm tra null, gây crash server.
-
-```javascript
-export function isSeller(req, res, next) {
-    // ❌ Crash nếu authUser null (chưa login hoặc session hết hạn)
-    if (req.session.authUser.role === "seller") { 
-        next();
-    }
-}
-
-```
-
-**💡 Đề xuất cải thiện:**
-Sử dụng Optional Chaining (`?.`) và xử lý edge cases.
-
-```javascript
-export function isSeller(req, res, next) {
-    if (req.session?.authUser?.role === "seller") {
-        next();
-    } else {
-        res.redirect('/account/signin'); // Handle gracefully
-    }
-}
-
-```
-
----
-
-### 📌 Vị trí 2: `src/index.js` — DB query trên mọi request
+### 📌1: `src/index.js` — DB query trên mọi request
 
 **Mô tả vi phạm:**
 Global middleware trong `index.js` gọi `userModel.findById()` trên **mọi HTTP request** (kể cả request tĩnh như CSS, JS) để đồng bộ thông tin user với DB:
@@ -2366,29 +2369,64 @@ app.use(async function (req, res, next) {
 :::
 
 **💡 Đề xuất cải thiện:**
-Chỉ refresh session khi cần thiết (ví dụ: mỗi 60 giây hoặc sau khi có thay đổi profile):
+Tách ra `src/middlewares/userSession.mdw.js` — chỉ refresh session mỗi `SESSION.REFRESH_INTERVAL_MS` và bỏ qua static assets:
 
 ```javascript
-app.use(async function (req, res, next) {
-    // Bỏ qua static assets
-    if (req.path.startsWith('/static')) return next();
-    
-    if (req.session.isAuthenticated && req.session.authUser) {
-        const lastRefresh = req.session.userLastRefresh || 0;
-        // Chỉ hit DB nếu đã quá 60s kể từ lần cuối
-        if (Date.now() - lastRefresh > 60_000) {
-            const currentUser = await userModel.findById(req.session.authUser.id);
-            req.session.authUser = { ...currentUser };
-            req.session.userLastRefresh = Date.now();
-        }
+import { SESSION } from '../config/app.config.js';
+
+export async function userSessionMiddleware(req, res, next) {
+  if (req.path.startsWith('/static')) return next(); // bỏ qua static
+  if (req.session.isAuthenticated && req.session.authUser) {
+    const lastRefresh = req.session.userLastRefresh || 0;
+    if (Date.now() - lastRefresh > SESSION.REFRESH_INTERVAL_MS) {
+      const currentUser = await userModel.findById(req.session.authUser.id);
+      req.session.authUser = { ...currentUser };
+      req.session.userLastRefresh = Date.now();
     }
-    next();
-});
+  }
+  next();
+}
 ```
+
+### Minh chứng
+
+**`src/middlewares/userSession.mdw.js` — tách riêng, dùng `SESSION.REFRESH_INTERVAL_MS`:**
+
+```javascript
+import { userModel } from '../models/index.js';
+import { SESSION } from '../config/app.config.js';
+
+const SESSION_REFRESH_INTERVAL = SESSION.REFRESH_INTERVAL_MS;
+
+export async function userSessionMiddleware(req, res, next) {
+  // Bỏ qua static assets — không cần hit DB cho CSS/JS/images
+  if (req.path.startsWith('/static')) return next();
+
+  if (req.session.isAuthenticated && req.session.authUser) {
+    const lastRefresh = req.session.userLastRefresh || 0;
+
+    // Chỉ đồng bộ DB mỗi 60 giây, tránh hit DB trên mọi request  ✅
+    if (Date.now() - lastRefresh > SESSION_REFRESH_INTERVAL) {
+      const currentUser = await userModel.findById(req.session.authUser.id);
+      if (!currentUser) {
+        req.session.isAuthenticated = false;  // user bị xóa → tự đăng xuất
+      } else {
+        req.session.authUser = { id: currentUser.id, ... };
+        req.session.userLastRefresh = Date.now();
+      }
+    }
+  }
+  next();
+}
+```
+
+**Kết quả:**
+- Từ N DB queries/page → **tối đa 1 query mỗi 60 giây** bất kể bao nhiêu request.
+- Logic session đặt trong file riêng, không còn nằm trong `index.js`.
 
 ---
 
-### 📌 Vị trí 3: `src/routes/account.route.js` — Inline reCAPTCHA verification
+### 📌 2: `src/routes/account.route.js` — Inline reCAPTCHA verification
 
 **Mô tả vi phạm:**
 Logic xác minh reCAPTCHA (gọi Google API, parse JSON, kiểm tra `data.success`) được nhúng **trực tiếp** vào route handler POST `/signup`, làm handler trở nên dài và khó đọc:
@@ -2407,24 +2445,399 @@ try {
 ```
 
 **💡 Đề xuất cải thiện:**
-Tách ra một util function:
+Tách `verifyRecaptcha` ra khỏi inline route handler thành một hàm export riêng — route chỉ gọi hàm, không còn biết đến URL hay fetch logic:
 
 ```javascript
-// src/utils/recaptcha.js
+// src/services/account/auth.service.js
 export async function verifyRecaptcha(token) {
     if (!token) return false;
-    const url = `https://www.google.com/recaptcha/api/siteverify`;
-    const resp = await fetch(url, {
-        method: 'POST',
-        body: new URLSearchParams({ secret: process.env.RECAPTCHA_SECRET, response: token })
-    });
-    const data = await resp.json();
-    return data.success;
+    const secretKey = process.env.RECAPTCHA_SECRET;
+    const verifyUrl = `https://www.google.com/.../siteverify?secret=${secretKey}&response=${token}`;
+    try {
+        const response = await fetch(verifyUrl, { method: 'POST' });
+        const data = await response.json();
+        return data.success;
+    } catch (err) {
+        return null; // null = connection error
+    }
 }
 
-// Trong route:
-const isHuman = await verifyRecaptcha(req.body['g-recaptcha-response']);
-if (!isHuman) errors.captcha = 'Captcha verification failed.';
+// Route — 1 dòng thay cho 8 dòng inline:
+const captchaResult = await authService.verifyRecaptcha(recaptchaResponse);
 ```
 
- 
+### Minh chứng
+
+**`src/services/account/auth.service.js` — hàm `verifyRecaptcha` được tách ra:**
+
+```javascript
+export async function verifyRecaptcha(token) {
+  if (!token) return false;
+  const secretKey = process.env.RECAPTCHA_SECRET;
+  const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${token}`;
+  try {
+    const response = await fetch(verifyUrl, { method: 'POST' });
+    const data = await response.json();
+    return data.success;
+  } catch (err) {
+    return null; // null = connection error (phân biệt với false = failed)
+  }
+}
+```
+
+**`src/routes/account/auth.route.js` — gọi service, không còn inline fetch:**
+
+```javascript
+const captchaResult = await authService.verifyRecaptcha(recaptchaResponse);  // ✅ 1 dòng
+if (captchaResult === null) {
+  errors.captcha = 'Error connecting to captcha server.';
+} else if (!captchaResult) {
+  errors.captcha = 'Captcha verification failed. Please try again.';
+}
+```
+
+**Kết quả:** Route handler không còn biết URL Google API hay cách parse response — toàn bộ logic reCAPTCHA encapsulated trong `auth.service.js`.
+
+
+---
+
+###  3: `src/utils/passport.js`  OAuth callback lặp lại 3 lần với logic y hệt cho Google, Facebook, GitHub  
+
+**Mô tả vi phạm:**
+Cả 3 OAuth strategies (Google, Facebook, GitHub) đều chứa cùng một khối `try/catch` dài 30 dòng với cấu trúc y hệt: tìm user theo provider  tìm theo email  tạo mới. Chỉ 3 giá trị thay đổi giữa các strategy (tên provider, fallback email, display name fallback):
+
+```javascript
+// Google: ~30 dòng
+async (accessToken, refreshToken, profile, done) => {
+  try {
+    let user = await userModel.findByOAuthProvider('google', profile.id);
+    if (user) return done(null, user);
+    const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
+    if (email) { user = await userModel.findByEmail(email); ... }
+    const newUser = await userModel.add({ ..., oauth_provider: 'google', ... });
+    done(null, newUser);
+  } catch (error) { done(error, null); }
+}
+// Facebook: copy-paste y hệt, chỉ đổi 'google'  'facebook' (~30 dòng nữa)
+// GitHub:   copy-paste y hệt, chỉ đổi 'google'  'github'  (~30 dòng nữa)
+```
+
+:::warning
+**Tác động:**
+
+* **90 dòng callback** thực ra chỉ chứa **1 logic** với 3 tham số khác nhau.
+* Thêm provider mới (VD: Apple Login) phải copy-paste thêm 30 dòng.
+* Sửa bug trong logic OAuth (VD: xử lý email null) phải sửa ở 3 chỗ.
+:::
+
+** Đề xuất cải thiện:**
+Tách logic oauth chung ra hàm `handleOAuthLogin(provider, displayNameFallback, profile, done)`:
+
+```javascript
+async function handleOAuthLogin(provider, displayNameFallback, profile, done) {
+  try {
+    let user = await userModel.findByOAuthProvider(provider, profile.id);
+    if (user) return done(null, user);
+    const email = profile.emails?.[0]?.value ?? null;
+    if (email) {
+      user = await userModel.findByEmail(email);
+      if (user) { await userModel.addOAuthProvider(user.id, provider, profile.id); return done(null, user); }
+    }
+    const newUser = await userModel.add({
+      email: email ?? `${provider}_${profile.id}@oauth.local`,
+      fullname: profile.displayName || profile.username || displayNameFallback,
+      password_hash: null, address: '', role: 'bidder', email_verified: true,
+      oauth_provider: provider, oauth_id: profile.id,
+    });
+    done(null, newUser);
+  } catch (error) { done(error, null); }
+}
+
+// Mỗi strategy giờ chỉ còn 3 dòng:
+passport.use(new GoogleStrategy({...},   (at, rt, p, done) => handleOAuthLogin('google',   'Google User',   p, done)));
+passport.use(new FacebookStrategy({...}, (at, rt, p, done) => handleOAuthLogin('facebook', 'Facebook User', p, done)));
+passport.use(new GitHubStrategy({...},   (at, rt, p, done) => handleOAuthLogin('github',   'GitHub User',   p, done)));
+```
+
+### Minh chứng
+
+**`src/utils/passport.js`  sau khi refactor, 90 dòng callback  1 hàm shared + 3 dòng mỗi strategy:**
+
+```javascript
+async function handleOAuthLogin(provider, displayNameFallback, profile, done) {
+  try {
+    let user = await userModel.findByOAuthProvider(provider, profile.id);
+    if (user) return done(null, user);
+    const email = profile.emails?.[0]?.value ?? null;
+    if (email) {
+      user = await userModel.findByEmail(email);
+      if (user) {
+        await userModel.addOAuthProvider(user.id, provider, profile.id);
+        return done(null, user);
+      }
+    }
+    const newUser = await userModel.add({
+      email: email ?? `${provider}_${profile.id}@oauth.local`,
+      fullname: profile.displayName || profile.username || displayNameFallback,
+      password_hash: null, address: '', role: 'bidder', email_verified: true,
+      oauth_provider: provider, oauth_id: profile.id,
+    });
+    done(null, newUser);
+  } catch (error) { done(error, null); }
+}
+
+//  Mỗi strategy chỉ còn 3 dòng
+passport.use(new GoogleStrategy({...},
+  (at, rt, profile, done) => handleOAuthLogin('google', 'Google User', profile, done)));
+passport.use(new FacebookStrategy({...},
+  (at, rt, profile, done) => handleOAuthLogin('facebook', 'Facebook User', profile, done)));
+passport.use(new GitHubStrategy({...},
+  (at, rt, profile, done) => handleOAuthLogin('github', 'GitHub User', profile, done)));
+```
+
+**Kết quả:** Từ 90 dòng copy-paste  **1 hàm 20 dòng**. Thêm provider mới chỉ cần 3 dòng. Sửa bug OAuth logic chỉ sửa 1 chỗ.
+
+---
+
+###  4: `src/config/handlebars.config.js`  Date helper lặp lại boilerplate `padStart`
+
+**Mô tả vi phạm:**
+4 helper xử lý ngày giờ (`format_date`, `format_only_date`, `format_only_time`, `format_date_input`) và nhánh `days > 3` trong `format_time_remaining` đều lặp lại cùng một đoạn setup giống hệt nhau:
+
+```javascript
+// Lặp lại trong format_date, format_only_date, format_date_input, format_time_remaining:
+const d = new Date(date);
+if (isNaN(d.getTime())) return '';
+const year   = d.getFullYear();
+const month  = String(d.getMonth() + 1).padStart(2, '0');
+const day    = String(d.getDate()).padStart(2, '0');
+const hour   = String(d.getHours()).padStart(2, '0');    // (trong những helper cần giờ)
+const minute = String(d.getMinutes()).padStart(2, '0');
+const second = String(d.getSeconds()).padStart(2, '0');
+```
+
+:::warning
+**Tác động:**
+
+* **40+ dòng boilerplate** cho logic đơn giản "parse và format date".
+* Thay đổi format ngày (VD: thêm timezone) phải sửa 5 chỗ khác nhau.
+:::
+
+** Đề xuất cải thiện:**
+Tách ra hàm nội bộ `parseDateParts(date)`  mỗi helper chỉ còn 2 dòng real logic:
+
+```javascript
+function parseDateParts(date) {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return null;
+  return {
+    year: d.getFullYear(),
+    month: String(d.getMonth() + 1).padStart(2, '0'),
+    day: String(d.getDate()).padStart(2, '0'),
+    hour: String(d.getHours()).padStart(2, '0'),
+    minute: String(d.getMinutes()).padStart(2, '0'),
+    second: String(d.getSeconds()).padStart(2, '0'),
+  };
+}
+
+format_date(date) {
+  if (!date) return '';
+  const p = parseDateParts(date); if (!p) return '';
+  return `${p.hour}:${p.minute}:${p.second} ${p.day}/${p.month}/${p.year}`;
+},
+```
+
+### Minh chứng
+
+**`src/config/handlebars.config.js`  `parseDateParts` thêm trước `engine({})`, 5 helper đơn giản hóa:**
+
+```javascript
+function parseDateParts(date) {
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return null;
+  return {
+    year:   d.getFullYear(),
+    month:  String(d.getMonth() + 1).padStart(2, '0'),
+    day:    String(d.getDate()).padStart(2, '0'),
+    hour:   String(d.getHours()).padStart(2, '0'),
+    minute: String(d.getMinutes()).padStart(2, '0'),
+    second: String(d.getSeconds()).padStart(2, '0'),
+  };
+}
+
+// format_date: 8 dòng boilerplate  3 dòng  
+format_date(date) {
+  if (!date) return '';
+  const p = parseDateParts(date); if (!p) return '';
+  return `${p.hour}:${p.minute}:${p.second} ${p.day}/${p.month}/${p.year}`;
+},
+// format_only_date, format_only_time, format_date_input  tương tự
+// format_time_ remaining (days > 3):    const p = parseDateParts(end);  
+```
+
+**Kết quả:** Từ 40+ dòng boilerplate  **1 hàm 9 dòng** dùng chung. Muốn thêm timezone support chỉ cần sửa `parseDateParts`.
+
+---
+
+###  5: `src/services/account/auth.service.js`  `generateOtp()` dùng `Math.random()`
+
+**Mô tả vi phạm:**
+OTP dùng để xác thực email và reset mật khẩu  cần tính ngẫu nhiên không đoán được. `Math.random()` là pseudo-random, **không cryptographically secure**:
+
+```javascript
+function generateOtp() {
+  return Math.floor(100000 + Math.random() * 900000).toString(); //  Math.random không secure
+}
+```
+
+:::warning
+**Tác động:**
+
+* `Math.random()` không được khuyến nghị cho security token (OTP, API key...).
+* Node.js có sẵn `crypto.randomInt()`  đơn giản hơn, an toàn hơn.
+:::
+
+** Đề xuất cải thiện:**
+Dùng `crypto.randomInt(min, max)` (Node.js built-in, có từ v14.10):
+
+```javascript
+import { randomInt } from 'crypto';
+function generateOtp() {
+  return randomInt(100000, 1000000).toString(); //  cryptographically secure
+}
+```
+
+### Minh chứng
+
+**`src/services/account/auth.service.js`  replace `Math.random()` bằng `crypto.randomInt`:**
+
+```javascript
+import { randomInt } from 'crypto'; //  built-in, không cần cài thêm
+
+function generateOtp() {
+  return randomInt(100000, 1000000).toString(); //  secure  không cần Math.floor + offset
+}
+```
+
+**Kết quả:** OTP generation an toàn hơn. Code ngắn hơn  không cần `Math.floor()` và công thức `100000 + random() * 900000`.
+
+---
+
+## YAGNI (You Aren't Gonna Need It)
+
+### 📌 A. `src_origin/models/product.model.js` — 4 functions không được sử dụng
+
+**Mô tả vi phạm:**
+Sau khi logic duyệt category được nâng cấp lên hỗ trợ multi-level (tìm theo danh sách `categoryIds`), 4 hàm cũ vẫn còn tồn tại trong model nhưng **không còn được gọi ở bất kỳ đâu**:
+
+| Hàm | Ghi chú |
+|---|---|
+| `findPage(limit, offset)` | Không có use case |
+| `countAll()` | Không có use case |
+| `findByCategoryId(categoryId, ...)` | Bị thay thế bởi `findByCategoryIds` |
+| `countByCategoryId(categoryId)` | Bị thay thế bởi `countByCategoryIds` |
+
+:::warning
+**Tác động:** Dead code làm model file phình to không cần thiết — đọc code dễ nhầm đây là API đang dùng.
+:::
+
+### Minh chứng
+
+**`src/models/postgres/product.model.js` — đã xóa 4 hàm không dùng:**
+```javascript
+// ❌ Đã xóa: findPage(limit, offset)
+// ❌ Đã xóa: countAll()
+// ❌ Đã xóa: findByCategoryId(categoryId, limit, offset, sort, currentUserId)
+// ❌ Đã xóa: countByCategoryId(categoryId)
+
+// ✅ Chỉ giữ lại các hàm đang được dùng:
+export function findByCategoryIds(categoryIds, limit, offset, sort, currentUserId) { ... }
+export function countByCategoryIds(categoryIds) { ... }
+```
+
+---
+
+### 📌 B. `src_origin/index.js` — Helpers trùng lặp và không sử dụng trong Handlebars config
+
+**Mô tả vi phạm:**
+Handlebars helpers trong `src_origin/index.js` có 2 nhóm vấn đề:
+
+**Nhóm 1 — Helpers khai báo trùng (3 cặp):**
+```javascript
+gte(a, b) { return a >= b; },   // line 225
+// ... helpers khác ...
+gte(a, b) { return a >= b; },   // line 235 — trùng lặp
+lte(a, b) { return a <= b; },   // line 232
+lte(a, b) { return a <= b; },   // line 238 — trùng lặp
+add(a, b) { return a + b; },    // line 64
+add(a, b) { return a + b; },    // line 239 — trùng lặp
+```
+
+**Nhóm 2 — Helpers khai báo nhưng không dùng trong bất kỳ template nào:**
+```javascript
+mask_name(fullname) { ... }      // masking done server-side bởi DB function
+truncate(str, len) { ... }       // không template nào gọi {{truncate ...}}
+time_remaining(date) { ... }     // bị thay thế bởi format_time_remaining
+```
+
+:::warning
+**Tác động:** Helpers trùng gây nhầm lẫn (JS dùng cái cuối cùng); helpers dead không dùng làm config file phình to.
+:::
+
+### Minh chứng
+
+**`src/config/handlebars.config.js` — config đã được dọn sạch:**
+```javascript
+// ❌ Đã xóa duplicate: gte, lte, add (mỗi helper chỉ còn 1 định nghĩa)
+// ❌ Đã xóa không dùng: mask_name, truncate, time_remaining
+
+// ✅ Mỗi helper chỉ xuất hiện đúng 1 lần:
+gte(a, b) { return a >= b; },
+lte(a, b) { return a <= b; },
+add(a, b) { return a + b; },
+```
+
+---
+
+### 📌 C. `src_origin/index.js` — `uploadDir` + `fileFilter` khai báo nhưng không dùng
+
+**Mô tả vi phạm:**
+```javascript
+// src_origin/index.js — lines 273-290:
+const uploadDir = path.join(__dirname, 'public', 'images', 'products');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true }); // ❌ tạo folder nhưng không dùng
+}
+
+const fileFilter = (req, file, cb) => { // ❌ khai báo nhưng không truyền vào multer nào
+  const allowedTypes = /jpeg|jpg|png|webp/;
+  // ...
+};
+```
+
+`product.route.js` dùng thư mục `public/uploads/` (khác) và định nghĩa `fileFilter` inline riêng — 2 khai báo trên hoàn toàn thừa.
+
+:::warning
+**Tác động:** Tạo thư mục không mong muốn khi khởi động; `fileFilter` chết gây nhầm lẫn khi đọc code.
+:::
+
+### Minh chứng
+
+**`src/index.js`** — đã xóa cả 2 khối:
+- `uploadDir` + `mkdirSync`: không còn trong `index.js`.
+- `fileFilter`: xóa hoàn toàn vì là dead code.
+
+**`src/utils/productImageHelper.js`** — logic tạo thư mục được đặt đúng nơi cần dùng, ngay trước khi `renameSync`:
+```javascript
+export async function moveProductImages(productId, thumbnail, imgsList) {
+  const dirPath = path.join('public', 'images', 'products').replace(/\\/g, '/');
+
+  // Đảm bảo thư mục đích tồn tại trước khi rename
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+  // ...
+}
+```
+
+`fileFilter` thực sự được định nghĩa tại `src/utils/upload.js` cùng multer config — không cần khai báo thêm ở nơi khác.
