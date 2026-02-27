@@ -14,7 +14,7 @@ import { startAuctionEndNotifier } from './scripts/auctionEndNotifier.js';
 
 // Import Routes
 import homeRouter from './routes/home.route.js';
-import productRouter from './routes/product.route.js';
+import productRouter from './routes/product/index.js';
 import accountRouter from './routes/account.route.js';
 import adminCategoryRouter from './routes/admin/category.route.js';
 import adminUserRouter from './routes/admin/user.route.js';
