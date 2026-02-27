@@ -1,4 +1,4 @@
-import * as categoryModel from '../../models/category.model.js';
+import { categoryModel } from '../../models/index.js';
 
 export async function listCategories() {
   return categoryModel.findAll();

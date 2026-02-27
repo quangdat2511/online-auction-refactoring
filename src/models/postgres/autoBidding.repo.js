@@ -1,4 +1,4 @@
-import db from '../utils/db.js';
+import db from '../../utils/db.js';
 
 // ── Internal Query Helper ────────────────────────────────
 /** Returns a subquery that counts bids for the current product row. */
@@ -6,15 +6,7 @@ const bidCountRaw = () =>
   db.raw(`(SELECT COUNT(*) FROM bidding_history WHERE bidding_history.product_id = products.id) AS bid_count`);
 // ─────────────────────────────────────────────────────────
 
-/**
- * Thêm hoặc cập nhật auto bidding record cho một bidder
- * @param {number} productId - ID sản phẩm
- * @param {number} bidderId - ID người đặt giá
- * @param {number} maxPrice - Giá tối đa người này sẵn sàng trả
- * @returns {Promise} Kết quả upsert
- */
 export async function upsertAutoBid(productId, bidderId, maxPrice, trx = null) {
-  // Use PostgreSQL's ON CONFLICT to handle upsert
   return (trx || db).raw(`
     INSERT INTO auto_bidding (product_id, bidder_id, max_price)
     VALUES (?, ?, ?)
@@ -26,12 +18,6 @@ export async function upsertAutoBid(productId, bidderId, maxPrice, trx = null) {
   `, [productId, bidderId, maxPrice]);
 }
 
-/**
- * Lấy auto bid record của một bidder cho sản phẩm
- * @param {number} productId - ID sản phẩm
- * @param {number} bidderId - ID người đặt giá
- * @returns {Promise<Object>} Auto bid record
- */
 export async function getAutoBid(productId, bidderId, trx = null) {
   return (trx || db)('auto_bidding')
     .where('product_id', productId)
@@ -39,23 +25,12 @@ export async function getAutoBid(productId, bidderId, trx = null) {
     .first();
 }
 
-/**
- * Lấy tất cả auto bids cho một sản phẩm
- * @param {number} productId - ID sản phẩm
- * @returns {Promise<Array>} Danh sách auto bids
- */
 export async function getAllAutoBids(productId, trx = null) {
   return (trx || db)('auto_bidding')
     .where('product_id', productId)
     .orderBy('max_price', 'desc');
 }
 
-/**
- * Xóa auto bid của một bidder
- * @param {number} productId - ID sản phẩm
- * @param {number} bidderId - ID người đặt giá
- * @returns {Promise} Kết quả xóa
- */
 export async function deleteAutoBid(productId, bidderId, trx = null) {
   return (trx || db)('auto_bidding')
     .where('product_id', productId)
@@ -63,11 +38,6 @@ export async function deleteAutoBid(productId, bidderId, trx = null) {
     .del();
 }
 
-/**
- * Lấy tất cả sản phẩm mà bidder đang tham gia đấu giá
- * @param {number} bidderId - ID người đặt giá
- * @returns {Promise<Array>} Danh sách sản phẩm
- */
 export async function getBiddingProductsByBidderId(bidderId) {
   return db('auto_bidding')
     .join('products', 'auto_bidding.product_id', 'products.id')
@@ -90,11 +60,6 @@ export async function getBiddingProductsByBidderId(bidderId) {
     .orderBy('products.end_at', 'asc');
 }
 
-/**
- * Lấy tất cả sản phẩm mà bidder đã thắng (pending, sold, cancelled)
- * @param {number} bidderId - ID người đặt giá
- * @returns {Promise<Array>} Danh sách sản phẩm
- */
 export async function getWonAuctionsByBidderId(bidderId) {
   return db('products')
     .leftJoin('categories', 'products.category_id', 'categories.id')
@@ -102,14 +67,13 @@ export async function getWonAuctionsByBidderId(bidderId) {
     .where('products.highest_bidder_id', bidderId)
     .where(function() {
       this.where(function() {
-        // Pending: (end_at <= NOW OR closed_at) AND is_sold IS NULL
         this.where(function() {
           this.where('products.end_at', '<=', new Date())
             .orWhereNotNull('products.closed_at');
         }).whereNull('products.is_sold');
       })
-      .orWhere('products.is_sold', true)   // Sold
-      .orWhere('products.is_sold', false); // Cancelled
+      .orWhere('products.is_sold', true)
+      .orWhere('products.is_sold', false);
     })
     .select(
       'products.*',

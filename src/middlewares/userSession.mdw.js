@@ -1,4 +1,4 @@
-import * as userModel from '../models/user.model.js';
+import { userModel } from '../models/index.js';
 import { SESSION } from '../config/app.config.js';
 
 const SESSION_REFRESH_INTERVAL = SESSION.REFRESH_INTERVAL_MS;

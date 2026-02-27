@@ -1,5 +1,4 @@
-import * as userModel from '../../models/user.model.js';
-import * as reviewModel from '../../models/review.model.js';
+import { userModel, reviewModel } from '../../models/index.js';
 
 async function getRatingStats(userId) {
   const ratingData = await reviewModel.calculateRatingPoint(userId);

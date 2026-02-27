@@ -3,7 +3,7 @@
  * Script kiểm tra và gửi email thông báo khi đấu giá kết thúc
  */
 
-import * as productModel from '../models/product.model.js';
+import { productModel } from '../models/index.js';
 import { sendMail } from '../utils/mailer.js';
 import { AUCTION } from '../config/app.config.js';
 

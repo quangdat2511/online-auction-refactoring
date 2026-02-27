@@ -3,7 +3,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
 import { Strategy as TwitterStrategy } from 'passport-twitter';
 import { Strategy as GitHubStrategy } from 'passport-github2';
-import * as userModel from '../models/user.model.js';
+import { userModel } from '../models/index.js';
 
 // Serialize user vào session
 passport.serializeUser((user, done) => {

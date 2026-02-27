@@ -1,4 +1,4 @@
-import * as systemSettingModel from '../../models/systemSetting.model.js';
+import { systemSettingModel } from '../../models/index.js';
 
 const DEFAULTS = {
   new_product_limit_minutes: 60,

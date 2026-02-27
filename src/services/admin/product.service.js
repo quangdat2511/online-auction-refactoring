@@ -1,5 +1,4 @@
-import * as productModel from '../../models/product.model.js';
-import * as userModel from '../../models/user.model.js';
+import { productModel, userModel } from '../../models/index.js';
 import { moveProductImages } from '../../utils/productImageHelper.js';
 
 export async function listProducts() {

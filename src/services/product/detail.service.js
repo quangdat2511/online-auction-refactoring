@@ -1,9 +1,4 @@
-import * as productModel from '../../models/product.model.js';
-import * as reviewModel from '../../models/review.model.js';
-import * as biddingHistoryModel from '../../models/biddingHistory.model.js';
-import * as productCommentModel from '../../models/productComment.model.js';
-import * as productDescUpdateModel from '../../models/productDescriptionUpdate.model.js';
-import * as rejectedBidderModel from '../../models/rejectedBidder.model.js';
+import { productModel, reviewModel, biddingHistoryModel, productCommentModel, productDescUpdateModel, rejectedBidderModel } from '../../models/index.js';
 import { PAGINATION } from '../../config/app.config.js';
 
 export function determineProductStatus(product) {

@@ -1,13 +1,5 @@
-import * as reviewModel from '../../models/review.model.js';
-import * as userModel from '../../models/user.model.js';
-import * as watchListModel from '../../models/watchlist.model.js';
-import * as systemSettingModel from '../../models/systemSetting.model.js';
-import * as productModel from '../../models/product.model.js';
-import * as biddingHistoryModel from '../../models/biddingHistory.model.js';
-import * as autoBiddingModel from '../../models/autoBidding.model.js';
-import * as rejectedBidderModel from '../../models/rejectedBidder.model.js';
+import { reviewModel, userModel, watchlistModel as watchListModel, systemSettingModel, productModel, biddingHistoryModel, autoBiddingModel, rejectedBidderModel, transaction } from '../../models/index.js';
 import { sendMail } from '../../utils/mailer.js';
-import db from '../../utils/db.js';
 
 export async function addToWatchlist(userId, productId) {
   const isInWatchlist = await watchListModel.isInWatchlist(userId, productId);
@@ -21,7 +13,7 @@ export async function removeFromWatchlist(userId, productId) {
 }
 
 export async function placeBid(userId, productId, bidAmount, productUrl) {
-  const result = await db.transaction(async (trx) => {
+  const result = await transaction(async (trx) => {
     const product = await productModel.findForUpdate(productId, trx);
 
     if (!product) throw new Error('Product not found');
@@ -227,7 +219,7 @@ export async function placeBid(userId, productId, bidAmount, productUrl) {
 }
 
 export async function buyNow(userId, productId) {
-  await db.transaction(async (trx) => {
+  await transaction(async (trx) => {
     const product = await productModel.findForUpdate(productId, trx);
 
     if (!product) throw new Error('Product not found');

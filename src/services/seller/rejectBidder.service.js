@@ -1,9 +1,4 @@
-import db from '../../utils/db.js';
-import * as productModel from '../../models/product.model.js';
-import * as rejectedBidderModel from '../../models/rejectedBidder.model.js';
-import * as autoBiddingModel from '../../models/autoBidding.model.js';
-import * as biddingHistoryModel from '../../models/biddingHistory.model.js';
-import * as userModel from '../../models/user.model.js';
+import { productModel, rejectedBidderModel, autoBiddingModel, biddingHistoryModel, userModel, transaction } from '../../models/index.js';
 import { sendMail } from '../../utils/mailer.js';
 
 // encapsulates entire rejection process + notification
@@ -17,7 +12,7 @@ export async function rejectBidder(
   let productInfo = null;
   let sellerInfo = null;
 
-  await db.transaction(async (trx) => {
+  await transaction(async (trx) => {
     const product = await productModel.findForUpdate(productId, trx);
 
     if (!product) {

@@ -1,4 +1,4 @@
-import db from '../utils/db.js';
+import db from '../../utils/db.js';
 
 export function searchPageByUserId(user_id, limit, offset) {
     return db('watchlists')

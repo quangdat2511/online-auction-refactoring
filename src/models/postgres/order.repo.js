@@ -1,8 +1,8 @@
-import db from '../utils/db.js';
+import db from '../../utils/db.js';
 
 /**
  * ============================================
- * ORDER MODEL
+ * ORDER REPO
  * ============================================
  * Quản lý đơn hàng sau khi đấu giá kết thúc
  * 
@@ -63,14 +63,8 @@ export async function findByProductId(productId) {
     .first();
 }
 
-/**
- * Lấy order kèm thông tin đầy đủ (product, buyer, seller)
- */
 // internal helper that builds the common join/select block used by
-// "withDetails" queries.  this keeps the WHERE clause (and any
-// pagination/filtering) separate from the shared wiring of products,
-// buyer, seller and category.  other functions can call this and then
-// add their own where/limit/etc.
+// "withDetails" queries.
 function orderWithDetailsQuery() {
   return db('orders')
     .leftJoin('products', 'orders.product_id', 'products.id')
@@ -108,12 +102,7 @@ export async function findByProductIdWithDetails(productId) {
     .first();
 }
 
-/**
- * Lấy tất cả orders của một seller
- */
-// small helper for queries that only need product info plus a single
-// user (either buyer or seller).  the caller just specifies the alias
-// and the label that will be used in the select clause.
+// small helper for queries that only need product info plus a single user.
 function ordersWithProductAndUserQuery(userAlias, selectName) {
   return db('orders')
     .leftJoin('products', 'orders.product_id', 'products.id')

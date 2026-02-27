@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
-import * as userModel from '../../models/user.model.js';
-import * as upgradeRequestModel from '../../models/upgradeRequest.model.js';
+import { userModel, upgradeRequestModel } from '../../models/index.js';
 import { sendMail } from '../../utils/mailer.js';
 import { AUTH } from '../../config/app.config.js';
 

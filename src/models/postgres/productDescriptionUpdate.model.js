@@ -1,4 +1,4 @@
-import db from '../utils/db.js';
+import db from '../../utils/db.js';
 
 export function addUpdate(productId, content) {
   return db('product_description_updates').insert({

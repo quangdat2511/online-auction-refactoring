@@ -1,4 +1,4 @@
-import * as reviewModel from '../../models/review.model.js';
+import { reviewModel } from '../../models/index.js';
 
 export async function rateBidder({ sellerId, productId, highest_bidder_id, rating, comment }) {
   if (!highest_bidder_id) {

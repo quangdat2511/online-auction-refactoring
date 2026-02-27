@@ -29,7 +29,7 @@
 :::
 
 ## SINGLE RESPONSIBILITY PRINCIPLE
-### 📌 Vị trí: `src/index.js`
+### 📌 1. `src/index.js`
 
 **Mô tả vi phạm:**
 
@@ -216,7 +216,7 @@ app.use('/admin/categories', adminCategoryRouter);
 
 ---
 
-### 📌 Vị trí 2: `src/routes/product.route.js` (1860 dòng)
+### 📌 2. `src/routes/product.route.js`
 
 **Mô tả vi phạm:**
 `product.route.js` là một **God File** điển hình với đến **1860 dòng**, đảm nhận mọi trách nhiệm liên quan đến sản phẩm:
@@ -274,22 +274,64 @@ router.post('/buy-now', isAuthenticated, async (req, res) => {
 });
 ```
 4. **Quản lý đơn hàng** — xác nhận thanh toán, vận chuyển, giao hàng
-```javascrip
+```javascript
+// ROUTE: COMPLETE ORDER PAGE (For PENDING products)
+router.get('/complete-order', isAuthenticated, async (req, res) => {
+  ...
+});
+```
+```javascript
+router.post('/order/:orderId/confirm-payment', isAuthenticated, async (req, res) => {
+	...
+})
+```
+
+```javascript
+router.post('/order/:orderId/submit-shipping', isAuthenticated, async (req, res) => {
+	...
+})
+```
+
+```javascript
+router.post('/order/:orderId/confirm-delivery', isAuthenticated, async (req, res) => {
+	...
+})
+```
 5. **Hóa đơn** — tải lên và xử lý payment/shipping invoices
+```javascript
+router.post('/order/:orderId/submit-payment', isAuthenticated, async (req, res) => {
+  ...
+});
+```
 6. **Đánh giá** — buyer đánh giá seller và ngược lại sau giao dịch
+
+```javascript
+router.get('/seller/:sellerId/ratings', async (req, res) => {
+  ...
+});
+
+router.get('/bidder/:bidderId/ratings', async (req, res) => {
+  ...
+});
+```
+
 7. **Comment** — thêm, lấy, phân trang comment
+```javascript
+router.post('/comment', isAuthenticated, async (req, res) => {
+  ...
+});
+```
+
 8. **Reject bidder** — seller chặn bidder cụ thể
 ```javascript
-
-// ROUTE: REJECT BIDDER (POST) - Seller rejects a bidder from a product
 router.post('/reject-bidder', isAuthenticated, async (req, res) => {
   ...
 });
 
-// ROUTE: UNREJECT BIDDER (POST) - Seller removes a bidder from rejected list
 router.post('/unreject-bidder', isAuthenticated, async (req, res) => {
   ...
 });
+...
 ```
 
 :::danger
@@ -301,7 +343,6 @@ router.post('/unreject-bidder', isAuthenticated, async (req, res) => {
 :::
 
 **💡 Đề xuất cải thiện:**
-Tách ra các service để xử lí business logic
 Tách thành các route nhỏ theo bounded context:
 
 ```
@@ -312,23 +353,80 @@ src/routes/
     bidding.route.js    — đặt giá, mua ngay
     order.route.js      — quản lý đơn hàng, hóa đơn
     comment.route.js    — bình luận
+    index.js            — route chính, chỉ định prefix và đăng ký các sub-route
 ```
-
+### Minh chứng
+Cấu trúc thư mục
+![alt text](images/product-refactoring.png)
 ---
 
-### 📌 Vị trí 3: `src/routes/account.route.js` (725 dòng)
+### 📌 3. `src/routes/account.route.js`
 
 **Mô tả vi phạm:**
 `account.route.js` gộp chung các nhóm chức năng hoàn toàn độc lập:
 
 1. **Authentication** — signin, signup, verify email, forgot/reset password, OAuth, OTP
+
+
+```javascript
+// Đăng ký, Đăng nhập & Đăng xuất
+router.get('/signup', function (req, res) { ... });
+router.post('/signup', async function (req, res) { ... });
+router.get('/signin', function (req, res) { ... });
+router.post('/signin', async function (req, res) { ... });
+router.post('/logout', isAuthenticated, (req, res) => { ... });
+
+// Xác thực Email & OTP
+router.get('/verify-email', (req, res) => { ... });
+router.post('/verify-email', async (req, res) => { ... });
+router.post('/resend-otp', async (req, res) => { ... });
+
+// Quên & Đặt lại mật khẩu
+router.get('/forgot-password', (req, res) => { ... });
+router.post('/forgot-password', async (req, res) => { ... });
+router.post('/verify-forgot-password-otp', async (req, res) => { ... });
+router.post('/resend-forgot-password-otp', async (req, res) => { ... });
+router.post('/reset-password', async (req, res) => { ... });
+
+// OAuth (Google, Facebook, Github)
+router.get('/auth/google', passport.authenticate(...) ...);
+router.get('/auth/google/callback', ...);
+router.get('/auth/facebook', ...);
+router.get('/auth/facebook/callback', ...);
+router.get('/auth/github', ...);
+router.get('/auth/github/callback', ...);
+```
+
 2. **Profile** — xem và cập nhật thông tin cá nhân
+```javascript
+router.get('/profile', isAuthenticated, async (req, res) => { ... });
+router.put('/profile', isAuthenticated, async (req, res) => { ... });
+```
 3. **Watchlist** — xem danh sách sản phẩm yêu thích
+```javascript
+router.get('/watchlist', isAuthenticated ,async (req, res) => { ... });
+```
 4. **Bidding history** — xem các sản phẩm đang đấu giá
+```javascript
+router.get('/bidding', isAuthenticated, async (req, res) => { ... });
+```
 5. **Won auctions** — xem các phiên đấu giá đã thắng
+```javascript
+router.get('/auctions', isAuthenticated, async (req, res) => { ... });
+router.post('/won-auctions/:productId/rate-seller', isAuthenticated, async (req, res) => { ... });
+router.put('/won-auctions/:productId/rate-seller', isAuthenticated, async (req, res) => { ... });
+```
 6. **Ratings** — xem đánh giá nhận được
+
+```javascript
+router.get('/ratings', isAuthenticated, async (req, res) => { ... });
+```
 7. **Upgrade request** — gửi yêu cầu nâng cấp lên seller
 
+```javascript
+router.get('/request-upgrade', isAuthenticated, async (req, res) => { ... });
+router.post('/request-upgrade', isAuthenticated, async (req, res) => { ... });
+```
 :::warning
 **Tác động:**
 
@@ -343,20 +441,102 @@ src/routes/
   auth.route.js       — signin, signup, OTP, OAuth, forgot/reset password
   profile.route.js    — xem & cập nhật thông tin cá nhân
   bidder.route.js     — watchlist, bidding history, won auctions, ratings
+  index.js                — route chính, chỉ định prefix và đăng ký các sub-route
 ```
-
+### Minh chứng
+Cấu trúc thư mục
+![alt text](images/account-refactoring.png)
 ---
 
-### 📌 Vị trí 4: `src/routes/seller.route.js` (473 dòng)
+### 📌 4. `src/routes/seller.route.js`
 
 **Mô tả vi phạm:**
 `seller.route.js` đảm nhận **cả quản lý sản phẩm lẫn gửi email thông báo** trong cùng một file:
 
 1. **Dashboard** — thống kê tổng quan
+
+```javascript
+router.get('/', async function (req, res) {
+    ...
+});
+```
 2. **CRUD sản phẩm** — thêm, xem, sửa, hủy, cập nhật mô tả
+```javascript
+
+router.get('/products', async function (req, res) {
+    ...
+});
+
+router.get('/products/active', async function (req, res) {
+    ...
+});
+
+router.get('/products/pending', async function (req, res) {
+    ...
+});
+
+router.get('/products/sold', async function (req, res) {
+    ...
+});
+
+router.get('/products/expired', async function (req, res) {
+    ...
+});
+
+router.get('/products/add', async function (req, res) {
+    ...
+});
+
+router.post('/products/add', async function (req, res) {
+    ...
+});
+
+...
+```
+
 3. **File upload** — xử lý thumbnail và sub-images, rename và move files
+
+```javascript
+
+router.post('/products/upload-thumbnail', upload.single('thumbnail'), async function (req, res) {
+    ...
+});
+
+router.post('/products/upload-subimages', upload.array('images', 10), async function (req, res) {
+...
+});
+```
+
 4. **Email notification** — gửi mail cho bidder/commenter khi seller cập nhật mô tả sản phẩm
+
+```javascript
+// Send email notifications (non-blocking)
+        const notifyUsers = Array.from(notifyMap.values());
+        if (notifyUsers.length > 0) {
+            const productUrl = `${req.protocol}://${req.get('host')}/products/detail?id=${productId}`;
+            
+            Promise.all(notifyUsers.map(user => {
+                return sendMail({
+									...
+                }).catch(err => console.error('Failed to send email to', user.email, err));
+            })).catch(err => console.error('Email notification error:', err));
+				}
+```
+
 5. **Đánh giá bidder** — POST và PUT rating
+
+```javascript
+router.post('/products/:id/rate', async function (req, res) {
+	...
+});
+```
+
+```javascript
+// Update Bidder Rating
+router.put('/products/:id/rate', async function (req, res) {
+  ...
+})
+```
 
 :::warning
 **Tác động:**
@@ -366,63 +546,62 @@ src/routes/
 :::
 
 **💡 Đề xuất cải thiện:**
-Tách thành các route/service riêng biệt theo trách nhiệm:
+Tách thành các route riêng biệt theo trách nhiệm:
 
 ```
 src/routes/seller/
   dashboard.route.js     — thống kê tổng quan (GET /)
   product.route.js       — CRUD sản phẩm, upload ảnh
   rating.route.js        — đánh giá bidder (POST/PUT rating)
-src/services/
-  seller.service.js      — logic cancel auction, cập nhật mô tả
-  notification.service.js — gửi email thông báo bidder/commenter
 ```
+### Minh chứng
+Cấu trúc thư mục
+![alt text](images/seller-refactoring.png)
 
+### 📌 5. Logic xử lí trực tiếp trong route
+Hiện tại, ngoài vai trò chính là định tuyến thì các route cũng xử lí trực tiếp các business logic bên trong.
+
+***Ví dụ route /ratings trong src/routes/account.route.js:***
 ```javascript
-// src/services/seller.service.js
-export class SellerService {
-    async updateDescription(productId, sellerId, description) {
-        await productDescUpdateModel.addUpdate({ product_id: productId, description });
-        await productModel.updateDescription(productId, description);
-
-        // Lấy danh sách cần thông báo và giao cho NotificationService
-        const bidders  = await biddingHistoryModel.getUniqueBiddersByProductId(productId);
-        const commenters = await productCommentModel.getUniqueCommentersByProductId(productId);
-        await notificationService.notifyDescriptionUpdated(productId, [...bidders, ...commenters]);
-    }
-}
-
-// src/services/notification.service.js
-export class NotificationService {
-    async notifyDescriptionUpdated(productId, recipients) {
-        for (const user of recipients) {
-            await sendMail({
-                to: user.email,
-                subject: 'Product description updated',
-                html: this._buildDescriptionUpdateTemplate(user, productId)
-            });
-        }
-    }
-
-    _buildDescriptionUpdateTemplate(user, productId) {
-        // HTML template tập trung tại đây, không nằm trong route handler
-        return `<div>...</div>`;
-    }
-}
-
-// src/routes/seller/product.route.js — chỉ xử lý HTTP, giao logic cho service
-router.post('/products/:id/update-description', async (req, res) => {
-    await req.services.sellerService.updateDescription(
-        req.params.id,
-        req.session.authUser.id,
-        req.body.description
-    );
-    res.redirect(`/seller/products/active`);
+router.get('/ratings', isAuthenticated, async (req, res) => {
+  const currentUserId = req.session.authUser.id;
+  
+  // // Get rating point
+  const ratingData = await reviewModel.calculateRatingPoint(currentUserId);
+  const rating_point = ratingData ? ratingData.rating_point : 0;
+  // // Get all reviews (model already excludes rating=0)
+  const reviews = await reviewModel.getReviewsByUserId(currentUserId);
+  
+  // // Calculate statistics
+  const totalReviews = reviews.length;
+  const positiveReviews = reviews.filter(r => r.rating === 1).length;
+  const negativeReviews = reviews.filter(r => r.rating === -1).length;
+  
+  res.render('vwAccount/rating', { 
+    activeSection: 'ratings',
+    rating_point,
+    reviews,
+    totalReviews,
+    positiveReviews,
+    negativeReviews
+  });
 });
 ```
 
----
+:::warning
+**Tác động:**
 
+* Khó bảo trì, cập nhật thêm logic.
+* Phần code của các routes quá dài gây khó đọc, khó theo dõi để mở rộng thêm routes mới.
+* Dễ xảy ra trường hợp lặp code xử lí logic.
+:::
+
+**💡 Đề xuất cải thiện:** 
+- Tách việc xử lí logic trong toàn bộ các routes ra thành các services.
+- Tăng reusability trong xử lí logic thông qua các services.
+### Minh chứng
+Cấu trúc thư mục
+![alt text](images/service-refactoring.png)
 ## DRY (Don't Repeat Yourself)
 
 ### 📌 Vị trí: `src/routes/account.route.js`
@@ -447,25 +626,74 @@ await sendMail({ ... });
 :::
 
 **💡 Đề xuất cải thiện:**
-Tạo `OTPService` để quản lý logic tập trung.
+Tách logic OTP thành một **private helper function** dùng chung bên trong `auth.service.js`, đồng thời trích xuất hằng số thời gian hết hạn ra `app.config.js`:
 
 ```javascript
-// src/services/otp.service.js
-export class OTPService {
-    static async createAndSendOTP(user, purpose) {
-        // ... Logic tạo và lưu OTP
-        // ... Logic gửi email theo template
-    }
+// src/config/app.config.js — hằng số tập trung, đổi 1 chỗ áp dụng khắp nơi
+export const AUTH = {
+  BCRYPT_SALT_ROUNDS: 10,
+  OTP_EXPIRY_MS: 15 * 60 * 1000,   // 15 phút
+};
+
+// src/services/account/auth.service.js — helper dùng chung, không export ra ngoài
+async function createAndSendOtp(userId, email, fullname, purpose, subject, html) {
+  const otp = generateOtp();
+  const expiresAt = new Date(Date.now() + AUTH.OTP_EXPIRY_MS);
+  await userModel.createOtp({ user_id: userId, otp_code: otp, purpose, expires_at: expiresAt });
+  await sendMail({ to: email, subject, html: html(otp) });
+  return otp;
 }
 
-// Sử dụng trong routes:
-router.post('/forgot-password', async (req, res) => {
-    // ...
-    await OTPService.createAndSendOTP(user, 'reset_password');
-    // ...
-});
+// Cả 4 luồng đều gọi createAndSendOtp, không còn lặp lại logic:
+export async function register({ fullname, email, ... }) {
+  // ...
+  await createAndSendOtp(newUser.id, email, fullname, 'verify_email', 'Verify your ...', (otp) => `...`);
+}
 
+export async function authenticate(email, password) {
+  // ...unverified email case
+  await createAndSendOtp(user.id, email, user.fullname, 'verify_email', 'Verify your ...', (otp) => `...`);
+}
+
+export async function resendEmailOtp(email) {
+  // ...
+  await createAndSendOtp(user.id, email, user.fullname, 'verify_email', 'New OTP ...', (otp) => `...`);
+}
+
+export async function initForgotPassword(email) {
+  // ...
+  await createAndSendOtp(user.id, email, user.fullname, 'reset_password', 'Password Reset ...', (otp) => `...`);
+}
+
+export async function resendForgotPasswordOtp(email) {
+  // ...
+  await createAndSendOtp(user.id, email, user.fullname, 'reset_password', 'New OTP ...', (otp) => `...`);
+}
 ```
+
+### Minh chứng
+
+**Cấu trúc sau khi refactoring:**
+- `src/config/app.config.js` — hằng số `AUTH.OTP_EXPIRY_MS` tập trung
+- `src/services/account/auth.service.js` — hàm `createAndSendOtp` dùng chung cho 4 luồng OTP (register, signin unverified, resend OTP, forgot password / resend forgot password OTP)
+
+**Hàm `createAndSendOtp` trong `src/services/account/auth.service.js`:**
+```javascript
+async function createAndSendOtp(userId, email, fullname, purpose, subject, html) {
+  const otp = generateOtp();
+  const expiresAt = new Date(Date.now() + AUTH.OTP_EXPIRY_MS);
+  await userModel.createOtp({ user_id: userId, otp_code: otp, purpose, expires_at: expiresAt });
+  await sendMail({ to: email, subject, html: html(otp) });
+  return otp;
+}
+```
+
+**Kết quả:**
+- Logic tạo và gửi OTP chỉ còn **1 chỗ duy nhất** thay vì 4 chỗ.
+- Muốn thay đổi thời gian hết hạn OTP — chỉ sửa `AUTH.OTP_EXPIRY_MS` trong `app.config.js`.
+- Muốn thay đổi flow gửi OTP (thêm logging, rate limiting...) — chỉ sửa hàm `createAndSendOtp`.
+
+---
 
 ### 📌 Vị trí 2.2: `src/models/product.model.js`
 
@@ -473,23 +701,108 @@ router.post('/forgot-password', async (req, res) => {
 Logic `JOIN` và `SELECT` lặp lại **10+ lần** trong các queries khác nhau (`findByCategoryId`, `searchPageByKeywords`, `findTopEnding`, v.v.).
 
 **💡 Đề xuất cải thiện:**
-Sử dụng **Query Builder Pattern** để tái sử dụng logic query cơ bản.
+Thay vì một class phức tạp, sử dụng **các factory function nhỏ** để đóng gói từng raw expression / base query hay lặp lại, giữ mọi thứ đơn giản và idiomatic với codebase dùng Knex:
 
 ```javascript
-class ProductQueryBuilder {
-    baseQuery(userId = null) {
-        return this.db('products')
-            .leftJoin('users', ...)
-            .leftJoin('categories', ...)
-            .select(...);
-    }
-    
-    onlyActive(query) { ... }
-    applySort(query, sort) { ... }
+// src/models/postgres/product.model.js
+
+// 1. Factory functions cho raw expressions lặp lại
+const bidCountRaw = () =>
+  db.raw(`(SELECT COUNT(*) FROM bidding_history
+           WHERE bidding_history.product_id = products.id) AS bid_count`);
+
+const maskedBidderRaw = () =>
+  db.raw(`mask_name_alternating(users.fullname) AS bidder_name`);
+
+// 2. Base query cho nhóm Top Products (dùng chung bởi findTopEnding, findTopPrice, findTopBids)
+function topProductsQuery() {
+  return db('products')
+    .leftJoin('users', 'products.highest_bidder_id', 'users.id')
+    .select('products.*', maskedBidderRaw(), bidCountRaw())
+    .limit(PAGINATION.TOP_PRODUCTS_LIMIT);
 }
 
+// 3. Base query cho seller dashboard (dùng chung bởi 5 hàm find*BySellerId)
+function sellerProductBaseQuery(sellerId) {
+  return db('products')
+    .leftJoin('categories', 'products.category_id', 'categories.id')
+    .where('seller_id', sellerId)
+    .select('products.*', 'categories.name as category_name', bidCountRaw());
+}
+
+// Các hàm xuất — gọn, không lặp lại logic JOIN/SELECT
+export function findTopEnding() {
+  return topProductsQuery()
+    .where('products.end_at', '>', new Date())
+    .orderBy('end_at', 'asc');
+}
+export function findTopPrice() {
+  return topProductsQuery()
+    .where('products.end_at', '>', new Date())
+    .orderBy('current_price', 'desc');
+}
+export function findTopBids() {
+  return topProductsQuery()
+    .where('products.end_at', '>', new Date())
+    .orderBy('bid_count', 'desc');
+}
+
+export function findActiveProductsBySellerId(sellerId) {
+  return sellerProductBaseQuery(sellerId)
+    .where('end_at', '>', new Date())
+    .whereNull('closed_at');
+}
+export function findPendingProductsBySellerId(sellerId) {
+  return sellerProductBaseQuery(sellerId)
+    .leftJoin('users', 'products.highest_bidder_id', 'users.id')
+    .where(...).whereNull('is_sold')
+    .select('users.fullname as highest_bidder_name', ...);
+}
+// ... tương tự cho findSoldProductsBySellerId, findExpiredProductsBySellerId, ...
 ```
 
+### Minh chứng
+
+**Các helper được định nghĩa ở đầu file `src/models/postgres/product.model.js`:**
+
+```javascript
+/** Returns a subquery that counts bids for the current product row. */
+const bidCountRaw = () =>
+  db.raw(`(SELECT COUNT(*) FROM bidding_history WHERE bidding_history.product_id = products.id) AS bid_count`);
+
+/** Returns a raw expression that masks the highest bidder's full name. */
+const maskedBidderRaw = () =>
+  db.raw(`mask_name_alternating(users.fullname) AS bidder_name`);
+
+/**
+ * Base query for the top-products home-page sections.
+ * Joins the highest-bidder user, selects masked bidder name + bid count,
+ * and applies the global TOP_PRODUCTS_LIMIT.
+ */
+function topProductsQuery() {
+  return db('products')
+    .leftJoin('users', 'products.highest_bidder_id', 'users.id')
+    .select('products.*', maskedBidderRaw(), bidCountRaw())
+    .limit(PAGINATION.TOP_PRODUCTS_LIMIT);
+}
+
+/**
+ * Base query for seller-dashboard product listing functions.
+ * Joins categories, pre-filters by seller_id, and selects
+ * products.*, category name, and bid_count.
+ */
+function sellerProductBaseQuery(sellerId) {
+  return db('products')
+    .leftJoin('categories', 'products.category_id', 'categories.id')
+    .where('seller_id', sellerId)
+    .select('products.*', 'categories.name as category_name', bidCountRaw());
+}
+```
+
+**Kết quả:**
+- `bidCountRaw()` được tái sử dụng bởi: `findAll`, `findPage`, `findByCategoryId`, `findByCategoryIds`, `searchPageByKeywords`, `findByProductId`, `findByProductId2`, `findAllProductsBySellerId`, `findActiveProductsBySellerId`, `findPendingProductsBySellerId`, `findSoldProductsBySellerId` — **không còn viết lại raw SQL dài 2 dòng nhiều lần.**
+- `topProductsQuery()` dùng chung cho `findTopEnding`, `findTopPrice`, `findTopBids` — mỗi hàm chỉ cần thêm 1 điều kiện `orderBy`.
+- `sellerProductBaseQuery(sellerId)` dùng chung cho `findAllProductsBySellerId`, `findActiveProductsBySellerId`, `findPendingProductsBySellerId`, `findSoldProductsBySellerId`, `findExpiredProductsBySellerId`.
 
 ---
 
@@ -523,10 +836,10 @@ db('orders')
 Ngoài ra, `findBySellerId` và `findByBuyerId` cũng lặp lại cấu trúc join `products` + một alias `users` với cùng select cơ bản.
 
 **💡 Đề xuất cải thiện:**
-Tách phần query chung thành một helper nội bộ:
+Tách phần query chung thành **hai helper nội bộ** — một cho queries cần đầy đủ 4 bảng (product + buyer + seller + category), một cho queries chỉ cần product + một user:
 
 ```javascript
-// Hàm helper dùng nội bộ trong order.model.js
+// Helper 1: join đầy đủ 4 bảng, dùng cho findByIdWithDetails và findByProductIdWithDetails
 function orderWithDetailsQuery() {
     return db('orders')
         .leftJoin('products', 'orders.product_id', 'products.id')
@@ -545,15 +858,85 @@ function orderWithDetailsQuery() {
         );
 }
 
+// Helper 2: join product + 1 user với alias động, dùng cho findBySellerId và findByBuyerId
+function ordersWithProductAndUserQuery(userAlias, selectName) {
+    return db('orders')
+        .leftJoin('products', 'orders.product_id', 'products.id')
+        .leftJoin(`users as ${userAlias}`, `orders.${userAlias}_id`, `${userAlias}.id`)
+        .select(
+            'orders.*',
+            'products.name as product_name',
+            'products.thumbnail as product_thumbnail',
+            `${userAlias}.fullname as ${selectName}`
+        );
+}
+
 export function findByIdWithDetails(orderId) {
     return orderWithDetailsQuery().where('orders.id', orderId).first();
 }
-
 export function findByProductIdWithDetails(productId) {
     return orderWithDetailsQuery().where('orders.product_id', productId).first();
 }
-
+export function findBySellerId(sellerId) {
+    return ordersWithProductAndUserQuery('buyer', 'buyer_name')
+        .where('orders.seller_id', sellerId).orderBy('orders.created_at', 'desc');
+}
+export function findByBuyerId(buyerId) {
+    return ordersWithProductAndUserQuery('seller', 'seller_name')
+        .where('orders.buyer_id', buyerId).orderBy('orders.created_at', 'desc');
+}
 ```
+
+### Minh chứng
+
+**Hai helper nội bộ trong `src/models/postgres/order.model.js`:**
+
+```javascript
+// internal helper that builds the common join/select block used by
+// "withDetails" queries.  this keeps the WHERE clause (and any
+// pagination/filtering) separate from the shared wiring of products,
+// buyer, seller and category.
+function orderWithDetailsQuery() {
+  return db('orders')
+    .leftJoin('products', 'orders.product_id', 'products.id')
+    .leftJoin('users as buyer', 'orders.buyer_id', 'buyer.id')
+    .leftJoin('users as seller', 'orders.seller_id', 'seller.id')
+    .leftJoin('categories', 'products.category_id', 'categories.id')
+    .select(
+      'orders.*',
+      'products.name as product_name',
+      'products.thumbnail as product_thumbnail',
+      'products.end_at as product_end_at',
+      'products.closed_at as product_closed_at',
+      'categories.name as category_name',
+      'buyer.id as buyer_id',
+      'buyer.fullname as buyer_name',
+      'buyer.email as buyer_email',
+      'seller.id as seller_id',
+      'seller.fullname as seller_name',
+      'seller.email as seller_email'
+    );
+}
+
+// small helper for queries that only need product info plus a single
+// user (either buyer or seller).  the caller just specifies the alias
+// and the label that will be used in the select clause.
+function ordersWithProductAndUserQuery(userAlias, selectName) {
+  return db('orders')
+    .leftJoin('products', 'orders.product_id', 'products.id')
+    .leftJoin(`users as ${userAlias}`, `orders.${userAlias}_id`, `${userAlias}.id`)
+    .select(
+      'orders.*',
+      'products.name as product_name',
+      'products.thumbnail as product_thumbnail',
+      `${userAlias}.fullname as ${selectName}`
+    );
+}
+```
+
+**Kết quả:**
+- `orderWithDetailsQuery()` dùng chung cho `findByIdWithDetails` và `findByProductIdWithDetails` — loại bỏ hoàn toàn việc lặp lại 4 lần leftJoin + 12 cột select.
+- `ordersWithProductAndUserQuery(userAlias, selectName)` dùng chung cho `findBySellerId` và `findByBuyerId` với alias động — 2 hàm này chỉ khác nhau ở user alias (`buyer` vs `seller`), được truyền qua tham số thay vì viết lại.
 
 ---
 
@@ -574,9 +957,10 @@ Ba hàm `getCommentsByProductId`, `getRepliesByCommentId`, `getRepliesByCommentI
 ```
 
 **💡 Đề xuất cải thiện:**
-Tạo base query helper tái sử dụng:
+Tạo một **base query helper nội bộ** tái sử dụng, tất cả các hàm GET đều gọi helper này rồi thêm điều kiện `WHERE` / `ORDER BY` riêng:
 
 ```javascript
+// Helper nội bộ — base join + select dùng chung
 function commentWithUserQuery() {
     return db('product_comments')
         .join('users', 'product_comments.user_id', 'users.id')
@@ -587,6 +971,7 @@ function commentWithUserQuery() {
         );
 }
 
+// 3 hàm bên dưới chỉ thêm WHERE/ORDER, không lặp lại JOIN+SELECT:
 export function getCommentsByProductId(productId, limit = null, offset = 0) {
     let query = commentWithUserQuery()
         .where('product_comments.product_id', productId)
@@ -602,7 +987,60 @@ export function getRepliesByCommentId(commentId) {
         .orderBy('product_comments.created_at', 'asc');
 }
 
+export function getRepliesByCommentIds(commentIds) {
+    if (!commentIds || commentIds.length === 0) return [];
+    return commentWithUserQuery()
+        .whereIn('product_comments.parent_id', commentIds)
+        .orderBy('product_comments.created_at', 'asc');
+}
 ```
+
+### Minh chứng
+
+**Helper nội bộ trong `src/models/postgres/productComment.model.js`:**
+
+```javascript
+// ── Internal Query Helper ────────────────────────────────────
+/** Base query joining users to product_comments — reused by get/replies functions. */
+function commentWithUserQuery() {
+  return db('product_comments')
+    .join('users', 'product_comments.user_id', 'users.id')
+    .select(
+      'product_comments.*',
+      'users.fullname as user_name',
+      'users.role as user_role'
+    );
+}
+```
+
+**Các hàm sử dụng helper:**
+```javascript
+export async function getCommentsByProductId(productId, limit = null, offset = 0) {
+  let query = commentWithUserQuery()
+    .where('product_comments.product_id', productId)
+    .whereNull('product_comments.parent_id')
+    .orderBy('product_comments.created_at', 'desc');
+  if (limit !== null) query = query.limit(limit).offset(offset);
+  return query;
+}
+
+export async function getRepliesByCommentId(commentId) {
+  return commentWithUserQuery()
+    .where('product_comments.parent_id', commentId)
+    .orderBy('product_comments.created_at', 'asc');
+}
+
+export async function getRepliesByCommentIds(commentIds) {
+  if (!commentIds || commentIds.length === 0) return [];
+  return commentWithUserQuery()
+    .whereIn('product_comments.parent_id', commentIds)
+    .orderBy('product_comments.created_at', 'asc');
+}
+```
+
+**Kết quả:**
+- `.join('users', ...)` và `.select('product_comments.*', 'users.fullname as user_name', 'users.role as user_role')` chỉ viết **1 lần** trong `commentWithUserQuery()` thay vì lặp lại trong cả 3 hàm.
+- `getRepliesByCommentIds` xử lý thêm trường hợp batch query (N+1 avoidance) bằng `whereIn` — cũng tái sử dụng cùng helper.
 
 ---
 
@@ -625,21 +1063,82 @@ db.raw(`
 ```
 
 **💡 Đề xuất cải thiện:**
-Tách raw expression thành hằng số tái sử dụng:
+Tách raw subquery lặp lại thành một **factory function** dùng chung. Lưu ý: hai hàm có base table khác nhau (`auto_bidding` join `products` vs `products` join `categories` + `users as seller`), nên không thể dùng chung một base query hoàn toàn — chỉ `bidCountRaw` được tái sử dụng:
 
 ```javascript
-const BID_COUNT_RAW = () => db.raw(`
-    (SELECT COUNT(*) FROM bidding_history
-     WHERE bidding_history.product_id = products.id) AS bid_count
-`);
+// Factory function cho raw subquery lặp lại
+const bidCountRaw = () =>
+  db.raw(`(SELECT COUNT(*) FROM bidding_history
+           WHERE bidding_history.product_id = products.id) AS bid_count`);
 
-function productsWithCategoryQuery() {
-    return db('products')
-        .leftJoin('categories', 'products.category_id', 'categories.id')
-        .select('products.*', 'categories.name as category_name', BID_COUNT_RAW());
+// getBiddingProductsByBidderId — base từ auto_bidding JOIN products
+export function getBiddingProductsByBidderId(bidderId) {
+    return db('auto_bidding')
+        .join('products', ...)
+        .leftJoin('categories', ...)
+        .select('products.*', 'categories.name as category_name', bidCountRaw(), ...)
+        ...
 }
 
+// getWonAuctionsByBidderId — base từ products JOIN categories + seller
+export function getWonAuctionsByBidderId(bidderId) {
+    return db('products')
+        .leftJoin('categories', ...)
+        .leftJoin('users as seller', ...)
+        .select('products.*', 'categories.name as category_name', bidCountRaw(), ...)
+        ...
+}
 ```
+
+### Minh chứng
+
+**Factory function `bidCountRaw` trong `src/models/postgres/autoBidding.model.js`:**
+
+```javascript
+// ── Internal Query Helper ────────────────────────────────
+/** Returns a subquery that counts bids for the current product row. */
+const bidCountRaw = () =>
+  db.raw(`(SELECT COUNT(*) FROM bidding_history WHERE bidding_history.product_id = products.id) AS bid_count`);
+```
+
+**Cả hai hàm đều gọi `bidCountRaw()` thay vì viết lại raw SQL:**
+
+```javascript
+export async function getBiddingProductsByBidderId(bidderId) {
+  return db('auto_bidding')
+    .join('products', 'auto_bidding.product_id', 'products.id')
+    .leftJoin('categories', 'products.category_id', 'categories.id')
+    .where('auto_bidding.bidder_id', bidderId)
+    ...
+    .select(
+      'products.*',
+      'categories.name as category_name',
+      'auto_bidding.max_price as my_max_bid',
+      db.raw(`CASE WHEN products.highest_bidder_id = ? THEN true ELSE false END AS is_winning`, [bidderId]),
+      bidCountRaw()   // ✅ tái sử dụng
+    );
+}
+
+export async function getWonAuctionsByBidderId(bidderId) {
+  return db('products')
+    .leftJoin('categories', 'products.category_id', 'categories.id')
+    .leftJoin('users as seller', 'products.seller_id', 'seller.id')
+    .where('products.highest_bidder_id', bidderId)
+    ...
+    .select(
+      'products.*',
+      'categories.name as category_name',
+      'seller.fullname as seller_name',
+      'seller.email as seller_email',
+      db.raw(`CASE WHEN products.is_sold IS TRUE THEN 'Sold' ... END AS status`),
+      bidCountRaw()   // ✅ tái sử dụng
+    );
+}
+```
+
+**Kết quả:**
+- Raw SQL subquery đếm bid chỉ viết **1 lần** trong `bidCountRaw()`, cả hai hàm đều gọi lại.
+- Hai hàm không dùng base query chung vì xuất phát từ hai bảng gốc khác nhau (`auto_bidding` vs `products`), nên chỉ extract phần raw expression có thể tái sử dụng là hợp lý nhất.
 
 ---
 
@@ -679,6 +1178,35 @@ export const getShippingInvoice = (orderId) => findInvoiceByType(orderId, 'shipp
 
 ```
 
+### Minh chứng
+
+**Helper nội bộ** `findInvoiceByType` chỉ viết một lần, hai hàm công khai gọi lại với tham số khác nhau. Ví dụ trong file thực tế:
+
+```javascript
+// src/models/postgres/invoice.model.js
+
+// internal helper xây dựng truy vấn chung cho cả hai loại hóa đơn
+function findInvoiceByType(orderId, type) {
+    return db('invoices')
+        .leftJoin('users as issuer', 'invoices.issuer_id', 'issuer.id')
+        .where('invoices.order_id', orderId)
+        .where('invoices.invoice_type', type)
+        .select('invoices.*', 'issuer.fullname as issuer_name')
+        .first();
+}
+
+export function getPaymentInvoice(orderId) {
+    return findInvoiceByType(orderId, 'payment');
+}
+
+export function getShippingInvoice(orderId) {
+    return findInvoiceByType(orderId, 'shipping');
+}
+```
+
+**Kết quả:** hai hàm nay giờ chỉ khác nhau ở giá trị `'payment'`/`'shipping'` và không lặp lại JOIN/SELECT. Muốn thêm loại mới (vd. `'refund'`) hoặc thay đổi cách lấy thông tin người phát hành chỉ cần sửa helper, mọi callers vẫn giữ nguyên.
+
+
 ---
 
 ### 📌 Vị trí 2.7: Multer config lặp lại trong 3 route files (DRY)
@@ -704,25 +1232,92 @@ const upload = multer({ storage: storage });
 ```
 
 **💡 Đề xuất cải thiện:**
-Tách ra một module upload dùng chung:
+Tách ra một module upload dùng chung tại `src/utils/upload.js`. Module này xuất **hai instance multer** — một general không giới hạn loại file, một dành riêng cho ảnh với giới hạn kích thước và file filter — dùng chung một `storage` config và `UPLOAD.IMAGE_MAX_SIZE_BYTES` từ `app.config.js`:
 
 ```javascript
 // src/utils/upload.js
 import multer from 'multer';
+import { UPLOAD } from '../config/app.config.js';
 
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'public/uploads/'),
-    filename: (req, file, cb) => {
-        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-        cb(null, `${uniqueSuffix}-${file.originalname}`);
-    }
+  destination: (req, file, cb) => cb(null, 'public/uploads/'),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${uniqueSuffix}-${file.originalname}`);
+  },
 });
 
+// General upload (no restrictions)
 export const upload = multer({ storage });
 
-// Trong mọi route file, thay bằng:
-import { upload } from '../utils/upload.js';
+// Image-only upload with size limit + file filter
+export const uploadImage = multer({
+  storage,
+  limits: { fileSize: UPLOAD.IMAGE_MAX_SIZE_BYTES },
+  fileFilter: (req, file, cb) => { /* chỉ cho phép jpg/png/gif */ },
+});
+
+// Trong các route file — không còn khai báo multer lặp lại:
+import { upload } from '../../utils/upload.js';
+import { uploadImage } from '../../utils/upload.js';
 ```
+
+### Minh chứng
+
+**`src/utils/upload.js` — module upload dùng chung, export 2 instance:**
+
+```javascript
+import multer from 'multer';
+import path from 'path';
+import { UPLOAD } from '../config/app.config.js';
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'public/uploads/'),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${uniqueSuffix}-${file.originalname}`);
+  },
+});
+
+// General upload (no restrictions)
+export const upload = multer({ storage });
+
+// Image-only upload with 5MB limit (for payment/shipping proofs)
+export const uploadImage = multer({
+  storage,
+  limits: { fileSize: UPLOAD.IMAGE_MAX_SIZE_BYTES },
+  fileFilter: (req, file, cb) => {
+    const allowed = /jpeg|jpg|png|gif/;
+    const ok =
+      allowed.test(path.extname(file.originalname).toLowerCase()) &&
+      allowed.test(file.mimetype);
+    ok ? cb(null, true) : cb(new Error('Chỉ chấp nhận file ảnh (jpg, png, gif)!'));
+  },
+});
+```
+
+**`src/routes/seller/product.route.js` — import `upload` thay vì tự khai báo multer:**
+
+```javascript
+import { upload } from '../../utils/upload.js';   // ✅ dùng chung
+```
+
+**`src/routes/admin/product.route.js` — import `upload` thay vì tự khai báo multer:**
+
+```javascript
+import { upload } from '../../utils/upload.js';   // ✅ dùng chung
+```
+
+**`src/routes/product/order.route.js` — dùng `uploadImage` (có giới hạn ảnh) cho payment/shipping proofs:**
+
+```javascript
+import { uploadImage as upload } from '../../utils/upload.js';   // ✅ dùng chung, alias lại tên
+```
+
+**Kết quả:**
+- `multer.diskStorage(...)` chỉ khai báo **1 lần** thay vì 3 lần trong 3 route file.
+- Ngoài `upload` general, còn tách thêm `uploadImage` có file filter + size limit (`UPLOAD.IMAGE_MAX_SIZE_BYTES` từ `app.config.js`) — phục vụ luồng upload hóa đơn payment/shipping mà không cần viết lại config.
+- Thay đổi thư mục đích, naming convention, hay giới hạn file size chỉ cần sửa ở 1 file.
 
 ---
 
@@ -749,50 +1344,384 @@ await productModel.addProductImages(newImgPaths);
 ```
 
 **💡 Đề xuất cải thiện:**
-Tách thành một hàm helper hoặc service:
+Tách toàn bộ logic move/rename ảnh thành một **utility function** dùng chung tại `src/utils/productImageHelper.js`. Hàm nhận `productId`, `thumbnail`, `imgsList` và trả về `{ thumbnailPath, imagePaths }` — cả seller service lẫn admin service chỉ cần gọi một dòng:
 
 ```javascript
 // src/utils/productImageHelper.js
 export async function moveProductImages(productId, thumbnail, imgsList) {
-    // Di chuyển thumbnail
-    // Di chuyển sub-images
-    // Trả về { thumbnailPath, imagePaths }
+  // Di chuyển thumbnail → public/images/products/p{id}_thumb.jpg
+  // Di chuyển từng sub-image → public/images/products/p{id}_1.jpg, p{id}_2.jpg…
+  // Trả về { thumbnailPath, imagePaths } để caller cập nhật DB
+}
+
+// Caller (seller service / admin service):
+const { thumbnailPath, imagePaths } = await moveProductImages(productId, thumbnail, imgsList);
+if (thumbnailPath) await productModel.updateProductThumbnail(productId, thumbnailPath);
+if (imagePaths.length) await productModel.addProductImages(imagePaths);
+```
+
+### Minh chứng
+
+**`src/utils/productImageHelper.js` — utility function dùng chung:**
+
+```javascript
+import path from 'path';
+import fs from 'fs';
+
+// Di chuyển thumbnail và sub‑images, trả về đường dẫn đã lưu để cập nhật DB.
+export async function moveProductImages(productId, thumbnail, imgsList) {
+  const dirPath = path.join('public', 'images', 'products').replace(/\\/g, '/');
+  const result = { thumbnailPath: null, imagePaths: [] };
+
+  if (thumbnail) {
+    const oldMainPath = path.join('public', 'uploads', path.basename(thumbnail)).replace(/\\/g, '/');
+    const mainPath    = path.join(dirPath, `p${productId}_thumb.jpg`).replace(/\\/g, '/');
+    const savedMainPath = '/' + path.join('images', 'products', `p${productId}_thumb.jpg`).replace(/\\/g, '/');
+    fs.renameSync(oldMainPath, mainPath);
+    result.thumbnailPath = savedMainPath;
+  }
+
+  if (imgsList && imgsList.length) {
+    let i = 1;
+    for (const img of imgsList) {
+      const oldPath  = path.join('public', 'uploads', path.basename(img)).replace(/\\/g, '/');
+      const newPath  = path.join(dirPath, `p${productId}_${i}.jpg`).replace(/\\/g, '/');
+      const savedPath = '/' + path.join('images', 'products', `p${productId}_${i}.jpg`).replace(/\\/g, '/');
+      fs.renameSync(oldPath, newPath);
+      result.imagePaths.push({ product_id: productId, img_link: savedPath });
+      i++;
+    }
+  }
+
+  return result;
 }
 ```
 
----
-
-### 📌 Vị trí 2.9: Bcrypt salt rounds hardcoded lặp lại (DRY)
-
-**Mô tả vi phạm:**
-Giá trị salt rounds `10` được hardcode lặp lại **4 lần** ở các file khác nhau:
+**`src/services/seller/product.service.js` — gọi lại hàm thay vì tự xử lý:**
 
 ```javascript
-// account.route.js — signup
+import { moveProductImages } from '../../utils/productImageHelper.js';
+
+// ... tạo product, lấy newId ...
+const { thumbnailPath, imagePaths } = await moveProductImages(  // ✅ tái sử dụng
+  newId,
+  product.thumbnail,
+  imgsList
+);
+if (thumbnailPath) await productModel.updateProductThumbnail(newId, thumbnailPath);
+if (imagePaths.length) await productModel.addProductImages(imagePaths);
+```
+
+**`src/services/admin/product.service.js` — gọi lại hàm thay vì tự xử lý:**
+
+```javascript
+import { moveProductImages } from '../../utils/productImageHelper.js';
+
+// ... tạo product, lấy productId ...
+const { thumbnailPath, imagePaths } = await moveProductImages(productId, thumbnail, imgsList);  // ✅ tái sử dụng
+if (thumbnailPath) {
+  await productModel.updateProductThumbnail(productId, thumbnailPath);
+}
+if (imagePaths.length) {
+  await productModel.addProductImages(imagePaths);
+}
+```
+
+**Kết quả:**
+- Logic rename + move ảnh (thumbnail + sub-images) chỉ viết **1 lần** trong `productImageHelper.js`.
+- Cả `seller/product.service.js` và `admin/product.service.js` đều import và gọi cùng một hàm — không còn code trùng lặp giữa hai luồng tạo sản phẩm.
+
+---
+
+### 📌 Vị trí 2.9: Magic numbers / hằng số rải rác khắp codebase
+
+**Mô tả vi phạm:**
+Ba nhóm hằng số quan trọng bị hardcode lặp lại ở nhiều file khác nhau thay vì được tập trung quản lý:
+
+**Nhóm 1 — Số sản phẩm mỗi trang (`limit = 3`) lặp lại 3 lần:**
+```javascript
+// /routes/product.route.js — route /category
+const limit = 3;
+const offset = (page - 1) * limit;
+const list = await productModel.findByCategoryIds(categoryIds, limit, offset, sort, userId);
+
+// /routes/product.route.js — route /search
+const limit = 3;
+const offset = (page - 1) * limit;
+const list = await productModel.searchPageByKeywords(keywords, limit, offset, userId, logic, sort);
+
+// /routes/account.route.js — route /watchlist
+const limit = 3;
+const offset = (page - 1) * limit;
+const watchlistProducts = await watchlistModel.searchPageByUserId(currentUserId, limit, offset);
+```
+
+**Nhóm 2 — OTP expiry (`15 * 60 * 1000`) lặp lại 3 lần:**
+```javascript
+// /routes/account.route.js — signup (verify email)
+const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+// /routes/account.route.js — resend OTP
+const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+// /routes/account.route.js — forgot password
+const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+```
+
+**Nhóm 3 — Bcrypt salt rounds (`10`) lặp lại 4 lần:**
+```javascript
+// /routes/account.route.js — signup
 bcrypt.hashSync(req.body.password, 10);
 
-// account.route.js — profile update
+// /routes/account.route.js — profile update (reset password)
 bcrypt.hashSync(new_password, 10);
 
-// admin/user.route.js — add user
+// /routes/admin/user.route.js — add user
 bcrypt.hash(password, 10);
 
-// admin/user.route.js — reset password
+// /routes/admin/user.route.js — reset user password
 bcrypt.hash(defaultPassword, 10);
 ```
 
 :::warning
-**Tác động:** Muốn tăng security bằng cách nâng salt rounds lên 12 phải tìm và sửa ở 4 chỗ.
+**Tác động:**
+* Thay đổi số sản phẩm/trang từ 3 lên 5 phải sửa ở ít nhất 3 chỗ — dễ bỏ sót.
+* Thay đổi thời gian hết hạn OTP phải tìm và sửa ở 3 chỗ — dễ gây hành vi không nhất quán.
+* Nâng bcrypt salt rounds để tăng bảo mật phải sửa ở 4 chỗ trên 2 file khác nhau.
 :::
 
 **💡 Đề xuất cải thiện:**
+Gom toàn bộ magic numbers vào một file cấu hình tập trung `src/config/app.config.js`, phân nhóm theo concerns rõ ràng. Không chỉ có PAGINATION và AUTH, mà bao gồm mọi hằng số cứng trong cả dự án:
 
 ```javascript
-// src/utils/password.js
-const SALT_ROUNDS = 10;
-export const hashPassword = (plain) => bcrypt.hash(plain, SALT_ROUNDS);
-export const comparePassword = (plain, hash) => bcrypt.compare(plain, hash);
+// src/config/app.config.js — thay đổi 1 chỗ, có hiệu lực khắp codebase
+export const PAGINATION = {
+  PRODUCTS_PER_PAGE: 3,       // Browse (category list, search results, watchlist)
+  COMMENTS_PER_PAGE: 2,       // Product detail — comment section
+  TOP_PRODUCTS_LIMIT: 5,      // Homepage — Top ending / Top bids / Top price
+};
+
+export const AUTH = {
+  BCRYPT_SALT_ROUNDS: 10,           // Cost factor for bcrypt password hashing
+  OTP_EXPIRY_MS: 15 * 60 * 1000,   // OTP validity window: 15 minutes
+};
+
+export const UPLOAD = {
+  IMAGE_MAX_SIZE_BYTES: 5 * 1024 * 1024, // 5 MB — payment/shipping proof images
+};
+
+export const SESSION = {
+  REFRESH_INTERVAL_MS: 60_000, // Re-sync user data from DB every 60 seconds
+};
+
+export const AUCTION = {
+  END_NOTIFIER_INTERVAL_SECONDS: 30, // How often the end-notifier cron job runs
+};
 ```
+
+### Minh chứng
+
+**`src/config/app.config.js` — toàn bộ file, 5 nhóm hằng số được tập trung:**
+
+```javascript
+/**
+ * Centralized application configuration.
+ * All magic numbers and hardcoded constants are defined here.
+ * Change once → takes effect everywhere.
+ */
+
+export const PAGINATION = {
+  PRODUCTS_PER_PAGE: 3,       // Browse (category list, search results, watchlist)
+  COMMENTS_PER_PAGE: 2,       // Product detail — comment section
+  TOP_PRODUCTS_LIMIT: 5,      // Homepage — Top ending / Top bids / Top price
+};
+
+export const AUTH = {
+  BCRYPT_SALT_ROUNDS: 10,           // Cost factor for bcrypt password hashing
+  OTP_EXPIRY_MS: 15 * 60 * 1000,   // OTP validity window: 15 minutes
+};
+
+export const UPLOAD = {
+  IMAGE_MAX_SIZE_BYTES: 5 * 1024 * 1024, // 5 MB — payment/shipping proof images
+};
+
+export const SESSION = {
+  REFRESH_INTERVAL_MS: 60_000, // Re-sync user data from DB every 60 seconds
+};
+
+export const AUCTION = {
+  END_NOTIFIER_INTERVAL_SECONDS: 30, // How often the end-notifier cron job runs
+};
+```
+
+**`src/services/product/browse.service.js` — `PAGINATION.PRODUCTS_PER_PAGE` cho category và search:**
+
+```javascript
+import { PAGINATION } from '../../config/app.config.js';
+
+export async function getProductsByCategory({ ..., limit = PAGINATION.PRODUCTS_PER_PAGE }) {
+  const offset = (page - 1) * limit;
+  // ...
+}
+
+export async function searchProducts({ ..., limit = PAGINATION.PRODUCTS_PER_PAGE }) {
+  // ...
+}
+```
+
+**`src/services/product/detail.service.js` — `PAGINATION.COMMENTS_PER_PAGE` cho comment section:**
+
+```javascript
+import { PAGINATION } from '../../config/app.config.js';
+
+export async function getProductDetail(productId, userId) {
+  const commentsPerPage = PAGINATION.COMMENTS_PER_PAGE;   // ✅ thay vì hardcode 2
+  // ...
+}
+```
+
+**`src/services/account/bidder.service.js` — `PAGINATION.PRODUCTS_PER_PAGE` cho watchlist:**
+
+```javascript
+import { PAGINATION } from '../../config/app.config.js';
+
+export async function getWatchlistPage(userId, page = 1, limit = PAGINATION.PRODUCTS_PER_PAGE) {
+  const offset = (page - 1) * limit;
+  // ...
+}
+```
+
+**`src/services/account/auth.service.js` — `AUTH.OTP_EXPIRY_MS` và `AUTH.BCRYPT_SALT_ROUNDS`:**
+
+```javascript
+import { AUTH } from '../../config/app.config.js';
+
+// Dùng AUTH.OTP_EXPIRY_MS trong createAndSendOtp (thay 15 * 60 * 1000):
+const expiresAt = new Date(Date.now() + AUTH.OTP_EXPIRY_MS);
+
+// Dùng AUTH.BCRYPT_SALT_ROUNDS trong register và resetPassword:
+const hashedPassword = bcrypt.hashSync(password, AUTH.BCRYPT_SALT_ROUNDS);
+```
+
+**`src/services/admin/user.service.js` — `AUTH.BCRYPT_SALT_ROUNDS` cho add user và reset password:**
+
+```javascript
+import { AUTH } from '../../config/app.config.js';
+
+const hashedPassword = await bcrypt.hash(password, AUTH.BCRYPT_SALT_ROUNDS);         // add user
+const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, AUTH.BCRYPT_SALT_ROUNDS); // reset
+```
+
+**`src/utils/upload.js` — `UPLOAD.IMAGE_MAX_SIZE_BYTES` cho multer image filter:**
+
+```javascript
+import { UPLOAD } from '../config/app.config.js';
+
+export const uploadImage = multer({
+  storage,
+  limits: { fileSize: UPLOAD.IMAGE_MAX_SIZE_BYTES },  // ✅ thay vì hardcode 5 * 1024 * 1024
+  fileFilter: (req, file, cb) => { ... },
+});
+```
+
+**`src/middlewares/userSession.mdw.js` — `SESSION.REFRESH_INTERVAL_MS` cho session sync:**
+
+```javascript
+import { SESSION } from '../config/app.config.js';
+
+const SESSION_REFRESH_INTERVAL = SESSION.REFRESH_INTERVAL_MS;  // ✅ thay vì hardcode 60_000
+```
+
+**`src/scripts/auctionEndNotifier.js` và `src/index.js` — `AUCTION.END_NOTIFIER_INTERVAL_SECONDS`:**
+
+```javascript
+// auctionEndNotifier.js — default parameter dùng hằng số:
+export function startAuctionEndNotifier(intervalSeconds = AUCTION.END_NOTIFIER_INTERVAL_SECONDS) { ... }
+
+// index.js — truyền hằng số thay vì hardcode 30:
+startAuctionEndNotifier(AUCTION.END_NOTIFIER_INTERVAL_SECONDS);
+```
+
+**Kết quả:**
+- **5 nhóm hằng số** (PAGINATION, AUTH, UPLOAD, SESSION, AUCTION) đều nằm ở **1 file duy nhất**.
+- Mỗi hằng số có comment giải thích đơn vị/ý nghĩa — code tự documenting.
+- Muốn thay đổi bất kỳ giá trị nào (VD: nâng salt rounds, tăng file size limit, đổi OTP expiry) chỉ sửa 1 dòng trong `app.config.js`, mọi nơi dùng đều tự cập nhật.
+
+---
+
+### 📌 Vị trí 2.10: Logic tính phân trang lặp lại (DRY)
+
+**Mô tả vi phạm:**
+Khối tính toán `nPages`, `from`, `to` cho phân trang được **copy-paste 3 lần** trong 3 route handler khác nhau:
+
+```javascript
+// src_origin/routes/product.route.js — route /category (line 67-71)
+// src_origin/routes/product.route.js — route /search  (line 120-124)
+// src_origin/routes/account.route.js — route /watchlist (line 547-551)
+const nPages = Math.ceil(totalCount / limit);
+let from = (page - 1) * limit + 1;
+let to = page * limit;
+if (to > totalCount) to = totalCount;
+if (totalCount === 0) { from = 0; to = 0; }
+```
+
+:::warning
+**Tác động:**
+* Sửa edge case (VD: trang cuối cụt) phải cập nhật ở 3 chỗ.
+* Logic 5 dòng lặp lại gây noise, khó nhận ra sự khác biệt thực sự giữa các handler.
+:::
+
+**💡 Đề xuất cải thiện:**
+Tách thành một utility function dùng chung:
+
+```javascript
+// src/utils/pagination.js
+export function calcPagination(totalCount, page, limit) {
+  const nPages = Math.ceil(totalCount / limit);
+  let from = (page - 1) * limit + 1;
+  let to = page * limit;
+  if (to > totalCount) to = totalCount;
+  if (totalCount === 0) { from = 0; to = 0; }
+  return { nPages, from, to };
+}
+
+// Trong mọi service — thay 5 dòng bằng 1 dòng:
+const { nPages, from, to } = calcPagination(totalCount, page, limit);
+```
+
+### Minh chứng
+
+`src/utils/pagination.js` — utility function tập trung:
+```javascript
+export function calcPagination(totalCount, page, limit) {
+  const nPages = Math.ceil(totalCount / limit);
+  let from = (page - 1) * limit + 1;
+  let to = page * limit;
+  if (to > totalCount) to = totalCount;
+  if (totalCount === 0) { from = 0; to = 0; }
+  return { nPages, from, to };
+}
+```
+
+`src/services/product/browse.service.js` — dùng `calcPagination` cho cả category và search:
+```javascript
+import { calcPagination } from '../../utils/pagination.js';
+
+// getProductsByCategory
+const { nPages, from, to } = calcPagination(totalCount, page, limit);
+
+// searchProducts
+const { nPages, from, to } = calcPagination(totalCount, page, limit);
+```
+
+`src/services/account/bidder.service.js` — dùng `calcPagination` cho watchlist:
+```javascript
+import { calcPagination } from '../../utils/pagination.js';
+
+const { nPages, from, to } = calcPagination(totalCount, page, limit);
+```
+
+**Kết quả:** Logic phân trang tồn tại ở **1 chỗ duy nhất** — sửa edge case hay đổi công thức chỉ cần chỉnh `calcPagination`.
 
 ---
 
@@ -1220,70 +2149,4 @@ const isHuman = await verifyRecaptcha(req.body['g-recaptcha-response']);
 if (!isHuman) errors.captcha = 'Captcha verification failed.';
 ```
 
----
-
-## CÁC VI PHẠM KHÁC (Minor)
-
-### 🔁 Duplicate Helper Functions (DRY)
-
-* **Vị trí:** `src/index.js`
-* **Mô tả:** Các hàm `add`, `gte`, `lte` được định nghĩa lặp lại 2 lần trong cùng một object helpers.
-* **Giải quyết:** Xóa bỏ các hàm trùng lặp, giữ lại 1 version duy nhất.
-
-### 🗑️ Dead Code — Commented-out redirect (YAGNI)
-
-* **Vị trí:** `src/index.js` (Lines 391-399)
-* **Mô tả:** Code redirect admin bị comment out nhưng không xóa.
-* **Giải quyết:** Xóa hoàn toàn. Sử dụng Git history nếu cần khôi phục sau này.
-
-### 🗑️ Dynamic import cho module đã được import tĩnh (YAGNI)
-
-* **Vị trí:** `src/routes/seller.route.js` (POST `/products/:id/cancel`)
-* **Mô tả:** Route handler dùng `await import('../models/review.model.js')` trong runtime, trong khi `reviewModel` đã được **import tĩnh ở đầu file** (line 3). Dynamic import thừa hoàn toàn và gây nhầm lẫn.
-
-```javascript
-// Line 3 — đã import tĩnh
-import * as reviewModel from '../models/review.model.js';
-
-// Trong route handler — thừa, import lại cùng module
-const reviewModule = await import('../models/review.model.js'); // ❌
-await reviewModule.createReview(reviewData);
-
-// Đúng phải là:
-await reviewModel.createReview(reviewData); // ✅
-```
-
-* **Giải quyết:** Xóa dynamic import, dùng trực tiếp biến `reviewModel` đã có.
-
-### 🗑️ Debug `console.log` trong production code (YAGNI)
-
-* **Vị trí:** Rải rác khắp codebase — `seller.route.js`, `admin/product.route.js`, `account.route.js`, `index.js`.
-* **Mô tả:** Hàng chục `console.log` debug được để lại trong code production:
-
-```javascript
-// seller.route.js
-console.log('productData:', productData);
-console.log('subimagesData:', newImgPaths);
-
-// account.route.js
-console.log(hashedPassword);
-console.log('User id: ', newUser.id, ' OTP: ', otp);
-
-// index.js — trong Handlebars helper
-console.log(end);
-```
-
-* **Giải quyết:** Xóa toàn bộ. Nếu cần logging, dùng thư viện như `winston` hoặc `pino` với log levels (`debug`, `info`, `error`) để tắt log ở production.
-
----
-### 🗑️ Import thừa (YAGNI)
-
-* **Vị trí: src/index.js.
-* **Mô tả:** Nhiều dòng import thừa ở đầu file.
-
-```javascript
-import multer from 'multer';
-import { v4 as uuidv4 } from 'uuid';
-```
-
-* **Giải quyết:** Xóa toàn bộ. 
+ 

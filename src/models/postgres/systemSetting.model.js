@@ -1,4 +1,4 @@
-import db from '../utils/db.js';
+import db from '../../utils/db.js';
 
 export function getAllSettings() {
     return db('system_settings').select('*');

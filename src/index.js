@@ -22,7 +22,7 @@ import sellerRouter from './routes/seller/index.js';
 
 // Import Middlewares
 import { isAuthenticated, isSeller, isAdmin, setAdminMode } from './middlewares/auth.mdw.js';
-import * as categoryModel from './models/category.model.js';
+import { categoryModel } from './models/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

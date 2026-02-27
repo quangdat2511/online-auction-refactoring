@@ -1,4 +1,4 @@
-import * as productModel from '../models/product.model.js';
+import { productModel } from '../models/index.js';
 
 export async function getHomeProducts() {
   const [topEnding, topBids, topPrice] = await Promise.all([

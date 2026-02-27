@@ -1,4 +1,4 @@
-import * as productModel from '../../models/product.model.js';
+import { productModel } from '../../models/index.js';
 
 // Dashboard-related helper for seller area
 export function getSellerStats(sellerId) {

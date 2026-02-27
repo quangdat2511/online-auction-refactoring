@@ -1,8 +1,4 @@
-import * as productModel from '../../models/product.model.js';
-import * as reviewModel from '../../models/review.model.js';
-import * as orderModel from '../../models/order.model.js';
-import * as invoiceModel from '../../models/invoice.model.js';
-import * as orderChatModel from '../../models/orderChat.model.js';
+import { productModel, reviewModel, orderModel, invoiceModel, orderChatModel } from '../../models/index.js';
 import { determineProductStatus } from './detail.service.js';
 
 function parsePostgresArray(value) {

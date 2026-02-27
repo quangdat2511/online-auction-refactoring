@@ -1,7 +1,4 @@
-import * as productModel from '../../models/product.model.js';
-import * as userModel from '../../models/user.model.js';
-import * as biddingHistoryModel from '../../models/biddingHistory.model.js';
-import * as productCommentModel from '../../models/productComment.model.js';
+import { productModel, userModel, biddingHistoryModel, productCommentModel } from '../../models/index.js';
 import { sendMail } from '../../utils/mailer.js';
 
 export async function postComment({ productId, userId, content, parentId, protocol, host }) {

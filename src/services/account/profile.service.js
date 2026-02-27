@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
-import * as userModel from '../../models/user.model.js';
-import * as upgradeRequestModel from '../../models/upgradeRequest.model.js';
+import { userModel, upgradeRequestModel } from '../../models/index.js';
 
 export async function getProfileById(userId) {
   return userModel.findById(userId);

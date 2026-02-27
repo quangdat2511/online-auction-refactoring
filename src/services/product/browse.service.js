@@ -1,7 +1,6 @@
-import * as productModel from '../../models/product.model.js';
-import * as categoryModel from '../../models/category.model.js';
-import * as systemSettingModel from '../../models/systemSetting.model.js';
+import { productModel, categoryModel, systemSettingModel } from '../../models/index.js';
 import { PAGINATION } from '../../config/app.config.js';
+import { calcPagination } from '../../utils/pagination.js';
 
 async function prepareProductList(products) {
   const now = new Date();
@@ -32,12 +31,7 @@ export async function getProductsByCategory({ categoryId, page = 1, sort = '', u
   const products = await prepareProductList(list);
   const total = await productModel.countByCategoryIds(categoryIds);
   const totalCount = parseInt(total.count) || 0;
-  const nPages = Math.ceil(totalCount / limit);
-
-  let from = (page - 1) * limit + 1;
-  let to = page * limit;
-  if (to > totalCount) to = totalCount;
-  if (totalCount === 0) { from = 0; to = 0; }
+  const { nPages, from, to } = calcPagination(totalCount, page, limit);
 
   return {
     products,
@@ -74,12 +68,7 @@ export async function searchProducts({ keywords, page = 1, sort = '', logic = 'a
   const products = await prepareProductList(list);
   const total = await productModel.countByKeywords(q, logic);
   const totalCount = parseInt(total.count) || 0;
-  const nPages = Math.ceil(totalCount / limit);
-
-  let from = (page - 1) * limit + 1;
-  let to = page * limit;
-  if (to > totalCount) to = totalCount;
-  if (totalCount === 0) { from = 0; to = 0; }
+  const { nPages, from, to } = calcPagination(totalCount, page, limit);
 
   return {
     products,
