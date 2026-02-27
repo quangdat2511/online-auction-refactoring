@@ -15,13 +15,13 @@ import { startAuctionEndNotifier } from './scripts/auctionEndNotifier.js';
 // Import Routes
 import homeRouter from './routes/home.route.js';
 import productRouter from './routes/product/index.js';
-import accountRouter from './routes/account.route.js';
+import accountRouter from './routes/account/index.js';
 import adminCategoryRouter from './routes/admin/category.route.js';
 import adminUserRouter from './routes/admin/user.route.js';
 import adminAccountRouter from './routes/admin/account.route.js';
 import adminProductRouter from './routes/admin/product.route.js';
 import adminSystemRouter from './routes/admin/system.route.js';
-import sellerRouter from './routes/seller.route.js';
+import sellerRouter from './routes/seller/index.js';
 
 // Import Middlewares
 import { isAuthenticated, isSeller, isAdmin, setAdminMode } from './middlewares/auth.mdw.js';
