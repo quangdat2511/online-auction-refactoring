@@ -1,2 +1,60 @@
+﻿# =====================================================
+# Dependencies
+# =====================================================
+node_modules/
 src/node_modules/
+src_origin/node_modules/
+
+# =====================================================
+# Environment variables (chứa secrets  KHÔNG commit)
+# =====================================================
+.env
 src/.env
+src_origin/.env
+# Giữ lại .env.example làm template
+!.env.example
+!src/.env.example
+!src_origin/.env.example
+
+# =====================================================
+# User-uploaded files (runtime, không phải source code)
+# =====================================================
+src/public/uploads/*
+src/public/images/payment_proofs/*
+src/public/images/shipping_proofs/*
+# Giữ thư mục rỗng để git track
+!src/public/uploads/.gitkeep
+!src/public/uploads/placeholder.txt
+!src/public/images/payment_proofs/.gitkeep
+!src/public/images/shipping_proofs/.gitkeep
+
+# =====================================================
+# Logs
+# =====================================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =====================================================
+# OS generated files
+# =====================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# =====================================================
+# Editor / IDE
+# =====================================================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
