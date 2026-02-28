@@ -26,8 +26,7 @@ const __dirname = path.dirname(__filename);
 function moveUploadedFiles(tempUrls, type) {
   if (!tempUrls || tempUrls.length === 0) return [];
   
-  const targetFolder = `public/images/${type}`;
-  const publicPath = path.join(__dirname, '..', 'public');
+  const publicPath = path.join(__dirname, '..', '..', 'public');
   const targetPath = path.join(publicPath, 'images', type);
   
   // Create target folder if not exists
