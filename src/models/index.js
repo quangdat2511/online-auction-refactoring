@@ -5,7 +5,7 @@
  * the entire application uses.
  *
  * To switch databases, change only the one import below:
- *   PostgreSQL  →  export * from './postgres/index.js';   ✅ current
+ *   PostgreSQL  →  export * from './postgres/index.js'; 
  *   MongoDB     →  export * from './mongodb/index.js';
  *   SQLite      →  export * from './sqlite/index.js';
  *

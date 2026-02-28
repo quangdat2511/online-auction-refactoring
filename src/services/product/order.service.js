@@ -44,12 +44,15 @@ export async function getCompleteOrderPage(productId, userId) {
 
   const messages = await orderChatModel.getMessagesByOrderId(order.id);
 
+  const isSeller = product.seller_id === userId;
+  const isHighestBidder = product.highest_bidder_id === userId;
+
   return { product, order, paymentInvoice, shippingInvoice, messages, isSeller, isHighestBidder };
 }
 
 export async function submitPayment(orderId, userId, { payment_method, payment_proof_urls, note, shipping_address, shipping_phone }) {
   const order = await orderModel.findById(orderId);
-  if (!order || order.buyer_id !== userId) throw new Error('Unauthorized');
+  if (!order || +order.buyer_id !== +userId) throw new Error('Unauthorized');
 
   await invoiceModel.createPaymentInvoice({ order_id: orderId, issuer_id: userId, payment_method, payment_proof_urls, note });
   await orderModel.updateShippingInfo(orderId, { shipping_address, shipping_phone });
@@ -58,7 +61,7 @@ export async function submitPayment(orderId, userId, { payment_method, payment_p
 
 export async function confirmPayment(orderId, userId) {
   const order = await orderModel.findById(orderId);
-  if (!order || order.seller_id !== userId) throw new Error('Unauthorized');
+  if (!order || +order.seller_id !== +userId) throw new Error('Unauthorized');
 
   const paymentInvoice = await invoiceModel.getPaymentInvoice(orderId);
   if (!paymentInvoice) throw new Error('No payment invoice found');
@@ -69,7 +72,7 @@ export async function confirmPayment(orderId, userId) {
 
 export async function submitShipping(orderId, userId, { tracking_number, shipping_provider, shipping_proof_urls, note }) {
   const order = await orderModel.findById(orderId);
-  if (!order || order.seller_id !== userId) throw new Error('Unauthorized');
+  if (!order || +order.seller_id !== +userId) throw new Error('Unauthorized');
 
   await invoiceModel.createShippingInvoice({ order_id: orderId, issuer_id: userId, tracking_number, shipping_provider, shipping_proof_urls, note });
   await orderModel.updateStatus(orderId, ORDER_STATUS.SHIPPED, userId);
@@ -77,7 +80,7 @@ export async function submitShipping(orderId, userId, { tracking_number, shippin
 
 export async function confirmDelivery(orderId, userId) {
   const order = await orderModel.findById(orderId);
-  if (!order || order.buyer_id !== userId) throw new Error('Unauthorized');
+  if (!order || +order.buyer_id !== +userId) throw new Error('Unauthorized');
   await orderModel.updateStatus(orderId, ORDER_STATUS.DELIVERED, userId);
 }
 
@@ -92,9 +95,9 @@ async function finalizeOrderIfBothReviewed(order, userId) {
 
 export async function submitRating(orderId, userId, { rating, comment }) {
   const order = await orderModel.findById(orderId);
-  if (!order || (order.buyer_id !== userId && order.seller_id !== userId)) throw new Error('Unauthorized');
+  if (!order || (+order.buyer_id !== +userId && +order.seller_id !== +userId)) throw new Error('Unauthorized');
 
-  const isBuyer = order.buyer_id === userId;
+  const isBuyer = +order.buyer_id === +userId;
   const reviewerId = userId;
   const revieweeId = isBuyer ? order.seller_id : order.buyer_id;
   const ratingValue = rating === 'positive' ? 1 : -1;
@@ -111,9 +114,9 @@ export async function submitRating(orderId, userId, { rating, comment }) {
 
 export async function completeTransaction(orderId, userId) {
   const order = await orderModel.findById(orderId);
-  if (!order || (order.buyer_id !== userId && order.seller_id !== userId)) throw new Error('Unauthorized');
+  if (!order || (+order.buyer_id !== +userId && +order.seller_id !== +userId)) throw new Error('Unauthorized');
 
-  const isBuyer = order.buyer_id === userId;
+  const isBuyer = +order.buyer_id === +userId;
   const reviewerId = userId;
   const revieweeId = isBuyer ? order.seller_id : order.buyer_id;
 
@@ -127,19 +130,19 @@ export async function completeTransaction(orderId, userId) {
 
 export async function sendMessage(orderId, userId, message) {
   const order = await orderModel.findById(orderId);
-  if (!order || (order.buyer_id !== userId && order.seller_id !== userId)) throw new Error('Unauthorized');
+  if (!order || (+order.buyer_id !== +userId && +order.seller_id !== +userId)) throw new Error('Unauthorized');
   await orderChatModel.sendMessage({ order_id: orderId, sender_id: userId, message });
 }
 
 export async function getMessagesHTML(orderId, userId) {
   const order = await orderModel.findById(orderId);
-  if (!order || (order.buyer_id !== userId && order.seller_id !== userId)) throw new Error('Unauthorized');
+  if (!order || (+order.buyer_id !== +userId && +order.seller_id !== +userId)) throw new Error('Unauthorized');
 
   const messages = await orderChatModel.getMessagesByOrderId(orderId);
 
   let messagesHtml = '';
   for (const msg of messages) {
-    const isSent = msg.sender_id === userId;
+    const isSent = +msg.sender_id === +userId;
     const msgDate = new Date(msg.created_at);
     const pad = n => String(n).padStart(2, '0');
     const formattedDate = `${pad(msgDate.getHours())}:${pad(msgDate.getMinutes())}:${pad(msgDate.getSeconds())} ${pad(msgDate.getDate())}/${pad(msgDate.getMonth() + 1)}/${msgDate.getFullYear()}`;

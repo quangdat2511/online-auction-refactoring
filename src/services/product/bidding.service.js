@@ -1,4 +1,14 @@
-import { reviewModel, userModel, watchlistModel as watchListModel, systemSettingModel, productModel, biddingHistoryModel, autoBiddingModel, rejectedBidderModel, transaction } from '../../models/index.js';
+import { 
+  reviewModel, 
+  userModel, 
+  watchlistModel as watchListModel, 
+  systemSettingModel, 
+  productModel, 
+  biddingHistoryModel, 
+  autoBiddingModel, 
+  rejectedBidderModel, 
+  transaction 
+} from '../../models/index.js';
 import { sendMail } from '../../utils/mailer.js';
 
 export async function addToWatchlist(userId, productId) {
