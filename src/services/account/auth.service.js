@@ -4,7 +4,7 @@ import { userModel } from '../../models/index.js';
 import { sendMail } from '../../utils/mailer.js';
 import { AUTH } from '../../config/app.config.js';
 
-// crypto.randomInt đảm bảo tính ngẫu nhiên mật mã học, an toàn hơn Math.random()
+// crypto.randomInt provides cryptographic-quality randomness, safer than Math.random()
 function generateOtp() {
   return randomInt(100000, 1000000).toString();
 }

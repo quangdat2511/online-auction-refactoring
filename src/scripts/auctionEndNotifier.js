@@ -1,6 +1,6 @@
 /**
  * Auction End Notifier
- * Script kiểm tra và gửi email thông báo khi đấu giá kết thúc
+ * Checks for ended auctions and sends email notifications to winners and sellers.
  */
 
 import { productModel } from '../models/index.js';
@@ -8,7 +8,7 @@ import { sendMail } from '../utils/mailer.js';
 import { AUCTION } from '../config/app.config.js';
 
 /**
- * Kiểm tra các đấu giá kết thúc và gửi email thông báo
+ * Checks for newly ended auctions and sends email notifications.
  */
 export async function checkAndNotifyEndedAuctions() {
   try {
@@ -24,9 +24,9 @@ export async function checkAndNotifyEndedAuctions() {
       try {
         const productUrl = `${process.env.BASE_URL || 'http://localhost:3005'}/products/detail?id=${auction.id}`;
         
-        // Có người thắng
+        // Auction has a winner
         if (auction.highest_bidder_id) {
-          // Gửi email cho người thắng
+          // Notify winner
           if (auction.winner_email) {
             await sendMail({
               to: auction.winner_email,
@@ -61,7 +61,7 @@ export async function checkAndNotifyEndedAuctions() {
             console.log(`✅ Winner notification sent to ${auction.winner_email} for product #${auction.id}`);
           }
 
-          // Gửi email cho người bán - Có người thắng
+          // Notify seller
           if (auction.seller_email) {
             await sendMail({
               to: auction.seller_email,
@@ -96,7 +96,7 @@ export async function checkAndNotifyEndedAuctions() {
             console.log(`✅ Seller notification sent to ${auction.seller_email} for product #${auction.id}`);
           }
         } else {
-          // Không có người thắng - Chỉ thông báo cho người bán
+          // No winner — notify seller only
           if (auction.seller_email) {
             await sendMail({
               to: auction.seller_email,
@@ -129,7 +129,7 @@ export async function checkAndNotifyEndedAuctions() {
           }
         }
 
-        // Đánh dấu đã gửi thông báo
+        // Mark notification as sent
         await productModel.markEndNotificationSent(auction.id);
 
       } catch (emailError) {
@@ -143,15 +143,15 @@ export async function checkAndNotifyEndedAuctions() {
 }
 
 /**
- * Khởi chạy job định kỳ
- * @param {number} intervalSeconds - Khoảng thời gian giữa các lần kiểm tra (giây)
+ * Starts the periodic auction-end notification job.
+ * @param {number} intervalSeconds - Interval between checks in seconds
  */
 export function startAuctionEndNotifier(intervalSeconds = AUCTION.END_NOTIFIER_INTERVAL_SECONDS) {
   console.log(`🚀 Auction End Notifier started (checking every ${intervalSeconds} second(s))`);
-  
-  // Chạy ngay lần đầu
+
+  // Run immediately on start
   checkAndNotifyEndedAuctions();
-  
-  // Sau đó chạy định kỳ
+
+  // Then run on interval
   setInterval(checkAndNotifyEndedAuctions, intervalSeconds * 1000);
 }

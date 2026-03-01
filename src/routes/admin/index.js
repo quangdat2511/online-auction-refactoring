@@ -8,6 +8,7 @@ import systemRouter from './system.route.js';
 
 const router = express.Router();
 
+router.get('/', (req, res) => res.redirect('/admin/users/list'));
 router.use('/account', accountRouter);
 router.use('/users', userRouter);
 router.use('/categories', categoryRouter);

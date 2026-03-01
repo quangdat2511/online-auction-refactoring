@@ -13,7 +13,7 @@ function commentWithUserQuery() {
 }
 
 /**
- * Tạo comment mới cho sản phẩm
+ * Create a new comment on a product.
  */
 export async function createComment(productId, userId, content, parentId = null) {
   return db('product_comments').insert({
@@ -26,7 +26,7 @@ export async function createComment(productId, userId, content, parentId = null)
 }
 
 /**
- * Lấy tất cả comments của sản phẩm với pagination
+ * Get all parent comments for a product with pagination.
  */
 export async function getCommentsByProductId(productId, limit = null, offset = 0) {
   let query = commentWithUserQuery()
@@ -42,7 +42,7 @@ export async function getCommentsByProductId(productId, limit = null, offset = 0
 }
 
 /**
- * Đếm tổng số parent comments của sản phẩm
+ * Count total parent comments for a product.
  */
 export async function countCommentsByProductId(productId) {
   const result = await db('product_comments')
@@ -54,7 +54,7 @@ export async function countCommentsByProductId(productId) {
 }
 
 /**
- * Lấy replies của một comment
+ * Get replies for a comment.
  */
 export async function getRepliesByCommentId(commentId) {
   return commentWithUserQuery()
@@ -63,9 +63,9 @@ export async function getRepliesByCommentId(commentId) {
 }
 
 /**
- * Lấy replies của nhiều comments cùng lúc (batch query để tránh N+1 problem)
- * @param {Array<number>} commentIds - Mảng các comment IDs
- * @returns {Promise<Array>} Danh sách replies
+ * Get replies for multiple comments in a single query (avoids N+1).
+ * @param {Array<number>} commentIds - Array of comment IDs
+ * @returns {Promise<Array>} List of replies
  */
 export async function getRepliesByCommentIds(commentIds) {
   if (!commentIds || commentIds.length === 0) {
@@ -78,7 +78,7 @@ export async function getRepliesByCommentIds(commentIds) {
 }
 
 /**
- * Xóa comment
+ * Delete a comment.
  */
 export async function deleteComment(commentId, userId) {
   return db('product_comments')
@@ -88,7 +88,7 @@ export async function deleteComment(commentId, userId) {
 }
 
 /**
- * Lấy comment theo ID
+ * Get a comment by ID.
  */
 export async function findCommentById(commentId) {
   return db('product_comments')
@@ -97,9 +97,9 @@ export async function findCommentById(commentId) {
 }
 
 /**
- * Lấy danh sách unique commenters của một sản phẩm (với email)
- * @param {number} productId - ID sản phẩm
- * @returns {Promise<Array>} Danh sách commenters với email
+ * Get unique commenters for a product with their emails.
+ * @param {number} productId - Product ID
+ * @returns {Promise<Array>} List of commenters with email
  */
 export async function getUniqueCommenters(productId) {
   return db('product_comments')

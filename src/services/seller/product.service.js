@@ -1,5 +1,6 @@
 import { productModel, reviewModel, productDescUpdateModel, biddingHistoryModel, productCommentModel } from '../../models/index.js';
 import { moveProductImages } from '../../utils/productImageHelper.js';
+import { sendMail } from '../../utils/mailer.js';
 
 // listing helpers
 export function getAllProducts(sellerId) {

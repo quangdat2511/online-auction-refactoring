@@ -4,6 +4,7 @@ import * as bidderService from '../../services/account/bidder.service.js';
 
 const router = express.Router();
 
+// GET /ratings - Received seller ratings
 router.get('/ratings', isAuthenticated, async (req, res) => {
   const currentUserId = req.session.authUser.id;
   const stats = await bidderService.getRatingStats(currentUserId);
@@ -13,6 +14,7 @@ router.get('/ratings', isAuthenticated, async (req, res) => {
   });
 });
 
+// GET /watchlist - Watchlisted products
 router.get('/watchlist', isAuthenticated, async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const currentUserId = req.session.authUser.id;
@@ -20,7 +22,7 @@ router.get('/watchlist', isAuthenticated, async (req, res) => {
   res.render('vwAccount/watchlist', data);
 });
 
-// Bidding Products - Sản phẩm đang tham gia đấu giá
+// GET /bidding - Active bidding products
 router.get('/bidding', isAuthenticated, async (req, res) => {
   const currentUserId = req.session.authUser.id;
   const products = await bidderService.getBiddingProducts(currentUserId);
@@ -30,7 +32,7 @@ router.get('/bidding', isAuthenticated, async (req, res) => {
   });
 });
 
-// Won Auctions - Sản phẩm đã thắng (pending, sold, cancelled)
+// GET /auctions - Won auctions
 router.get('/auctions', isAuthenticated, async (req, res) => {
   const currentUserId = req.session.authUser.id;
   const products = await bidderService.getWonAuctionsWithRatings(currentUserId);
@@ -40,7 +42,7 @@ router.get('/auctions', isAuthenticated, async (req, res) => {
   });
 });
 
-// Rate Seller - POST
+// POST /won-auctions/:productId/rate-seller - Rate a seller
 router.post('/won-auctions/:productId/rate-seller', isAuthenticated, async (req, res) => {
   try {
     const currentUserId = req.session.authUser.id;
@@ -54,7 +56,7 @@ router.post('/won-auctions/:productId/rate-seller', isAuthenticated, async (req,
   }
 });
 
-// Rate Seller - PUT (Edit)
+// PUT /won-auctions/:productId/rate-seller - Update seller rating
 router.put('/won-auctions/:productId/rate-seller', isAuthenticated, async (req, res) => {
   try {
     const currentUserId = req.session.authUser.id;

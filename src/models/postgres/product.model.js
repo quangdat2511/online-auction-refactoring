@@ -48,56 +48,41 @@ export function findAll() {
 }
 
 export async function findByProductIdForAdmin(productId, userId) {
-  // Chuyển sang async để xử lý dữ liệu trước khi trả về controller
   const rows = await db('products')
-    // 1. Join lấy thông tin người đấu giá cao nhất (Giữ nguyên)
     .leftJoin('users as bidder', 'products.highest_bidder_id', 'bidder.id')
     .leftJoin('users as seller', 'products.seller_id', 'seller.id')
-    // 2. Join lấy danh sách ảnh phụ (Giữ nguyên)
     .leftJoin('product_images', 'products.id', 'product_images.product_id')
     .leftJoin('categories', 'products.category_id', 'categories.id')
-    // 3. Join lấy thông tin Watchlist (MỚI THÊM)
-    // Logic: Join vào bảng watchlist xem user hiện tại có lưu product này không
+    // Join watchlist to check if current user has saved this product
     .leftJoin('watchlists', function() {
-        this.on('products.id', '=', 'watchlists.product_id')
-            .andOnVal('watchlists.user_id', '=', userId || -1); 
-            // Nếu userId null (chưa login) thì so sánh với -1 để không khớp
+      this.on('products.id', '=', 'watchlists.product_id')
+          .andOnVal('watchlists.user_id', '=', userId || -1);
     })
-
     .where('products.id', productId)
     .select(
       'products.*',
-      'product_images.img_link', // Lấy link ảnh phụ để lát nữa gộp mảng
+      'product_images.img_link',
       'bidder.fullname as highest_bidder_name',
       'seller.fullname as seller_name',
       'categories.name as category_name',
-      // Logic che tên người đấu giá (Giữ nguyên)
-      // Logic đếm số lượt bid (Giữ nguyên)
       bidCountRaw(),
-
-      // 4. Logic kiểm tra yêu thích (MỚI THÊM)
-      // Nếu cột product_id bên bảng watchlists có dữ liệu -> Đã like (True)
+      // Check if product is in user's watchlist
       db.raw('watchlists.product_id IS NOT NULL AS is_favorite')
     );
 
-  // --- PHẦN XỬ LÝ DỮ LIỆU (QUAN TRỌNG) ---
-  
-  // Nếu không tìm thấy sản phẩm nào
   if (rows.length === 0) return null;
 
-  // SQL trả về nhiều dòng (do 1 sp có nhiều ảnh), ta lấy dòng đầu tiên làm thông tin chính
+  // SQL returns multiple rows (one per image); use first row as main product
   const product = rows[0];
 
-  // Gom tất cả img_link của các dòng lại thành mảng sub_images
-  // Để phục vụ vòng lặp {{#each product.sub_images}} bên View
+  // Collect all sub-image links into an array
   product.sub_images = rows
     .map(row => row.img_link)
-    .filter(link => link && link !== product.thumbnail); // Lọc bỏ ảnh null hoặc trùng thumbnail
+    .filter(link => link && link !== product.thumbnail); // Filter out null or duplicate thumbnail links
 
   return product;
 }
 
-// 1. Hàm tìm kiếm phân trang (Simplified FTS - Search in product name and category)
 export function searchPageByKeywords(keywords, limit, offset, userId, logic = 'or', sort = '') {
   // Remove accents from keywords for search
   const searchQuery = keywords.toLowerCase()
@@ -113,14 +98,12 @@ export function searchPageByKeywords(keywords, limit, offset, userId, logic = 'o
       this.on('products.id', '=', 'watchlists.product_id')
         .andOnVal('watchlists.user_id', '=', userId || -1);
     })
-    // Chỉ hiển thị sản phẩm ACTIVE
     .where('products.end_at', '>', new Date())
     .whereNull('products.closed_at')
     .where((builder) => {
       const words = searchQuery.split(/\s+/).filter(w => w.length > 0);
       if (logic === 'and') {
         // AND logic: all keywords must match
-        // Split words and each word must exist in product name OR category name OR parent category name
         words.forEach(word => {
           builder.where(function() {
             this.whereRaw(`LOWER(remove_accents(products.name)) LIKE ?`, [`%${word}%`])
@@ -164,7 +147,6 @@ export function searchPageByKeywords(keywords, limit, offset, userId, logic = 'o
   return query.limit(limit).offset(offset);
 }
 
-// 2. Hàm đếm tổng số lượng (Simplified)
 export function countByKeywords(keywords, logic = 'or') {
   // Remove accents from keywords for search
   const searchQuery = keywords.toLowerCase()
@@ -175,7 +157,6 @@ export function countByKeywords(keywords, logic = 'or') {
   return db('products')
     .leftJoin('categories', 'products.category_id', 'categories.id')
     .leftJoin('categories as parent_category', 'categories.parent_id', 'parent_category.id')
-    // Chỉ đếm sản phẩm ACTIVE
     .where('products.end_at', '>', new Date())
     .whereNull('products.closed_at')
     .where((builder) => {
@@ -212,7 +193,6 @@ export function findByCategoryIds(categoryIds, limit, offset, sort, currentUserI
         .andOnVal('watchlists.user_id', '=', currentUserId || -1);
     })
     .whereIn('products.category_id', categoryIds)
-    // Chỉ hiển thị sản phẩm ACTIVE
     .where('products.end_at', '>', new Date())
     .whereNull('products.closed_at')
     .select(
@@ -245,7 +225,6 @@ export function findByCategoryIds(categoryIds, limit, offset, sort, currentUserI
 export function countByCategoryIds(categoryIds) {
   return db('products')
     .whereIn('category_id', categoryIds)
-    // Chỉ đếm sản phẩm ACTIVE
     .where('end_at', '>', new Date())
     .whereNull('closed_at')
     .count('id as count')
@@ -253,7 +232,6 @@ export function countByCategoryIds(categoryIds) {
 }
 
 export function findTopEnding() {
-  // Sắp hết hạn: Sắp xếp thời gian kết thúc TĂNG DẦN (gần nhất lên đầu)
   return topProductsQuery()
     .where('products.end_at', '>', new Date())
     .whereNull('products.closed_at')
@@ -261,7 +239,6 @@ export function findTopEnding() {
 }
 
 export function findTopPrice() {
-  // Giá cao nhất: Sắp xếp giá hiện tại GIẢM DẦN
   return topProductsQuery()
     .where('products.end_at', '>', new Date())
     .whereNull('products.closed_at')
@@ -269,7 +246,6 @@ export function findTopPrice() {
 }
 
 export function findTopBids() {
-  // Nhiều lượt ra giá nhất: Sắp xếp theo số lượt bid GIẢM DẦN
   return topProductsQuery()
     .where('products.end_at', '>', new Date())
     .whereNull('products.closed_at')
@@ -304,62 +280,41 @@ export function findRelatedProducts(productId) {
   } 
 
 export async function findByProductId2(productId, userId) {
-  // Chuyển sang async để xử lý dữ liệu trước khi trả về controller
   const rows = await db('products')
-    // 1. Join lấy thông tin người đấu giá cao nhất (Giữ nguyên)
     .leftJoin('users', 'products.highest_bidder_id', 'users.id')
-    
-    // 2. Join lấy danh sách ảnh phụ (Giữ nguyên)
     .leftJoin('product_images', 'products.id', 'product_images.product_id')
-
-    // 3. Join lấy thông tin Watchlist (MỚI THÊM)
-    // Logic: Join vào bảng watchlist xem user hiện tại có lưu product này không
+    // Join watchlist to detect if current user has saved this product
     .leftJoin('watchlists', function() {
-        this.on('products.id', '=', 'watchlists.product_id')
-            .andOnVal('watchlists.user_id', '=', userId || -1); 
-            // Nếu userId null (chưa login) thì so sánh với -1 để không khớp
+      this.on('products.id', '=', 'watchlists.product_id')
+          .andOnVal('watchlists.user_id', '=', userId || -1);
     })
     .leftJoin('users as seller', 'products.seller_id', 'seller.id')
-
     .leftJoin('categories', 'products.category_id', 'categories.id')
-
     .where('products.id', productId)
     .select(
       'products.*',
-      'product_images.img_link', // Lấy link ảnh phụ để lát nữa gộp mảng
+      'product_images.img_link',
       'seller.fullname as seller_name',
       'seller.email as seller_email',
       'seller.created_at as seller_created_at',
       'categories.name as category_name',
-
-      // Logic che tên người đấu giá (Giữ nguyên)
       maskedBidderRaw(),
-      
-      // Thông tin người đấu giá cao nhất (highest bidder)
       'users.fullname as highest_bidder_name',
       'users.email as highest_bidder_email',
-      
-      // Logic đếm số lượt bid (Giữ nguyên)
       bidCountRaw(),
-
-      // 4. Logic kiểm tra yêu thích (MỚI THÊM)
-      // Nếu cột product_id bên bảng watchlists có dữ liệu -> Đã like (True)
+      // Check if product is in user's watchlist
       db.raw('watchlists.product_id IS NOT NULL AS is_favorite')
     );
 
-  // --- PHẦN XỬ LÝ DỮ LIỆU (QUAN TRỌNG) ---
-  
-  // Nếu không tìm thấy sản phẩm nào
   if (rows.length === 0) return null;
 
-  // SQL trả về nhiều dòng (do 1 sp có nhiều ảnh), ta lấy dòng đầu tiên làm thông tin chính
+  // SQL returns multiple rows (one per image); use first row as main product
   const product = rows[0];
 
-  // Gom tất cả img_link của các dòng lại thành mảng sub_images
-  // Để phục vụ vòng lặp {{#each product.sub_images}} bên View
+  // Collect all sub-image links into an array
   product.sub_images = rows
     .map(row => row.img_link)
-    .filter(link => link && link !== product.thumbnail); // Lọc bỏ ảnh null hoặc trùng thumbnail
+    .filter(link => link && link !== product.thumbnail); // Filter out null or duplicate thumbnail links
 
   return product;
 }
@@ -462,7 +417,7 @@ export async function getSellerStats(sellerId) {
     countSoldProductsBySellerId(sellerId),
     countPendingProductsBySellerId(sellerId),
     countExpiredProductsBySellerId(sellerId),
-    // Pending Revenue: Sản phẩm hết hạn hoặc closed, có người thắng nhưng chưa thanh toán
+    // Pending Revenue: ended/closed products with a winner but unpaid
     db('products')
       .where('seller_id', sellerId)
       .where(function() {
@@ -473,7 +428,7 @@ export async function getSellerStats(sellerId) {
       .whereNull('is_sold')
       .sum('current_price as revenue')
       .first(),
-    // Completed Revenue: Sản phẩm đã bán thành công
+    // Completed Revenue: products sold successfully
     db('products')
       .where('seller_id', sellerId)
       .where('is_sold', true)
@@ -662,9 +617,9 @@ export async function cancelProduct(productId, sellerId) {
 }
 
 /**
- * Lấy các auction vừa kết thúc mà chưa gửi thông báo
- * Điều kiện: end_at < now() AND end_notification_sent IS NULL
- * @returns {Promise<Array>} Danh sách các sản phẩm kết thúc cần gửi thông báo
+ * Get auctions that have just ended and have not yet had a notification sent.
+ * Condition: end_at < now() AND end_notification_sent IS NULL
+ * @returns {Promise<Array>} List of ended products awaiting notification
  */
 export async function getNewlyEndedAuctions() {
   return db('products')
@@ -688,8 +643,8 @@ export async function getNewlyEndedAuctions() {
 }
 
 /**
- * Đánh dấu auction đã gửi thông báo kết thúc
- * @param {number} productId - ID sản phẩm
+ * Mark an auction as having had its end notification sent.
+ * @param {number} productId - Product ID
  */
 export async function markEndNotificationSent(productId) {
   return db('products')

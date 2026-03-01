@@ -4,7 +4,7 @@ import * as profileService from '../../services/account/profile.service.js';
 
 const router = express.Router();
 
-// GET /profile - HIỂN THỊ PROFILE & THÔNG BÁO
+// GET /profile
 router.get('/profile', isAuthenticated, async (req, res) => {
   try {
     const currentUserId = req.session.authUser.id;
@@ -31,7 +31,7 @@ router.get('/profile', isAuthenticated, async (req, res) => {
   }
 });
 
-// PUT /profile - XỬ LÝ UPDATE
+// PUT /profile
 router.put('/profile', isAuthenticated, async (req, res) => {
   try {
     const currentUserId = req.session.authUser.id;
@@ -67,14 +67,14 @@ router.put('/profile', isAuthenticated, async (req, res) => {
 
 router.get('/request-upgrade', isAuthenticated, async (req, res) => {
   const currentUserId = req.session.authUser.id;
-  const upgradeRequest = await upgradeRequestModel.findByUserId(currentUserId);
+  const upgradeRequest = await profileService.getUpgradeRequest(currentUserId);
   res.render('vwAccount/request-upgrade', { upgrade_request: upgradeRequest });
 });
+
 router.post('/request-upgrade', isAuthenticated, async (req, res) => {
   try {
     const currentUserId = req.session.authUser.id;
-    await userModel.markUpgradePending(currentUserId);
-    await upgradeRequestModel.createUpgradeRequest(currentUserId);
+    await profileService.submitUpgradeRequest(currentUserId);
     return res.redirect('/account/profile?send-request-upgrade=true');
   } catch (err) {
     console.error(err);
@@ -82,10 +82,10 @@ router.post('/request-upgrade', isAuthenticated, async (req, res) => {
       user: req.session.authUser,
       err_message: 'Unable to submit your request at this time. Please try again later.'
     });
-
   }
 });
 
+// Seller shortcut views
 router.get('/seller/products', isAuthenticated, async (req, res) => {
   res.render('vwAccount/my-products');
 });

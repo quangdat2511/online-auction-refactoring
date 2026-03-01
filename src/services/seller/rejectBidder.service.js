@@ -51,15 +51,19 @@ export async function rejectBidder(
     const highestBidderIdNum = parseInt(product.highest_bidder_id);
     const wasHighestBidder = highestBidderIdNum === bidderIdNum;
 
+    const stepPrice = parseFloat(product.step_price);
+    const startingPrice = parseFloat(product.starting_price);
+    const currentPrice = parseFloat(product.current_price);
+
     if (allAutoBids.length === 0) {
       await productModel.updateProductData(productId, {
         highest_bidder_id: null,
-        current_price: product.starting_price,
+        current_price: startingPrice,
         highest_max_price: null,
       }, trx);
     } else if (allAutoBids.length === 1) {
       const winner = allAutoBids[0];
-      const newPrice = product.starting_price;
+      const newPrice = startingPrice;
 
       await productModel.updateProductData(productId, {
         highest_bidder_id: winner.bidder_id,
@@ -67,16 +71,17 @@ export async function rejectBidder(
         highest_max_price: winner.max_price,
       }, trx);
 
-      if (wasHighestBidder || product.current_price !== newPrice) {
+      if (wasHighestBidder || currentPrice !== newPrice) {
         await biddingHistoryModel.createBid(productId, winner.bidder_id, newPrice, trx);
       }
     } else if (wasHighestBidder) {
+      // Rejected bidder was the winner — first remaining becomes the new winner
       const firstBidder = allAutoBids[0];
       const secondBidder = allAutoBids[1];
 
-      let newPrice = secondBidder.max_price + product.step_price;
-      if (newPrice > firstBidder.max_price) {
-        newPrice = firstBidder.max_price;
+      let newPrice = parseFloat(secondBidder.max_price) + stepPrice;
+      if (newPrice > parseFloat(firstBidder.max_price)) {
+        newPrice = parseFloat(firstBidder.max_price);
       }
 
       await productModel.updateProductData(productId, {
@@ -87,8 +92,32 @@ export async function rejectBidder(
 
       const lastHistory = await biddingHistoryModel.getLastByProduct(productId, trx);
 
-      if (!lastHistory || lastHistory.current_price !== newPrice) {
+      if (!lastHistory || parseFloat(lastHistory.current_price) !== newPrice) {
         await biddingHistoryModel.createBid(productId, firstBidder.bidder_id, newPrice, trx);
+      }
+    } else {
+      // Rejected bidder was not the winner — winner stays, but the price may need to
+      // drop if the rejected bidder was the one setting the competitive price (2nd highest)
+      const firstBidder = allAutoBids[0]; // same winner
+      const secondBidder = allAutoBids[1]; // new second-highest after deletion
+
+      let newPrice = parseFloat(secondBidder.max_price) + stepPrice;
+      if (newPrice > parseFloat(firstBidder.max_price)) {
+        newPrice = parseFloat(firstBidder.max_price);
+      }
+
+      if (newPrice !== currentPrice) {
+        await productModel.updateProductData(productId, {
+          highest_bidder_id: firstBidder.bidder_id,
+          current_price: newPrice,
+          highest_max_price: firstBidder.max_price,
+        }, trx);
+
+        const lastHistory = await biddingHistoryModel.getLastByProduct(productId, trx);
+
+        if (!lastHistory || parseFloat(lastHistory.current_price) !== newPrice) {
+          await biddingHistoryModel.createBid(productId, firstBidder.bidder_id, newPrice, trx);
+        }
       }
     }
   });

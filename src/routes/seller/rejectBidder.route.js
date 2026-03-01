@@ -4,7 +4,7 @@ import * as rejectService from '../../services/seller/rejectBidder.service.js';
 
 const router = express.Router();
 
-// ROUTE: REJECT BIDDER (POST)
+// POST /reject-bidder - Reject a bidder from a product
 router.post('/reject-bidder', isAuthenticated, async (req, res) => {
   const { productId, bidderId } = req.body;
   const sellerId = req.session.authUser.id;
@@ -25,7 +25,7 @@ router.post('/reject-bidder', isAuthenticated, async (req, res) => {
   }
 });
 
-// ROUTE: UNREJECT BIDDER (POST)
+// POST /unreject-bidder - Restore a rejected bidder
 router.post('/unreject-bidder', isAuthenticated, async (req, res) => {
   const { productId, bidderId } = req.body;
   const sellerId = req.session.authUser.id;

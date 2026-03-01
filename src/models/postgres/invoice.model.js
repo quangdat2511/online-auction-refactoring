@@ -7,17 +7,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
- * ============================================
- * INVOICE MODEL
- * ============================================
- * Quản lý hóa đơn thanh toán và vận chuyển
- * 
- * 2 loại invoice:
- * - payment: Hóa đơn thanh toán từ buyer
- * - shipping: Hóa đơn vận chuyển từ seller
- */
-
-/**
  * Move uploaded files from temp folder to permanent folder
  * @param {Array} tempUrls - Array of temp URLs like ["uploads/123.jpg"]
  * @param {String} type - 'payment_proofs' or 'shipping_proofs'
@@ -69,7 +58,7 @@ function moveUploadedFiles(tempUrls, type) {
 }
 
 /**
- * Tạo hóa đơn thanh toán (từ buyer)
+ * Create a payment invoice (submitted by buyer).
  */
 export async function createPaymentInvoice(invoiceData) {
   const {
@@ -98,7 +87,7 @@ export async function createPaymentInvoice(invoiceData) {
 }
 
 /**
- * Tạo hóa đơn vận chuyển (từ seller)
+ * Create a shipping invoice (submitted by seller).
  */
 export async function createShippingInvoice(invoiceData) {
   const {
@@ -129,7 +118,7 @@ export async function createShippingInvoice(invoiceData) {
 }
 
 /**
- * Lấy invoice theo ID
+ * Get invoice by ID.
  */
 export async function findById(invoiceId) {
   return db('invoices')
@@ -138,7 +127,7 @@ export async function findById(invoiceId) {
 }
 
 /**
- * Lấy tất cả invoices của một order
+ * Get all invoices for an order.
  */
 export async function findByOrderId(orderId) {
   return db('invoices')
@@ -165,17 +154,17 @@ function findInvoiceByType(orderId, type) {
 // ─────────────────────────────────────────────────────────
 
 /**
- * Lấy payment invoice của một order
+ * Get payment invoice for an order.
  */
 export const getPaymentInvoice  = (orderId) => findInvoiceByType(orderId, 'payment');
 
 /**
- * Lấy shipping invoice của một order
+ * Get shipping invoice for an order.
  */
 export const getShippingInvoice = (orderId) => findInvoiceByType(orderId, 'shipping');
 
 /**
- * Xác minh invoice
+ * Mark an invoice as verified.
  */
 export async function verifyInvoice(invoiceId) {
   const rows = await db('invoices')
@@ -191,7 +180,7 @@ export async function verifyInvoice(invoiceId) {
 }
 
 /**
- * Cập nhật invoice
+ * Update an invoice.
  */
 export async function updateInvoice(invoiceId, updateData) {
   const rows = await db('invoices')
@@ -206,7 +195,7 @@ export async function updateInvoice(invoiceId, updateData) {
 }
 
 /**
- * Xóa invoice
+ * Delete an invoice.
  */
 export async function deleteInvoice(invoiceId) {
   return db('invoices')
@@ -215,7 +204,7 @@ export async function deleteInvoice(invoiceId) {
 }
 
 /**
- * Kiểm tra xem order đã có payment invoice chưa
+ * Check if an order already has a payment invoice.
  */
 export async function hasPaymentInvoice(orderId) {
   const count = await db('invoices')
@@ -228,7 +217,7 @@ export async function hasPaymentInvoice(orderId) {
 }
 
 /**
- * Kiểm tra xem order đã có shipping invoice chưa
+ * Check if an order already has a shipping invoice.
  */
 export async function hasShippingInvoice(orderId) {
   const count = await db('invoices')
@@ -241,7 +230,7 @@ export async function hasShippingInvoice(orderId) {
 }
 
 /**
- * Lấy tất cả invoices chưa xác minh
+ * Get all unverified invoices.
  */
 export async function getUnverifiedInvoices() {
   return db('invoices')

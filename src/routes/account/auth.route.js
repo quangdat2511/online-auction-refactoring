@@ -7,12 +7,10 @@ const router = express.Router();
 
 // GET /signup
 router.get('/signup', function (req, res) {
-  // CẬP NHẬT: Truyền Site Key xuống view để hiển thị widget
   res.render('vwAccount/auth/signup', {
     recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY
   });
 });
-
 
 // GET /signin
 router.get('/signin', function (req, res) {
@@ -39,6 +37,7 @@ router.get('/verify-email', (req, res) => {
 router.get('/forgot-password', (req, res) => {
   res.render('vwAccount/auth/forgot-password');
 });
+
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
   const result = await authService.initForgotPassword(email);
@@ -49,6 +48,7 @@ router.post('/forgot-password', async (req, res) => {
   }
   return res.render('vwAccount/auth/verify-forgot-password-otp', { email });
 });
+
 router.post('/verify-forgot-password-otp', async (req, res) => {
   const { email, otp } = req.body;
   const result = await authService.verifyForgotPasswordOtp(email, otp);
@@ -60,6 +60,7 @@ router.post('/verify-forgot-password-otp', async (req, res) => {
   }
   return res.render('vwAccount/auth/reset-password', { email });
 });
+
 router.post('/resend-forgot-password-otp', async (req, res) => {
   const { email } = req.body;
   const result = await authService.resendForgotPasswordOtp(email);
@@ -74,6 +75,7 @@ router.post('/resend-forgot-password-otp', async (req, res) => {
     info_message: 'We have sent a new OTP to your email. Please check your inbox.',
   });
 });
+
 router.post('/reset-password', async (req, res) => {
   const { email, new_password, confirm_new_password } = req.body;
   const result = await authService.resetPassword(email, new_password, confirm_new_password);
@@ -91,6 +93,7 @@ router.post('/reset-password', async (req, res) => {
     success_message: 'Your password has been reset. You can sign in now.',
   });
 });
+
 // POST /signin
 router.post('/signin', async function (req, res) {
   const { email, password } = req.body;
@@ -122,7 +125,7 @@ router.post('/signup', async function (req, res) {
   const old = { fullname, email, address };
   const recaptchaSiteKey = process.env.RECAPTCHA_SITE_KEY;
 
-  // Xác thực reCAPTCHA
+  // Validate reCAPTCHA
   if (!recaptchaResponse) {
     errors.captcha = 'Please check the captcha box.';
   } else {
@@ -204,9 +207,9 @@ router.post('/logout', isAuthenticated, (req, res) => {
   res.redirect('/');
 });
 
-// ===================== OAUTH ROUTES =====================
+// OAuth Routes
 
-// Google OAuth
+// Google
 router.get('/auth/google',
   passport.authenticate('google', { scope: ['profile', 'email'] })
 );
@@ -214,16 +217,13 @@ router.get('/auth/google',
 router.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/account/signin' }),
   (req, res) => {
-    // Lưu user vào session
     req.session.authUser = req.user;
     req.session.isAuthenticated = true;
     res.redirect('/');
   }
 );
 
-// Facebook OAuth
-// NOTE: 'email' scope chỉ hoạt động với Admin/Developer/Tester trong Development Mode
-// Tạm thời chỉ dùng 'public_profile' để test, sau đó thêm 'email' khi đã add tester
+// Facebook
 router.get('/auth/facebook',
   passport.authenticate('facebook', { scope: ['public_profile'] })
 );
@@ -237,21 +237,7 @@ router.get('/auth/facebook/callback',
   }
 );
 
-// Twitter OAuth - DISABLED (Twitter API requires $100/month subscription)
-// router.get('/auth/twitter',
-//   passport.authenticate('twitter')
-// );
-
-// router.get('/auth/twitter/callback',
-//   passport.authenticate('twitter', { failureRedirect: '/account/signin' }),
-//   (req, res) => {
-//     req.session.authUser = req.user;
-//     req.session.isAuthenticated = true;
-//     res.redirect('/');
-//   }
-// );
-
-// GitHub OAuth
+// GitHub
 router.get('/auth/github',
   passport.authenticate('github', { scope: ['user:email'] })
 );

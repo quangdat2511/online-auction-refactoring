@@ -3,7 +3,7 @@ import * as ratingService from '../../services/product/rating.service.js';
 
 const router = express.Router();
 
-// ROUTE: Seller Ratings Page
+// GET /seller/:sellerId/ratings - Seller ratings page
 router.get('/seller/:sellerId/ratings', async (req, res) => {
   try {
     const sellerId = parseInt(req.params.sellerId);
@@ -19,7 +19,7 @@ router.get('/seller/:sellerId/ratings', async (req, res) => {
   }
 });
 
-// ROUTE: Bidder Ratings Page
+// GET /bidder/:bidderId/ratings - Bidder ratings page
 router.get('/bidder/:bidderId/ratings', async (req, res) => {
   try {
     const bidderId = parseInt(req.params.bidderId);

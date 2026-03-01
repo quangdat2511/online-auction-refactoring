@@ -20,23 +20,7 @@ const STATUS_TIMESTAMPS = {
 };
 
 /**
- * ============================================
- * ORDER MODEL
- * ============================================
- * Quản lý đơn hàng sau khi đấu giá kết thúc
- * 
- * Quy trình:
- * 1. pending_payment: Chờ buyer gửi chứng từ thanh toán
- * 2. payment_submitted: Buyer đã gửi chứng từ
- * 3. payment_confirmed: Seller xác nhận đã nhận tiền
- * 4. shipped: Seller đã gửi hàng
- * 5. delivered: Buyer xác nhận đã nhận hàng
- * 6. completed: Hoàn tất (đã đánh giá)
- * 7. cancelled: Đơn hàng bị hủy
- */
-
-/**
- * Tạo order mới (thường được trigger tự động tạo)
+ * Create a new order. Usually triggered automatically when an auction ends.
  */
 export async function createOrder(orderData) {
   const {
@@ -65,7 +49,7 @@ export async function createOrder(orderData) {
 }
 
 /**
- * Lấy thông tin order theo ID
+ * Get order by ID.
  */
 export async function findById(orderId) {
   return db('orders')
@@ -74,7 +58,7 @@ export async function findById(orderId) {
 }
 
 /**
- * Lấy order theo product_id
+ * Get order by product ID.
  */
 export async function findByProductId(productId) {
   return db('orders')
@@ -82,9 +66,6 @@ export async function findByProductId(productId) {
     .first();
 }
 
-/**
- * Lấy order kèm thông tin đầy đủ (product, buyer, seller)
- */
 // internal helper that builds the common join/select block used by
 // "withDetails" queries.  this keeps the WHERE clause (and any
 // pagination/filtering) separate from the shared wiring of products,
@@ -119,7 +100,7 @@ export async function findByIdWithDetails(orderId) {
 }
 
 /**
- * Lấy order theo product_id kèm thông tin đầy đủ
+ * Get order by product ID with full details.
  */
 export async function findByProductIdWithDetails(productId) {
   return orderWithDetailsQuery()
@@ -128,7 +109,7 @@ export async function findByProductIdWithDetails(productId) {
 }
 
 /**
- * Lấy tất cả orders của một seller
+ * Get all orders for a seller.
  */
 // small helper for queries that only need product info plus a single
 // user (either buyer or seller).  the caller just specifies the alias
@@ -152,7 +133,7 @@ export async function findBySellerId(sellerId) {
 }
 
 /**
- * Lấy tất cả orders của một buyer
+ * Get all orders for a buyer.
  */
 export async function findByBuyerId(buyerId) {
   return ordersWithProductAndUserQuery('seller', 'seller_name')
@@ -161,13 +142,13 @@ export async function findByBuyerId(buyerId) {
 }
 
 /**
- * Cập nhật trạng thái order
+ * Update order status and stamp the corresponding timestamp.
  */
 export async function updateStatus(orderId, newStatus, userId, note = null) {
   const trx = await db.transaction();
   
   try {
-    // Lấy trạng thái cũ
+    // Fetch current status
     const order = await trx('orders')
       .where('id', orderId)
       .first();
@@ -178,7 +159,7 @@ export async function updateStatus(orderId, newStatus, userId, note = null) {
 
     const oldStatus = order.status;
     
-    // Cập nhật order
+    // Apply status update
     const updateData = {
       status: newStatus,
       updated_at: db.fn.now()
@@ -193,7 +174,7 @@ export async function updateStatus(orderId, newStatus, userId, note = null) {
       .where('id', orderId)
       .update(updateData);
 
-    // Ghi log vào order_status_history
+    // Log status transition
     await trx('order_status_history').insert({
       order_id: orderId,
       from_status: oldStatus,
@@ -213,7 +194,7 @@ export async function updateStatus(orderId, newStatus, userId, note = null) {
 }
 
 /**
- * Cập nhật thông tin giao hàng
+ * Update shipping information for an order.
  */
 export async function updateShippingInfo(orderId, shippingData) {
   const {
@@ -236,7 +217,7 @@ export async function updateShippingInfo(orderId, shippingData) {
 }
 
 /**
- * Cập nhật thông tin tracking
+ * Update tracking information for an order.
  */
 export async function updateTracking(orderId, trackingData) {
   const {
@@ -257,14 +238,14 @@ export async function updateTracking(orderId, trackingData) {
 }
 
 /**
- * Hủy order
+ * Cancel an order.
  */
 export async function cancelOrder(orderId, userId, reason) {
   return updateStatus(orderId, ORDER_STATUS.CANCELLED, userId, reason);
 }
 
 /**
- * Kiểm tra user có quyền truy cập order không
+ * Check whether a user is authorized to access an order (as buyer or seller).
  */
 export async function canUserAccessOrder(orderId, userId) {
   const order = await db('orders')
@@ -279,7 +260,7 @@ export async function canUserAccessOrder(orderId, userId) {
 }
 
 /**
- * Lấy lịch sử trạng thái của order
+ * Get status change history for an order.
  */
 export async function getStatusHistory(orderId) {
   return db('order_status_history')
@@ -293,7 +274,7 @@ export async function getStatusHistory(orderId) {
 }
 
 /**
- * Đếm số order theo trạng thái của một user
+ * Count orders by status for a user.
  */
 export async function countByStatus(userId, userType = 'buyer') {
   const column = userType === 'buyer' ? 'buyer_id' : 'seller_id';

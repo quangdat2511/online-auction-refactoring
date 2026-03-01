@@ -4,6 +4,7 @@ import { isAuthenticated } from '../../middlewares/auth.mdw.js';
 
 const router = express.Router();
 
+// GET /detail - Product detail page
 router.get('/detail', async (req, res) => {
   const userId = req.session.authUser ? req.session.authUser.id : null;
   const productId = req.query.id;
@@ -31,7 +32,7 @@ router.get('/detail', async (req, res) => {
   });
 });
 
-// ROUTE: BIDDING HISTORY PAGE (Requires Authentication)
+// GET /bidding-history - Bidding history page (authenticated)
 router.get('/bidding-history', isAuthenticated, async (req, res) => {
   const productId = req.query.id;
   if (!productId) return res.redirect('/');
@@ -46,7 +47,7 @@ router.get('/bidding-history', isAuthenticated, async (req, res) => {
   }
 });
 
-// ROUTE: GET BIDDING HISTORY (JSON)
+// GET /bid-history/:productId - Bidding history JSON
 router.get('/bid-history/:productId', async (req, res) => {
   try {
     const productId = parseInt(req.params.productId);

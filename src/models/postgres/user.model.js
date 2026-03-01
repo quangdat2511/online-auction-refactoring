@@ -7,9 +7,11 @@ export async function add(user) {
     .returning(['id', 'email', 'fullname', 'address', 'role', 'email_verified']);
   return rows[0]; // object: { id, email, fullname, ... }
 }
+
 export function findById(id, trx = null) {
   return (trx || db)('users').where('id', id).first();
 }
+
 export function loadAllUsers() {
   return db('users').orderBy('id', 'desc');
 }
@@ -26,22 +28,21 @@ export function findByUserName(username) {
 }
 
 export async function update(id, user) {
-  // SỬA: Thêm await
   const rows = await db('users')
     .where('id', id)
     .update(user)
-    .returning('*'); 
-  
-  return rows[0]; 
+    .returning('*');
+
+  return rows[0];
 }
 
 export function findByEmail(email) {
   return db('users').where('email', email).first();
 }
 
-// ===================== OTP USING KNEX =====================
+// OTP
 
-// Tạo OTP
+// Create OTP record
 export function createOtp({ user_id, otp_code, purpose, expires_at }) {
   return db('user_otps').insert({
     user_id,
@@ -51,7 +52,7 @@ export function createOtp({ user_id, otp_code, purpose, expires_at }) {
   });
 }
 
-// Tìm OTP còn hiệu lực
+// Find valid unexpired OTP
 export function findValidOtp({ user_id, otp_code, purpose }) {
   return db('user_otps')
     .where({
@@ -65,19 +66,20 @@ export function findValidOtp({ user_id, otp_code, purpose }) {
     .first();
 }
 
-// Đánh dấu OTP đã dùng
+// Mark OTP as used
 export function markOtpUsed(id) {
   return db('user_otps')
     .where('id', id)
     .update({ used: true });
 }
 
-// Verify email user
+// Verify user email
 export function verifyUserEmail(user_id) {
   return db('users')
     .where('id', user_id)
     .update({ email_verified: true });
 }
+
 export function updateUserInfo(user_id, { email, fullname, address }) {
   return db('users')
     .where('id', user_id)
@@ -94,9 +96,9 @@ export function updateUserRoleToSeller(user_id) {
     .update({ role: 'seller', is_upgrade_pending: false });
 }
 
-// ===================== OAUTH SUPPORT =====================
+// OAuth
 
-// Tìm user theo OAuth provider
+// Find user by OAuth provider
 export function findByOAuthProvider(provider, oauth_id) {
   return db('users')
     .where({
@@ -106,7 +108,7 @@ export function findByOAuthProvider(provider, oauth_id) {
     .first();
 }
 
-// Thêm OAuth provider cho user hiện có
+// Link OAuth provider to existing user
 export function addOAuthProvider(user_id, provider, oauth_id) {
   return db('users')
     .where('id', user_id)
@@ -115,9 +117,10 @@ export function addOAuthProvider(user_id, provider, oauth_id) {
       oauth_id: oauth_id,
       email_verified: true
     });
-} 
+}
+
 export async function deleteUser(id) {
-  return db('users')  
+  return db('users')
     .where('id', id)
     .del();
 }

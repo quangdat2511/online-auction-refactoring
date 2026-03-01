@@ -1,14 +1,7 @@
 import db from '../../utils/db.js';
 
 /**
- * ============================================
- * ORDER CHAT MODEL
- * ============================================
- * Quản lý tin nhắn chat giữa buyer và seller
- */
-
-/**
- * Gửi tin nhắn
+ * Send a message in an order chat.
  */
 export async function sendMessage(messageData) {
   const {
@@ -28,7 +21,7 @@ export async function sendMessage(messageData) {
 }
 
 /**
- * Lấy tất cả tin nhắn của một order
+ * Get all messages for an order.
  */
 export async function getMessagesByOrderId(orderId) {
   return db('order_chats')
@@ -43,7 +36,7 @@ export async function getMessagesByOrderId(orderId) {
 }
 
 /**
- * Xóa tin nhắn
+ * Delete a message.
  */
 export async function deleteMessage(messageId) {
   return db('order_chats')
@@ -52,7 +45,7 @@ export async function deleteMessage(messageId) {
 }
 
 /**
- * Lấy tin nhắn mới nhất của order
+ * Get the most recent message for an order.
  */
 export async function getLatestMessage(orderId) {
   return db('order_chats')

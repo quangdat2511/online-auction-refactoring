@@ -4,7 +4,7 @@ import * as biddingService from '../../services/product/bidding.service.js';
 
 const router = express.Router();
 
-// ROUTE 1: THÊM VÀO WATCHLIST (POST)
+// POST /watchlist - Add to watchlist
 router.post('/watchlist', isAuthenticated, async (req, res) => {
   const userId = req.session.authUser.id;
   const productId = req.body.productId;
@@ -15,7 +15,7 @@ router.post('/watchlist', isAuthenticated, async (req, res) => {
   res.redirect(retUrl);
 });
 
-// ROUTE 2: XÓA KHỎI WATCHLIST (DELETE)
+// DELETE /watchlist - Remove from watchlist
 router.delete('/watchlist', isAuthenticated, async (req, res) => {
   const userId = req.session.authUser.id;
   const productId = req.body.productId;
@@ -26,7 +26,7 @@ router.delete('/watchlist', isAuthenticated, async (req, res) => {
   res.redirect(retUrl);
 });
 
-// ROUTE 3: ĐẶT GIÁ (POST) - Server-side rendering with automatic bidding
+// POST /bid - Place bid with automatic bidding
 router.post('/bid', isAuthenticated, async (req, res) => {
   const userId = req.session.authUser.id;
   const productId = parseInt(req.body.productId);
@@ -45,7 +45,7 @@ router.post('/bid', isAuthenticated, async (req, res) => {
   }
 });
 
-// ROUTE: BUY NOW (POST) - Bidder directly purchases product at buy now price
+// POST /buy-now - Direct purchase at buy now price
 router.post('/buy-now', isAuthenticated, async (req, res) => {
   const { productId } = req.body;
   const userId = req.session.authUser.id;

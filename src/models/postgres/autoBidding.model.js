@@ -7,11 +7,11 @@ const bidCountRaw = () =>
 // ─────────────────────────────────────────────────────────
 
 /**
- * Thêm hoặc cập nhật auto bidding record cho một bidder
- * @param {number} productId - ID sản phẩm
- * @param {number} bidderId - ID người đặt giá
- * @param {number} maxPrice - Giá tối đa người này sẵn sàng trả
- * @returns {Promise} Kết quả upsert
+ * Insert or update an auto bidding record for a bidder.
+ * @param {number} productId - Product ID
+ * @param {number} bidderId - Bidder ID
+ * @param {number} maxPrice - Maximum price the bidder is willing to pay
+ * @returns {Promise} Upsert result
  */
 export async function upsertAutoBid(productId, bidderId, maxPrice, trx = null) {
   // Use PostgreSQL's ON CONFLICT to handle upsert
@@ -27,9 +27,9 @@ export async function upsertAutoBid(productId, bidderId, maxPrice, trx = null) {
 }
 
 /**
- * Lấy auto bid record của một bidder cho sản phẩm
- * @param {number} productId - ID sản phẩm
- * @param {number} bidderId - ID người đặt giá
+ * Get auto bid record for a bidder on a product.
+ * @param {number} productId - Product ID
+ * @param {number} bidderId - Bidder ID
  * @returns {Promise<Object>} Auto bid record
  */
 export async function getAutoBid(productId, bidderId, trx = null) {
@@ -40,9 +40,9 @@ export async function getAutoBid(productId, bidderId, trx = null) {
 }
 
 /**
- * Lấy tất cả auto bids cho một sản phẩm
- * @param {number} productId - ID sản phẩm
- * @returns {Promise<Array>} Danh sách auto bids
+ * Get all auto bids for a product.
+ * @param {number} productId - Product ID
+ * @returns {Promise<Array>} List of auto bids
  */
 export async function getAllAutoBids(productId, trx = null) {
   return (trx || db)('auto_bidding')
@@ -51,10 +51,10 @@ export async function getAllAutoBids(productId, trx = null) {
 }
 
 /**
- * Xóa auto bid của một bidder
- * @param {number} productId - ID sản phẩm
- * @param {number} bidderId - ID người đặt giá
- * @returns {Promise} Kết quả xóa
+ * Delete auto bid for a bidder on a product.
+ * @param {number} productId - Product ID
+ * @param {number} bidderId - Bidder ID
+ * @returns {Promise} Delete result
  */
 export async function deleteAutoBid(productId, bidderId, trx = null) {
   return (trx || db)('auto_bidding')
@@ -64,9 +64,9 @@ export async function deleteAutoBid(productId, bidderId, trx = null) {
 }
 
 /**
- * Lấy tất cả sản phẩm mà bidder đang tham gia đấu giá
- * @param {number} bidderId - ID người đặt giá
- * @returns {Promise<Array>} Danh sách sản phẩm
+ * Get all products a bidder is currently participating in.
+ * @param {number} bidderId - Bidder ID
+ * @returns {Promise<Array>} List of products
  */
 export async function getBiddingProductsByBidderId(bidderId) {
   return db('auto_bidding')
@@ -91,9 +91,9 @@ export async function getBiddingProductsByBidderId(bidderId) {
 }
 
 /**
- * Lấy tất cả sản phẩm mà bidder đã thắng (pending, sold, cancelled)
- * @param {number} bidderId - ID người đặt giá
- * @returns {Promise<Array>} Danh sách sản phẩm
+ * Get all auctions won by a bidder (pending, sold, or cancelled).
+ * @param {number} bidderId - Bidder ID
+ * @returns {Promise<Array>} List of products
  */
 export async function getWonAuctionsByBidderId(bidderId) {
   return db('products')

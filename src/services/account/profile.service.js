@@ -8,20 +8,20 @@ export async function getProfileById(userId) {
 export async function updateProfile(userId, { email, fullname, address, date_of_birth, old_password, new_password, confirm_new_password }) {
   const currentUser = await userModel.findById(userId);
 
-  // Kiểm tra password cũ (chỉ cho non-OAuth users)
+  // Validate current password (non-OAuth users only)
   if (!currentUser.oauth_provider) {
     if (!old_password || !bcrypt.compareSync(old_password, currentUser.password_hash)) {
       return { success: false, reason: 'wrong_password', user: currentUser };
     }
   }
 
-  // Kiểm tra trùng email
+  // Check for email conflict
   if (email !== currentUser.email) {
     const existingUser = await userModel.findByEmail(email);
     if (existingUser) return { success: false, reason: 'email_in_use', user: currentUser };
   }
 
-  // Kiểm tra password mới khớp (chỉ cho non-OAuth users)
+  // Validate new password match (non-OAuth users only)
   if (!currentUser.oauth_provider && new_password) {
     if (new_password !== confirm_new_password) {
       return { success: false, reason: 'password_mismatch', user: currentUser };

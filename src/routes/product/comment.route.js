@@ -4,7 +4,7 @@ import { isAuthenticated } from '../../middlewares/auth.mdw.js';
 
 const router = express.Router();
 
-// ROUTE: POST COMMENT
+// POST /comment - Post a comment on a product
 router.post('/comment', isAuthenticated, async (req, res) => {
   const { productId, content, parentId } = req.body;
   const userId = req.session.authUser.id;

@@ -1,11 +1,11 @@
 import db from '../../utils/db.js';
 
 /**
- * Thêm một lượt bid mới vào hệ thống
- * @param {number} productId - ID sản phẩm
- * @param {number} bidderId - ID người đặt giá
- * @param {number} currentPrice - Giá hiện tại của sản phẩm sau khi update
- * @returns {Promise} Kết quả insert
+ * Add a new bid to the system.
+ * @param {number} productId - Product ID
+ * @param {number} bidderId - Bidder ID
+ * @param {number} currentPrice - Current product price after the bid
+ * @returns {Promise} Insert result
  */
 export async function createBid(productId, bidderId, currentPrice, trx = null, options = {}) {
   const { isBuyNow = false } = options;
@@ -32,9 +32,9 @@ export async function getLastByProduct(productId, trx = null) {
 }
 
 /**
- * Lấy lịch sử đấu giá của một sản phẩm
- * @param {number} productId - ID sản phẩm
- * @returns {Promise<Array>} Danh sách lịch sử bid
+ * Get bid history for a product.
+ * @param {number} productId - Product ID
+ * @returns {Promise<Array>} List of bids
  */
 export async function getBiddingHistory(productId) {
   return db('bidding_history')
@@ -53,9 +53,9 @@ export async function getBiddingHistory(productId) {
 }
 
 /**
- * Lấy bid cao nhất của một sản phẩm
- * @param {number} productId - ID sản phẩm
- * @returns {Promise<Object>} Bid cao nhất
+ * Get the highest bid for a product.
+ * @param {number} productId - Product ID
+ * @returns {Promise<Object>} Highest bid record
  */
 export async function getHighestBid(productId) {
   return db('bidding_history')
@@ -65,10 +65,10 @@ export async function getHighestBid(productId) {
 }
 
 /**
- * Kiểm tra xem user đã bid cho sản phẩm này chưa
- * @param {number} productId - ID sản phẩm
- * @param {number} bidderId - ID người đặt giá
- * @returns {Promise<boolean>} True nếu đã bid
+ * Check whether a user has placed a bid on a product.
+ * @param {number} productId - Product ID
+ * @param {number} bidderId - Bidder ID
+ * @returns {Promise<boolean>} True if the user has bid
  */
 export async function hasUserBidOnProduct(productId, bidderId) {
   const result = await db('bidding_history')
@@ -79,9 +79,9 @@ export async function hasUserBidOnProduct(productId, bidderId) {
 }
 
 /**
- * Lấy danh sách unique bidders của một sản phẩm (với email)
- * @param {number} productId - ID sản phẩm
- * @returns {Promise<Array>} Danh sách bidders với email
+ * Get unique bidders for a product with their emails.
+ * @param {number} productId - Product ID
+ * @returns {Promise<Array>} List of unique bidders with email
  */
 export async function getUniqueBidders(productId) {
   return db('bidding_history')
